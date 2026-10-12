@@ -59,7 +59,7 @@ Un **Hilo** es un tema que requiere seguimiento. Tipos: decisión, tarea, proyec
 
 **[H]** Hoy el cargo de la cuenta de la Gerencia General figura como "Gerente Comercial". No pude revisar el resto de perfiles porque el conector de Claude no tiene permiso para leer el directorio completo. La depuración de perfiles es una tarea previa a la Fase 1 que puede hacer RRHH junto con quien administre Microsoft 365.
 
-**[S]** Si RRHH trabaja desde un buzón de rol (`recursoshumanos@`), se asocia ese buzón al puesto además de la cuenta personal.
+**[H]** HR Suplidora ya trabaja con muchas cuentas de rol: `recursoshumanos@`, `gestion@`, `sig@`, `bodega@`, `produccion@`, `ventas4@`, `contabilidad@` y `asistente.mercadeo@`. Esto calza con el modelo por puesto. Cada cuenta de rol debe tener su cargo, área y jefe en Entra igual que una cuenta personal.
 
 ### 2.3 Ciclo de vida (tres ejes)
 
@@ -84,6 +84,15 @@ Todo hilo y todo cambio guarda su fuente: cita, enlace al correo o mensaje, fech
 | Correo | Entra si el remitente y **todos** los destinatarios (Para y CC) son @hrsuplidora.com. Un correo externo reenviado de forma interna sí entra, porque el reenvío es una conversación interna. Quedan fuera las direcciones internas de sistemas o notificaciones automáticas (lista configurable). |
 | Slack | Solo el workspace de HR Suplidora. Quedan fuera los canales compartidos con otras organizaciones (Slack Connect) y los usuarios invitados externos. |
 | Externos | Si un tercero externo genera una tarea, se agrega manualmente (§4.4). |
+
+Detalles de la lectura de correo:
+
+- **[H]** El 74% del correo interno recibido en dos semanas estaba en *Elementos eliminados*. La ingesta lee todas las carpetas, incluida esa, y procesa cada correo cuando llega, antes de que se borre.
+- Quedan fuera:
+  - el resumen diario que la Gerencia se envía a sí misma (Zapier);
+  - las notificaciones de sistemas internos, como las de gestión documental (`sgd@` y `documentos@`) o las de formularios;
+  - las invitaciones y respuestas de calendario.
+- Slack avisa a HILOS por eventos cuando hay un mensaje nuevo, así que no hay que consultarlo periódicamente.
 
 Cobertura por fase:
 
@@ -284,13 +293,40 @@ El administrador de respaldo es una decisión pendiente (§13). Puede ser una pe
 - **Lo que cuesta es procesar cada mensaje con IA**, y cada mensaje se procesa una sola vez, cualquiera que sea la frecuencia. Revisar cada 15 minutos o una vez al día cuesta prácticamente lo mismo.
 - **Lo que sí ahorra es agrupar.** Procesar en lote dos veces al día con la Batch API cuesta 50% menos que procesar al instante, y procesar la conversación completa da mejor contexto y menos duplicados. Las actas se procesan al instante.
 
-### 9.2 Estimación
+### 9.2 Volumen medido **[H]**
 
-*(se completa con el volumen real medido; ver §9.3)*
+Buzón de la Gerencia General, del 28 de septiembre al 11 de octubre de 2026 (2 semanas):
 
-### 9.3 Volumen medido
+| Concepto | Correos |
+|---|---|
+| Recibidos de remitentes internos | 116 (37 la primera semana, 79 la segunda) |
+| De esos, automáticos de sistemas (gestión documental, notificaciones) | ~23 |
+| De esos, invitaciones o respuestas de calendario | ~8 |
+| **Recibidos internos escritos por personas** | **~85** |
+| Enviados con solo destinatarios internos | 74 (~67 sin contar aceptaciones de reunión ni pruebas) |
+| Enviados con destinatarios internos y externos (quedan fuera por la regla de §3.1) | 12 |
+| Asuntos distintos entre los recibidos internos | ~75–79 (~66 sin los de sistemas) |
 
-*(pendiente)*
+Proyección **[S]**: entre 250 y 400 mensajes internos al mes en las conversaciones de la Gerencia General, agrupados en unas 140 conversaciones. Dos semanas son una muestra corta y el volumen varió el doble de una semana a otra.
+
+### 9.3 Estimación mensual **[S]**
+
+Tipo de cambio de referencia: ₡507 por USD. Precios de la Claude API vigentes a octubre de 2026. Los de Supabase, Vercel y GitHub son referencias públicas por verificar.
+
+| Rubro | USD/mes | CRC/mes |
+|---|---|---|
+| Claude API, Fase 1: ~300–350 mensajes, publicación del lunes y actas | 15–35 | ₡7.600–17.700 |
+| Supabase (Pro) | ~25 | ~₡12.700 |
+| Vercel (Pro, 1 usuario) | ~20 | ~₡10.100 |
+| GitHub (Team, 2 usuarios) | ~8 | ~₡4.100 |
+| **Total Fase 1** | **~70–90** | **~₡34.500–44.600** |
+| **Total Fase 2** (5 buzones más Slack; IA de 50 a 150) | **~105–205** | **~₡53.000–104.000** |
+
+Notas:
+
+- **Costo por mensaje:** cerca de USD 0,06 (₡30) procesado al instante y USD 0,03 (₡15) en lote, con Claude Opus 5.5.
+- **Frecuencia:** revisar cada 15 minutos o una vez al día no cambia el costo de IA. Procesar en lote ahorra unos USD 10 al mes (~₡5.000) en la Fase 1.
+- **Fase 0:** corre dentro de la suscripción actual de Claude de la Gerencia General, sin cobro adicional de API.
 
 ## 10. Fases
 
