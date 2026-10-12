@@ -32,11 +32,11 @@ body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
 
 /* Encabezado */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
-.top-in{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:grid;gap:10px}
+.top-in{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:grid;gap:10px}
 .brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .mark{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.14em}
 .mark span{color:var(--accent)}
@@ -109,6 +109,38 @@ a{color:var(--accent)}
 .actions{display:flex;gap:6px;flex-wrap:wrap}
 .discard-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--surface-2);border-radius:8px;padding:8px}
 .discard-form select,.discard-form input{min-width:0;flex:1 1 160px}
+
+/* Tabla de revisión del borrador */
+.dtable{--dcols:minmax(0,1fr) 168px 148px 132px 168px 104px;display:grid;gap:8px}
+.dhead{display:none}
+.drow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;gap:10px 12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+.drow.upd{border-style:dashed}
+.drow .c-task{grid-column:1/-1}
+.drow .c-act{grid-column:1/-1;display:flex;gap:6px;justify-content:flex-end}
+.cell{display:grid;gap:4px;min-width:0}
+.cl{font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.in{width:100%;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px;font-size:14px}
+.in:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px var(--accent-soft)}
+.in.dirty{border-color:var(--warn);background:var(--warn-soft)}
+.in.empty{color:var(--ink-3)}
+textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
+.t-ro{margin:0;font-weight:600}
+.ro{font-size:14px;color:var(--ink-2);padding-top:6px}
+.chg{margin:0;font-size:13px;font-weight:600;color:var(--accent)}
+.dchips{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--ink-3);align-items:center}
+.ctx-box{display:grid;gap:6px}
+.ctx{margin:0;font-size:13px;color:var(--ink-2)}
+.ctx.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.more{appearance:none;background:none;border:0;padding:0;color:var(--accent);font-size:12.5px;cursor:pointer;justify-self:start}
+.toast .undo{appearance:none;margin-left:12px;background:none;border:0;color:var(--accent-soft);font-weight:700;text-decoration:underline;cursor:pointer;font-size:14px}
+@media (min-width:900px){
+  .dhead{display:grid;grid-template-columns:var(--dcols);gap:12px;padding:0 13px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em}
+  .drow{grid-template-columns:var(--dcols)}
+  .drow .c-task{grid-column:auto}
+  .drow .c-act{grid-column:auto;flex-direction:column;align-items:stretch;padding-top:0}
+  .drow .cl{display:none}
+  .drow .c-task>.cl{display:none}
+}
 
 /* Resumen por puesto */
 .grid-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
@@ -197,7 +229,7 @@ const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"]
 const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),pub:null,ingesta:null,
   tab:"lunes",rama:"consolidado",loaded:{p:false,h:false,b:false},
   f:{q:"",puesto:"todos",agrupar:"area",cerrados:false},
-  per:"90",discarding:null};
+  per:"90",fb:"todos"};
 let db = null;
 try{const t=localStorage.getItem("hilos.tab");if(t&&TABS.some(x=>x[0]===t))S.tab=t;}catch(e){}
 
@@ -222,7 +254,10 @@ function fmtHora(iso){try{return new Intl.DateTimeFormat("es-CR",{timeZone:TZ,da
 function nuevoId(p){return p+"-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);}
 function safeUrl(u){try{const x=new URL(u);if(x.protocol!=="https:")return null;
   return /(^|\.)(office365\.com|office\.com|outlook\.com|microsoft\.com|sharepoint\.com|slack\.com)$/i.test(x.hostname)?x.href:null;}catch(e){return null;}}
-function toast(msg){const t=h("div",{class:"toast",role:"status"},msg);document.body.append(t);setTimeout(()=>t.remove(),3200);}
+function toast(msg,undo){document.querySelectorAll(".toast").forEach(x=>x.remove());
+  const t=h("div",{class:"toast",role:"status"},msg);
+  if(undo){const b=h("button",{type:"button",class:"undo"},"Deshacer");b.addEventListener("click",async()=>{t.remove();try{await undo();toast("Cambio deshecho");}catch(e){toast("No se pudo deshacer");}});t.append(b);}
+  document.body.append(t);setTimeout(()=>t.remove(),undo?7000:3200);}
 function puestoNombre(id){if(!id)return"Sin responsable";if(id==="tercero")return"Un tercero";return S.puestos.get(id)?.nombre||id;}
 function reportesGG(){return[...S.puestos.entries()].filter(([,p])=>p.reportaGG).sort((a,b)=>(a[1].orden??99)-(b[1].orden??99));}
 function rama(pid){if(!pid||pid==="consolidado"||pid==="todos")return null;const out=new Set([pid]);let more=true;
@@ -279,7 +314,7 @@ function render(){renderTabs();renderSync();const m=document.getElementById("mai
   ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
 
 /* ---------- Publicación del lunes ---------- */
-function sec(title,items,emptyTxt){const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(items.length))));
+function sec(title,items,emptyTxt,count){const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(count??items.length))));
   s.append(items.length?h("div",{class:"list"},items):h("p",{class:"empty"},emptyTxt));return s;}
 function renderLunes(m){
   const set=rama(S.rama);const fechaPub=S.pub?.fecha||hoy();const desde=addDays(fechaPub,-7);const hoyD=hoy();
@@ -307,7 +342,7 @@ function renderLunes(m){
   const drafts=[...S.borrador.entries()].filter(([,d])=>!set||set.has(d.propuesta?.puesto||d.puesto));
   const draftGG=drafts.filter(([,d])=>esDecGG(d));
   m.append(sec("Espera su decisión",[...espGG.map(x=>hiloRow(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
-    ...draftGG.map(([id,d])=>draftCard(id,d,{compact:true}))],"Nada espera su decisión."));
+    draftGG.length?draftTable(draftGG):null].filter(Boolean),"Nada espera su decisión.",espGG.length+draftGG.length));
   const alertas=[];const alerted=new Set();
   for(const x of abiertos){if(terminado(x))continue;const why=[];
     if(x.fechaCompromiso&&x.fechaCompromiso<hoyD)why.push(`Vencido hace ${dias(x.fechaCompromiso,hoyD)} días`);
@@ -327,8 +362,7 @@ function renderLunes(m){
   const porMedir=vis.filter(x=>x.estadoImpl==="completada"&&(!x.resultado||x.resultado==="sin_medir"));
   m.append(sec("Resultados por medir",porMedir.map(x=>hiloRow(x)),"Nada pendiente de medir."));
   const resto=drafts.filter(([,d])=>!esDecGG(d));const LIM=S.rama==="consolidado"?8:40;
-  const bsec=sec("Detectado y por confirmar",resto.slice(0,LIM).map(([id,d])=>draftCard(id,d,{compact:true})),"No hay temas nuevos por confirmar.");
-  bsec.querySelector(".n").textContent=String(resto.length);
+  const bsec=sec("Detectado y por confirmar",resto.length?[draftTable(resto.slice(0,LIM))]:[],"No hay temas nuevos por confirmar.",resto.length);
   if(resto.length>LIM)bsec.append(h("p",{style:"margin-top:10px"},h("button",{type:"button",class:"btn sm",onclick:()=>{S.tab="borrador";render();window.scrollTo(0,0);}},`Ver los ${resto.length} en el Borrador`)));
   m.append(bsec);
   m.append(sec("Cerrados en la semana",cerradosSem.map(x=>hiloRow(x)),"Nada se cerró esta semana."));
@@ -338,58 +372,107 @@ function renderLunes(m){
   m.append(qsec);}
 
 /* ---------- Borrador ---------- */
-function draftCard(id,d,opts={}){
-  const p=d.propuesta||{};const isUpd=d.tipo==="actualizacion";const target=isUpd?S.hilos.get(d.hilo):null;
-  const c=h("article",{class:"card"});
-  c.append(h("div",{class:"meta",style:"display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12.5px;color:var(--ink-3);align-items:center"},
-    h("span",{class:"tag"},isUpd?"Actualización sugerida":"Tema nuevo"),
-    h("span",{class:"tag"},puestoNombre(isUpd?target?.puesto:p.puesto)),
-    !isUpd?h("span",{},TIPO[p.tipo]||"Tarea"):null,
-    !isUpd?pillImpl(p.estadoImpl):null,
-    !isUpd&&p.estadoDecision==="por_decidir"?pillDecide(p):null,
-    !isUpd&&p.fechaCompromiso?h("span",{class:"mono"},"fecha "+fmt(p.fechaCompromiso)):null,
-    d.confianza?h("span",{class:"conf"},"confianza "+d.confianza):null));
-  c.append(h("h3",{},isUpd?(target?.titulo||"Hilo"):(p.titulo||"(sin título)")));
-  if(isUpd&&d.resumen)c.append(h("p",{class:"detail"},d.resumen));
-  if(!isUpd&&p.detalle&&!opts.compact)c.append(h("p",{class:"detail"},p.detalle));
-  if(!isUpd&&p.notas&&!opts.compact)c.append(h("p",{class:"hint"},p.notas));
-  const evs=(d.evidencia||[]).slice(0,opts.compact?1:3);for(const ev of evs)c.append(quote(ev));
-  const act=h("div",{class:"actions"});
-  if(isUpd){act.append(h("button",{type:"button",class:"btn primary sm",onclick:()=>applyUpdate(id,d)},"Aplicar"),
-      h("button",{type:"button",class:"btn sm",onclick:()=>resolveDraft(id,{estado:"rechazado"},"Sugerencia rechazada")},"Rechazar"));}
-  else{act.append(h("button",{type:"button",class:"btn primary sm",onclick:()=>quickConvert(id,d)},"Convertir en hilo"),
-      h("button",{type:"button",class:"btn sm",onclick:()=>openEditor(null,{...p,evidencia:d.evidencia||[]},{fromDraft:id})},"Editar y convertir"),
-      h("button",{type:"button",class:"btn ghost sm",onclick:()=>{S.discarding=S.discarding===id?null:id;render();}},"Descartar"));}
-  c.append(act);
-  if(S.discarding===id){const sel=h("select",{id:"motivo-"+id,"aria-label":"Motivo"},MOTIVOS.map(x=>h("option",{value:x},x)));
-    const txt=h("input",{id:"nota-"+id,type:"text",placeholder:"Comentario (opcional)","aria-label":"Comentario"});
-    c.append(h("div",{class:"discard-form"},sel,txt,h("button",{type:"button",class:"btn danger sm",
-      onclick:()=>{S.discarding=null;resolveDraft(id,{estado:"descartado",motivo:sel.value,comentario:txt.value.trim()||null},"Descartado");}},"Confirmar descarte")));}
-  return c;}
+/* Decisión: un solo control que combina estado de decisión y quién decide. */
+function decOpts(){return[["no_requiere","No requiere"],["decidido","Ya decidido"],["gg","Decide GG"],
+  ...[...S.puestos.entries()].filter(([id])=>id!=="gg").sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>["p:"+id,"Decide "+p.nombre]),
+  ["tercero","Decide un tercero"],["pd","Por decidir (¿quién?)"]];}
+function decValue(p){if(p.estadoDecision==="por_decidir"){if(p.decisionDe==="gg")return"gg";if(p.decisionDe==="tercero")return"tercero";return p.decisionDe?"p:"+p.decisionDe:"pd";}
+  return p.estadoDecision==="decidido"?"decidido":"no_requiere";}
+function decParse(v){if(v==="no_requiere"||v==="decidido")return{estadoDecision:v,decisionDe:null};
+  if(v==="pd")return{estadoDecision:"por_decidir",decisionDe:null};
+  return{estadoDecision:"por_decidir",decisionDe:v.startsWith("p:")?v.slice(2):v};}
+/* Ediciones sin guardar: sobreviven a las actualizaciones en vivo de la lista. */
+S.edits=new Map();
+function editOf(id){if(!S.edits.has(id))S.edits.set(id,{});return S.edits.get(id);}
+function draftTable(entries){
+  const t=h("div",{class:"dtable"});
+  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Estado"),h("span",{},"Decide"),h("span",{})));
+  for(const[id,d]of entries)t.append(d.tipo==="actualizacion"?updRow(id,d):draftRow(id,d));
+  return t;}
+function cell(lbl,ctrl,cls){return h("label",{class:"cell"+(cls?" "+cls:""),for:ctrl.id},h("span",{class:"cl"},lbl),ctrl);}
+function ctxBlock(id,text,evid,extra){
+  const box=h("div",{class:"ctx-box"});
+  if(extra)box.append(extra);
+  if(text){const p=h("p",{class:"ctx clamp"},text);const more=h("button",{type:"button",class:"more"},"Ver contexto completo");
+    more.addEventListener("click",()=>{const open=p.classList.toggle("clamp");more.textContent=open?"Ver contexto completo":"Ver menos";});
+    box.append(p);if(text.length>160)box.append(more);}
+  const evs=evid||[];
+  if(evs.length){box.append(quote(evs[0]));
+    if(evs.length>1){const rest=h("div",{hidden:true},evs.slice(1).map(quote));const b=h("button",{type:"button",class:"more"},`Ver ${evs.length-1} correo${evs.length>2?"s":""} más`);
+      b.addEventListener("click",()=>{rest.hidden=!rest.hidden;b.textContent=rest.hidden?`Ver ${evs.length-1} correo${evs.length>2?"s":""} más`:"Ocultar";});box.append(rest,b);}}
+  return box;}
+function draftRow(id,d){
+  const p=d.propuesta||{};const e=editOf(id);const v=(k,def)=>k in e?e[k]:def;
+  const titulo=h("textarea",{class:"in t-in",id:"bt-"+id,rows:"2","aria-label":"Tarea"});titulo.value=v("titulo",p.titulo||"");
+  const resp=sel("br-"+id,puestoOpts([["","Sin responsable"]]),v("puesto",p.puesto||""));
+  const fecha=h("input",{type:"date",id:"bf-"+id,"aria-label":"Fecha esperada"});fecha.value=v("fechaCompromiso",p.fechaCompromiso||"");
+  const est=sel("be-"+id,Object.entries(IMPL).filter(([k])=>k!=="descartado"),v("estadoImpl",p.estadoImpl||"sin_iniciar"));
+  const dec=sel("bd-"+id,decOpts(),v("dec",decValue(p)));
+  for(const c of[resp,fecha,est,dec])c.classList.add("in");
+  const mark=()=>{titulo.classList.toggle("dirty",titulo.value!==(p.titulo||""));resp.classList.toggle("dirty",resp.value!==(p.puesto||""));
+    fecha.classList.toggle("dirty",fecha.value!==(p.fechaCompromiso||""));est.classList.toggle("dirty",est.value!==(p.estadoImpl||"sin_iniciar"));
+    dec.classList.toggle("dirty",dec.value!==decValue(p));fecha.classList.toggle("empty",!fecha.value);};
+  titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;mark();});
+  fecha.addEventListener("change",()=>{e.fechaCompromiso=fecha.value;mark();});est.addEventListener("change",()=>{e.estadoImpl=est.value;mark();});
+  dec.addEventListener("change",()=>{e.dec=dec.value;mark();});mark();
+  const chips=h("div",{class:"dchips"},h("span",{},TIPO[p.tipo]||"Tarea"),p.proyecto?h("span",{},"◇ "+p.proyecto):null,
+    p.confidencial?h("span",{class:"pill"},"Confidencial"):null,d.confianza?h("span",{class:"conf"},"confianza "+d.confianza):null);
+  const ctx=[p.detalle,p.notas].filter(Boolean).join(" · ");
+  const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const del=h("button",{type:"button",class:"btn ghost sm"},"Descartar");
+  save.addEventListener("click",async()=>{const t=titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");titulo.focus();return;}
+    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,puesto:resp.value||null,fechaCompromiso:fecha.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;});
+  del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id);save.disabled=del.disabled=false;});
+  return h("div",{class:"drow"},
+    h("div",{class:"cell c-task"},h("span",{class:"cl"},"Tarea"),titulo,chips,ctxBlock(id,ctx,d.evidencia)),
+    cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Estado",est),cell("Decide",dec),
+    h("div",{class:"c-act"},save,del));}
+function updRow(id,d){
+  const x=S.hilos.get(d.hilo);const cambios=d.cambios||{};
+  const desc=Object.entries(cambios).map(([k,val])=>k==="estadoImpl"?`Estado → ${IMPL[val]||val}`:k==="fechaCompromiso"?`Fecha → ${fmt(val)}`:k==="estadoDecision"?`Decisión → ${DEC[val]||val}`:k==="puesto"?`Responsable → ${puestoNombre(val)}`:k==="resultado"?`Resultado → ${RES[val]||val}`:null).filter(Boolean).join(" · ");
+  const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const del=h("button",{type:"button",class:"btn ghost sm"},"Descartar");
+  save.addEventListener("click",async()=>{save.disabled=del.disabled=true;await applyUpdate(id,d);save.disabled=del.disabled=false;});
+  del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id,"rechazado");save.disabled=del.disabled=false;});
+  const ro=(lbl,txt)=>h("div",{class:"cell"},h("span",{class:"cl"},lbl),h("span",{class:"ro"},txt));
+  return h("div",{class:"drow upd"},
+    h("div",{class:"cell c-task"},h("span",{class:"cl"},"Actualización sugerida"),h("p",{class:"t-ro"},x?.titulo||"(hilo no encontrado)"),
+      ctxBlock(id,d.resumen||"",d.evidencia,desc?h("p",{class:"chg"},desc):null)),
+    ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),
+    ro("Estado",IMPL[cambios.estadoImpl||x?.estadoImpl]||"—"),ro("Decide",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
+    h("div",{class:"c-act"},save,del));}
+async function saveDraft(id,d,vals){
+  const hid=nuevoId("h");const now=new Date().toISOString();const p={...(d.propuesta||{}),...vals};
+  const data=normalizeHilo({...p,area:S.puestos.get(p.puesto)?.area||p.area,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
+    ultimaActividad:p.ultimaActividad||hoy(),historial:[{fecha:now,texto:"Creado desde el borrador"}],fechaCierre:terminado(p)?now:null});
+  try{await db.doc("hilos/"+hid).set(data);await db.doc("borrador/"+id).update({estado:"convertido",hiloId:hid,resuelto:now});S.edits.delete(id);
+    toast("Guardado como hilo",async()=>{await db.doc("hilos/"+hid).delete();await db.doc("borrador/"+id).update({estado:"pendiente",hiloId:null,resuelto:null});});}
+  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
+async function discardDraft(id,estado="descartado"){const now=new Date().toISOString();
+  try{await db.doc("borrador/"+id).update({estado,motivo:"Descartado en la revisión",resuelto:now});S.edits.delete(id);
+    toast(estado==="rechazado"?"Sugerencia descartada":"Descartado",async()=>{await db.doc("borrador/"+id).update({estado:"pendiente",motivo:null,resuelto:null});});}
+  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
 function renderBorrador(m){
   m.append(h("div",{class:"page-h"},h("h1",{},"Borrador de tareas a agregar"),
-    h("div",{class:"sub"},"Temas detectados en las conversaciones internas. Usted decide cuáles se convierten en hilo y cuáles se descartan.")));
-  const ds=[...S.borrador.entries()].sort((a,b)=>String(b[1].detectado||"").localeCompare(String(a[1].detectado||"")));
+    h("div",{class:"sub"},"Ajuste en la misma fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento. Los campos cambiados se marcan en ámbar.")));
+  const ds=[...S.borrador.entries()];
   if(!ds.length){m.append(h("p",{class:"empty"},"No hay nada por confirmar. La próxima lectura del correo dejará aquí los temas nuevos."));return;}
-  const byP=new Map();for(const[id,d]of ds){const pid=d.tipo==="actualizacion"?S.hilos.get(d.hilo)?.puesto:d.propuesta?.puesto;
-    const top=topPuesto(pid);if(!byP.has(top))byP.set(top,[]);byP.get(top).push([id,d]);}
-  for(const[pid,arr]of byP){m.append(h("div",{class:"group-h"},puestoNombre(pid),h("span",{class:"n"},String(arr.length))));
-    m.append(h("div",{class:"list"},arr.map(([id,d])=>draftCard(id,d))));}}
+  const pidOf=d=>topPuesto(d.tipo==="actualizacion"?S.hilos.get(d.hilo)?.puesto:d.propuesta?.puesto);
+  const groups=new Map();for(const[id,d]of ds){const k=pidOf(d)||"";if(!groups.has(k))groups.set(k,[]);groups.get(k).push([id,d]);}
+  const order=[...groups.keys()].sort((a,b)=>(S.puestos.get(a)?.orden??99)-(S.puestos.get(b)?.orden??99));
+  const f=S.fb||"todos";const chips=h("div",{class:"chips",role:"group","aria-label":"Filtrar por puesto"});
+  for(const[k,l]of[["todos",`Todos (${ds.length})`],...order.map(k=>[k,`${puestoNombre(k)} (${groups.get(k).length})`])])
+    chips.append(h("button",{type:"button",class:"chip","aria-pressed":f===k?"true":"false",onclick:()=>{S.fb=k;render();}},l));
+  m.append(chips);
+  const byDate=(a,b)=>{const fa=a[1].propuesta?.fechaCompromiso||"9999",fb=b[1].propuesta?.fechaCompromiso||"9999";return fa.localeCompare(fb)||String(a[1].propuesta?.titulo||"").localeCompare(String(b[1].propuesta?.titulo||""),"es");};
+  for(const k of order){if(f!=="todos"&&f!==k)continue;const arr=groups.get(k).sort(byDate);
+    m.append(h("div",{class:"group-h"},puestoNombre(k),h("span",{class:"n"},String(arr.length))));m.append(draftTable(arr));}}
 function esDecGG(d){return d.tipo!=="actualizacion"&&d.propuesta?.estadoDecision==="por_decidir"&&d.propuesta?.decisionDe==="gg";}
 function topPuesto(pid){let p=pid,guard=0;while(p&&guard++<10){const x=S.puestos.get(p);if(!x||x.reportaGG||!x.superior||x.superior==="gg")return p;p=x.superior;}return pid;}
-async function quickConvert(id,d){const p=d.propuesta||{};const hid=nuevoId("h");const now=new Date().toISOString();
-  const data=normalizeHilo({...p,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
-    ultimaActividad:p.ultimaActividad||hoy(),historial:[{fecha:now,texto:"Creado desde el borrador"}]});
-  try{await db.doc("hilos/"+hid).set(data);await db.doc("borrador/"+id).update({estado:"convertido",hiloId:hid,resuelto:now});toast("Hilo creado");}
-  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
-async function resolveDraft(id,patch,msg){try{await db.doc("borrador/"+id).update({...patch,resuelto:new Date().toISOString()});toast(msg);}
-  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
 async function applyUpdate(id,d){const x=S.hilos.get(d.hilo);if(!x){toast("El hilo ya no existe");return;}
   const now=new Date().toISOString();const cambios={...(d.cambios||{})};
   const patch={...cambios,actualizado:now,ultimaActividad:hoy(),
     evidencia:[...(x.evidencia||[]),...(d.evidencia||[])],historial:[...(x.historial||[]),{fecha:now,texto:d.resumen||"Actualización aplicada"}]};
   if(cambios.estadoImpl&&["completada","descartado"].includes(cambios.estadoImpl)&&!x.fechaCierre)patch.fechaCierre=now;
-  try{await db.doc("hilos/"+d.hilo).update(patch);await db.doc("borrador/"+id).update({estado:"aplicado",resuelto:now});toast("Actualización aplicada");}
+  try{await db.doc("hilos/"+d.hilo).update(patch);await db.doc("borrador/"+id).update({estado:"aplicado",resuelto:now});toast("Actualización guardada");}
   catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
 
 /* ---------- Hilos ---------- */
