@@ -68,11 +68,17 @@ Otros documentos:
    - **Recibidos:** `sender:"hrsuplidora.com"` con fechas, una vez por carpeta: `Inbox`, `Deleted Items`, `SGD` y `Archive`.
    - **Enviados:** `folderName:"Sent Items"` con fechas, sin query.
 5. Descartar los `internetMessageId` que ya estén en `ingesta/{mes}`. Leer los demás con `read_resource` y aplicar la regla de solo internos y las exclusiones.
-6. **Actas.** Un correo interno cuyo asunto empiece con "Acta" es un acta de 1:1. Por cada tema del acta:
-   - Si corresponde claramente a un hilo abierto, se **actualiza el hilo directamente**: estado, fecha o responsable según el texto. Se agrega la evidencia y una entrada de historial "Actualizado por acta del 1:1 del <fecha>".
+6. **Actas (resumen de un 1:1 o de una reunión).** El asunto no importa: el acta se reconoce por su contenido. Un correo interno es un acta si cumple las dos condiciones:
+   - lo envía la Gerencia General o un puesto que le reporta;
+   - el cuerpo es, en lo esencial, una lista de temas tratados, acuerdos o compromisos de una reunión, dirigida a quien participó en ella.
+
+   Palabras en el asunto como "Acta", "Acuerdos", "Minuta", "Compromisos", "Resumen", "1:1" o "1 a 1" refuerzan la señal, pero no son obligatorias. Si hay duda de que sea un acta, se procesa como correo normal (paso 8) y sus temas van al borrador. Por cada tema del acta:
+   - Si corresponde claramente a un hilo abierto, se **actualiza el hilo directamente**: estado, fecha o responsable según el texto. Se agrega la evidencia y una entrada de historial "Actualizado por acta del <fecha>".
    - Si es un tema nuevo con responsable claro, se **crea directamente como hilo** con `origen: "acta"`.
    - Si es ambiguo (sin responsable claro, por ejemplo), va al borrador.
-7. **Captura manual por correo.** Un correo que la Gerencia General se envía a sí misma con asunto que empieza con "HILO:" se **crea directamente como hilo** con `origen: "manual"`. Puede ser un reenvío de un correo externo: en ese caso se usa su contenido como detalle y evidencia. Esta es la única excepción a la regla de solo internos.
+7. **Captura manual por correo.** Aplica a un correo que la Gerencia General se envía o se reenvía a sí misma (también si es un correo externo reenviado).
+   - Si el asunto empieza con la palabra "HILO" o "HILOS", sin importar mayúsculas, con o sin dos puntos, y aunque vaya antes o después de prefijos como RV:, RE:, FW: o Fwd:, cada tarea o seguimiento que se desprenda del correo se **crea directamente como hilo** con `origen: "manual"`. Si no se identifica una tarea concreta, se crea un hilo con el asunto como título y "por completar" en `notas`.
+   - Sin la palabra "HILO", el correo se procesa como uno normal (paso 8): si contiene un tema de seguimiento, va al borrador.
 8. **Resto de correos.** Por cada tema que requiera seguimiento:
    - Si corresponde a un hilo abierto y trae un cambio (estado, fecha, decisión o resultado), se crea en el borrador una `actualizacion` con `cambios` y `resumen`.
    - Si corresponde a un borrador pendiente, se agrega la evidencia a ese borrador, sin duplicarlo.

@@ -191,7 +191,7 @@ const ENTREGA = {a_tiempo:"A tiempo",tarde_justificado:"Tarde – Justificado",t
 const EJEC = {mejor:"Mejor de lo esperado",esperado:"Lo esperado",menos:"Menos de lo esperado"};
 const AREAS = ["Gerencia","Comercial","Operaciones","RRHH","Contabilidad"];
 const MOTIVOS = ["No es un tema de seguimiento","Ya está resuelto","Duplicado","No me corresponde","Otro"];
-const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["desempeno","Desempeño"],["puestos","Puestos"]];
+const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["desempeno","Desempeño"],["puestos","Puestos"],["ayuda","Cómo se usa"]];
 
 /* ---------- Estado ---------- */
 const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),pub:null,ingesta:null,
@@ -276,7 +276,7 @@ function renderSync(){const el=document.getElementById("sync");
   el.textContent=S.ingesta?.ultimaCorrida?"Correo leído al "+fmtHora(S.ingesta.ultimaCorrida):"Aún sin lectura de correo";}
 function render(){renderTabs();renderSync();const m=document.getElementById("main");m.replaceChildren();
   if(!S.loaded.p||!S.loaded.h||!S.loaded.b){m.append(h("p",{class:"empty",style:"padding-top:24px"},"Cargando HILOS…"));return;}
-  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos}[S.tab]||renderLunes)(m);}
+  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
 
 /* ---------- Publicación del lunes ---------- */
 function sec(title,items,emptyTxt){const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(items.length))));
@@ -586,6 +586,18 @@ function openPuesto(id){const cur=id?{...S.puestos.get(id)}:{nombre:"",area:"Ger
       try{if(id)await db.doc("puestos/"+id).update(data);else await db.doc("puestos/"+nuevoId("p")).set(data);toast("Puesto guardado");closeLayer();}
       catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}},"Guardar")));
   const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);document.getElementById("layer").replaceChildren(scrim);}
+
+/* ---------- Ayuda ---------- */
+const AYUDA=[
+ ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. En cada tema: Convertir en hilo (tal cual), Editar y convertir (cambiar detalle, fecha, puesto responsable, área, proyecto) o Descartar. Lo que descarta enseña al sistema qué no es un tema."],
+ ["Acta del 1:1","Al terminar el 1:1, envíe al otro participante un correo con los temas y acuerdos, en lista libre. Cualquier asunto sirve: HILOS reconoce el acta por su contenido. Lo claro se carga directo como hilo esa misma noche; lo dudoso queda en el Borrador."],
+ ["Correo de un externo","Reenvíeselo a usted mismo con la palabra HILO al inicio del asunto (por ejemplo, “HILO RV: Cotización…”): se crea el hilo directo esa noche. Sin la palabra HILO, queda en el Borrador para que lo confirme."],
+ ["Crear un hilo a mano","Botón “+ Hilo”, arriba a la derecha. Para dividir un hilo en subtareas, ábralo y use “+ Subtarea”."],
+ ["Cuándo se actualiza","El correo interno se lee de lunes a viernes a las 6:50 p. m. La publicación del lunes queda lista antes de las 6:45 a. m., y a esa hora llega el aviso al celular."],
+ ["Evaluar el cumplimiento","Al marcar un hilo como Completada aparecen Entrega (A tiempo, Tarde – Justificado, Tarde – Injustificado) y Ejecución (Mejor de lo esperado, Lo esperado, Menos de lo esperado). El resumen por persona está en Desempeño."]];
+function renderAyuda(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Cómo se usa HILOS"),h("div",{class:"sub"},"Fase 0: lee solo el correo interno (@hrsuplidora.com) del buzón de la Gerencia General.")));
+  const l=h("div",{class:"list"});for(const[t,d]of AYUDA)l.append(h("div",{class:"card"},h("h3",{},t),h("p",{class:"detail"},d)));m.append(l);}
 
 /* ---------- Arranque ---------- */
 document.getElementById("btn-new").addEventListener("click",()=>{if(db)openEditor(null,{});});
