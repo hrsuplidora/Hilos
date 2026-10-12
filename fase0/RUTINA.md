@@ -10,11 +10,12 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 | Rutina | Id | Cuándo (hora de Costa Rica) | Dónde corre | Qué hace |
 |---|---|---|---|---|
-| HILOS – Procesamiento diario | `trig_01VKGcaNBYnNLCeUwv38EnuJ` | Lunes a viernes, 6:50 p. m. | En la sesión de Claude Code que tiene el conector de Microsoft 365. Delega en un subagente. | Procedimiento A |
-| HILOS – Publicación del lunes | `trig_01Y78q7hTakLnsxAyGgMbEyr` | Lunes, 5:50 a. m. | En esa misma sesión, delegando en un subagente | Procedimiento A y luego B |
-| HILOS – Aviso 6:45 | `trig_01C4XL3AYm7rBKWN3JNKhWx7` | Lunes, 6:45 a. m. | En una sesión nueva, sin conectores, con aviso al celular | Procedimiento C |
+| HILOS – Procesamiento diario | `trig_01RqXcW371afMRdM8RcGWxe2` | Lunes a viernes, 6:50 p. m. | Sesión dedicada "HILOS – Operación (Fase 0)" (`session_01W7uMV8DTbN9eqy8NkojS2e`), que tiene el conector de Microsoft 365. Delega en un subagente. | Procedimiento A |
+| HILOS – Publicación del lunes | `trig_01NJ7NLn938BKdcXBicDRgmH` | Lunes, 5:50 a. m. | La misma sesión dedicada | Procedimiento A y luego B |
+| HILOS – Aviso 6:45 | `trig_01C4XL3AYm7rBKWN3JNKhWx7` | Lunes, 6:45 a. m. | Sesión nueva en cada corrida, sin conectores, con aviso al celular | Procedimiento C |
 
-Las rutinas que abren una sesión nueva no heredan los conectores. Por eso la lectura del correo corre en la sesión que ya los tiene.
+- **Fuente que leen las rutinas:** el documento `config/procedimiento` de la base de HILOS (campo `texto`). Es una copia de este archivo; si este archivo cambia, hay que actualizar también ese documento.
+- **Por qué una sesión dedicada:** las rutinas que abren una sesión nueva en cada corrida no heredan los conectores. Las sesiones creadas desde Claude Code sí los tienen.
 
 ## Reglas que aplican siempre
 
@@ -60,8 +61,8 @@ Otros documentos:
 ## Procedimiento A · Procesar correo nuevo
 
 1. Cargar las herramientas con ToolSearch:
-   - `select:ArtifactData`
-   - `select:mcp__Microsoft_365__outlook_email_search,mcp__Microsoft_365__read_resource`
+   - `select:ArtifactData`.
+   - El conector de Microsoft 365. Según la sesión, su nombre es `mcp__Microsoft_365__…` o `mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__…`. Probar `select:mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__outlook_email_search,mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__read_resource`. Si no aparece, probar con el prefijo `mcp__Microsoft_365__`, o buscar las palabras "outlook email search".
 2. Leer `estado/ingesta`, `config/general`, la colección `puestos`, los `hilos` abiertos (todo lo que no esté `descartado` ni `completada` con resultado), el `borrador` con `estado == "pendiente"` e `ingesta/{mes actual}` e `ingesta/{mes anterior}`.
 3. Ventana de búsqueda: desde `ultimaCorrida` menos 2 horas (o los últimos 3 días, si no existe) hasta ahora.
 4. Buscar con `outlook_email_search` y paginar hasta agotar cada búsqueda:
