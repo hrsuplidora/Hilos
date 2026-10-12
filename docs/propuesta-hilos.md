@@ -414,7 +414,7 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 
 Pendientes para la Fase 1:
 
-1. Crear la organización de GitHub de HR Suplidora y transferir el repositorio (Gerencia General).
+1. ~~Crear la organización de GitHub de HR Suplidora y transferir el repositorio.~~ **Hecho el 12 de octubre de 2026:** `github.com/hrsuplidora/Hilos`, con la app de Claude instalada.
 2. Depurar los perfiles de Entra ID: cargo, departamento y jefe directo de cada cuenta, incluidas las de rol (Gerencia General).
 3. Crear el buzón compartido `hilos@hrsuplidora.com` (Gerencia General).
 4. Crear las cuentas de Anthropic (API), Supabase y Vercel a nombre de HR Suplidora con los responsables de §8 (Gerencia General y Asistente Contable).
