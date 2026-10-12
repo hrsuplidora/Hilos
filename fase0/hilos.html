@@ -1,0 +1,599 @@
+<title>HILOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Schibsted+Grotesk:wght@600;700;800&display=swap">
+<style>
+/* Layout: una sola columna de trabajo (máx. 1080px) con pestañas fijas arriba; la edición abre en una hoja que sube desde abajo en el celular y queda centrada en la computadora. Las "costuras" punteadas separan secciones: HILOS trata los temas como hilos de una tela. */
+:root{
+  --bg:#f4f5f8; --surface:#ffffff; --surface-2:#eceef4; --line:#d6dae4; --stitch:#b9bfd2;
+  --ink:#191d2e; --ink-2:#464c63; --ink-3:#737a93;
+  --accent:#34409c; --accent-ink:#ffffff; --accent-soft:#e4e7f7;
+  --ok:#1d7349; --ok-soft:#dff0e7; --warn:#9a5b00; --warn-soft:#f9ecd4; --bad:#ad2a1f; --bad-soft:#f9e1de; --mute-soft:#e9ebf0;
+  --f-display:"Schibsted Grotesk","IBM Plex Sans",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11131b; --surface:#191c27; --surface-2:#212535; --line:#2e3346; --stitch:#3c4259;
+  --ink:#e7e9f1; --ink-2:#b5bacd; --ink-3:#8a90a8;
+  --accent:#9aa5ff; --accent-ink:#0f1220; --accent-soft:#262c55;
+  --ok:#64cf98; --ok-soft:#163024; --warn:#efb45c; --warn-soft:#382a13; --bad:#ff8f84; --bad-soft:#3b1b19; --mute-soft:#252937;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11131b; --surface:#191c27; --surface-2:#212535; --line:#2e3346; --stitch:#3c4259;
+  --ink:#e7e9f1; --ink-2:#b5bacd; --ink-3:#8a90a8;
+  --accent:#9aa5ff; --accent-ink:#0f1220; --accent-soft:#262c55;
+  --ok:#64cf98; --ok-soft:#163024; --warn:#efb45c; --warn-soft:#382a13; --bad:#ff8f84; --bad-soft:#3b1b19; --mute-soft:#252937;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+
+/* Encabezado */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:grid;gap:10px}
+.brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mark{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.14em}
+.mark span{color:var(--accent)}
+.phase{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);border:1px dashed var(--stitch);border-radius:999px;padding:2px 8px}
+.sync{font-size:12px;color:var(--ink-3);margin-left:auto}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:none;padding:8px 12px 10px;font-weight:600;font-size:14px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer;display:flex;gap:6px;align-items:center}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.count{font-family:var(--f-mono);font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 6px;min-width:18px;text-align:center}
+.count.zero{background:var(--mute-soft);color:var(--ink-3)}
+
+/* Botones */
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:4px 10px;min-height:30px;font-size:13px}
+
+/* Encabezados de sección */
+.page-h{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;padding-block:22px 6px}
+.page-h h1{font-family:var(--f-display);font-weight:700;font-size:26px;line-height:1.15;margin:0;text-wrap:balance}
+.page-h .sub{color:var(--ink-3);font-size:13px;width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding-block:8px 4px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.sec{padding-block:18px 4px;border-top:1px dashed var(--stitch);margin-top:14px}
+.sec:first-of-type{border-top:0;margin-top:0}
+.sec h2{font-family:var(--f-display);font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);margin:0 0 10px;display:flex;gap:8px;align-items:baseline}
+.sec h2 .n{font-family:var(--f-mono);color:var(--ink-3);letter-spacing:0}
+.empty{color:var(--ink-3);font-size:14px;padding:4px 0}
+.lede{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;max-width:72ch}
+.lede p{margin:0}
+
+/* Filas de hilo */
+.list{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;text-align:left;width:100%}
+.row:hover{border-color:var(--ink-3)}
+.row .t{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.row .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--ink-3);align-items:center}
+.row.sub{margin-left:22px;position:relative}
+.row.sub::before{content:"";position:absolute;left:-14px;top:-7px;bottom:50%;width:10px;border-left:1px dashed var(--stitch);border-bottom:1px dashed var(--stitch);border-bottom-left-radius:6px}
+.row .why{grid-column:1/-1;font-size:13px;color:var(--ink-2)}
+.parent-ref{font-size:12px;color:var(--ink-3)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--mute-soft);color:var(--ink-2)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.85}
+.p-sin_iniciar{background:var(--mute-soft);color:var(--ink-2)}
+.p-en_proceso{background:var(--accent-soft);color:var(--accent)}
+.p-en_revision{background:var(--warn-soft);color:var(--warn)}
+.p-completada{background:var(--ok-soft);color:var(--ok)}
+.p-en_pausa{background:var(--mute-soft);color:var(--ink-3)}
+.p-descartado{background:var(--mute-soft);color:var(--ink-3);text-decoration:line-through}
+.p-decide{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.p-decide::before{display:none}
+.tag{font-size:12px;font-weight:600;color:var(--ink-2)}
+.date-bad{color:var(--bad);font-weight:600}
+.date-warn{color:var(--warn);font-weight:600}
+.date-ok{color:var(--ok)}
+.conf{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+
+/* Tarjetas del borrador */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.card h3{margin:0;font-size:15.5px;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.card .detail{margin:0;color:var(--ink-2);font-size:14px}
+.quote{border-left:2px dashed var(--stitch);padding:2px 0 2px 10px;font-size:13px;color:var(--ink-2);font-style:italic;overflow-wrap:anywhere}
+.quote .src{font-style:normal;font-size:12px;color:var(--ink-3);display:block;margin-top:2px}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.discard-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--surface-2);border-radius:8px;padding:8px}
+.discard-form select,.discard-form input{min-width:0;flex:1 1 160px}
+
+/* Resumen por puesto */
+.grid-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;display:grid;gap:8px}
+.sum:hover{border-color:var(--ink-3)}
+.sum .name{font-weight:700;font-family:var(--f-display);font-size:16px}
+.sum dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0;font-size:13px}
+.sum dt{color:var(--ink-3)}
+.sum dd{margin:0;text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
+.sum dd.hot{color:var(--bad);font-weight:600}
+.qs{margin:0;padding-left:20px;display:grid;gap:6px;max-width:75ch}
+
+/* Herramientas de lista */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:6px 4px}
+.toolbar input[type=search],.toolbar select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;min-height:36px;min-width:0}
+.toolbar input[type=search]{flex:1 1 200px}
+.check{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--ink-2)}
+.group-h{display:flex;gap:8px;align-items:baseline;margin:16px 0 8px;font-weight:700;font-family:var(--f-display);font-size:16px}
+.group-h .n{font-family:var(--f-mono);font-size:12px;color:var(--ink-3);font-weight:400}
+
+/* Tablas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600;white-space:nowrap}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+
+/* Hoja de edición */
+.scrim{position:fixed;inset:0;background:rgba(10,12,20,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+@media (min-width:760px){.scrim{align-items:center}.sheet{border-radius:16px;max-height:88vh;padding:22px 24px}}
+.sheet-h{display:flex;gap:10px;align-items:center}
+.sheet-h h2{margin:0;font-family:var(--f-display);font-size:20px;flex:1}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form .full{grid-column:1/-1}
+@media (max-width:560px){.form{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;min-width:0}
+.field label,.field .lbl{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:38px;width:100%;min-width:0}
+.field textarea{min-height:84px;resize:vertical}
+.hint{font-size:12px;color:var(--ink-3)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;background:var(--bg)}
+.seg input{accent-color:var(--accent)}
+.box{border:1px dashed var(--stitch);border-radius:var(--r);padding:12px;display:grid;gap:10px}
+.box h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-family:var(--f-display)}
+.hist{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:13px;color:var(--ink-2)}
+.hist .when{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);margin-right:6px}
+.sheet-f{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));background:var(--surface);padding-block:10px 0;border-top:1px solid var(--line)}
+
+/* Avisos */
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;max-width:calc(100vw - 32px)}
+.notice{background:var(--warn-soft);color:var(--ink);border-radius:var(--r);padding:12px 14px;margin-top:16px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="mark">HILOS<span>.</span></div>
+      <div class="phase">Fase 0 · prototipo</div>
+      <div class="sync" id="sync">Conectando…</div>
+      <button class="btn primary sm" id="btn-new" type="button">+ Hilo</button>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </div>
+</header>
+<main class="wrap" id="main"><p class="empty" style="padding-top:24px">Cargando HILOS…</p></main>
+<div id="layer"></div>
+
+<script>
+"use strict";
+/* ---------- Catálogos ---------- */
+const IMPL = {sin_iniciar:"Sin iniciar",en_proceso:"En proceso",en_revision:"En revisión",completada:"Completada",en_pausa:"En pausa",descartado:"Descartado"};
+const DEC = {por_decidir:"Por decidir",decidido:"Decidido",no_requiere:"No requiere decisión"};
+const RES = {sin_medir:"Sin medir",logrado:"Logrado",parcial:"Parcial",no_logrado:"No logrado"};
+const TIPO = {tarea:"Tarea",decision:"Decisión",proyecto:"Proyecto",idea:"Idea",indicador:"Indicador",riesgo:"Riesgo"};
+const ENTREGA = {a_tiempo:"A tiempo",tarde_justificado:"Tarde – Justificado",tarde_injustificado:"Tarde – Injustificado"};
+const EJEC = {mejor:"Mejor de lo esperado",esperado:"Lo esperado",menos:"Menos de lo esperado"};
+const AREAS = ["Gerencia","Comercial","Operaciones","RRHH","Contabilidad"];
+const MOTIVOS = ["No es un tema de seguimiento","Ya está resuelto","Duplicado","No me corresponde","Otro"];
+const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["desempeno","Desempeño"],["puestos","Puestos"]];
+
+/* ---------- Estado ---------- */
+const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),pub:null,ingesta:null,
+  tab:"lunes",rama:"consolidado",loaded:{p:false,h:false,b:false},
+  f:{q:"",puesto:"todos",agrupar:"area",cerrados:false},
+  per:"90",discarding:null};
+let db = null;
+try{const t=localStorage.getItem("hilos.tab");if(t&&TABS.some(x=>x[0]===t))S.tab=t;}catch(e){}
+
+/* ---------- Utilidades ---------- */
+function h(tag,props,...kids){const el=document.createElement(tag);
+  if(props)for(const[k,v]of Object.entries(props)){if(v==null||v===false)continue;
+    if(k==="class")el.className=v;else if(k==="text")el.textContent=v;
+    else if(k.startsWith("on")&&typeof v==="function")el.addEventListener(k.slice(2),v);
+    else el.setAttribute(k,v===true?"":String(v));}
+  for(const c of kids.flat(Infinity)){if(c==null||c===false)continue;el.append(c instanceof Node?c:document.createTextNode(String(c)));}
+  return el;}
+const TZ="America/Costa_Rica";
+const ymd=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"});
+function hoy(){return ymd.format(new Date());}
+function fechaDe(iso){if(!iso)return null;const d=new Date(iso);return isNaN(d)?String(iso).slice(0,10):ymd.format(d);}
+function addDays(d,n){const t=new Date(d+"T12:00:00Z");t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10);}
+function dias(a,b){return Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/864e5);}
+const MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function fmt(d){if(!d)return"—";const[y,m,dd]=String(d).slice(0,10).split("-");return `${+dd} ${MESES[+m-1]}`;}
+function fmtLargo(d){try{return new Intl.DateTimeFormat("es-CR",{timeZone:"UTC",weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date(d+"T12:00:00Z"));}catch(e){return d;}}
+function fmtHora(iso){try{return new Intl.DateTimeFormat("es-CR",{timeZone:TZ,day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}).format(new Date(iso));}catch(e){return iso;}}
+function nuevoId(p){return p+"-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);}
+function safeUrl(u){try{const x=new URL(u);if(x.protocol!=="https:")return null;
+  return /(^|\.)(office365\.com|office\.com|outlook\.com|microsoft\.com|sharepoint\.com|slack\.com)$/i.test(x.hostname)?x.href:null;}catch(e){return null;}}
+function toast(msg){const t=h("div",{class:"toast",role:"status"},msg);document.body.append(t);setTimeout(()=>t.remove(),3200);}
+function puestoNombre(id){if(!id)return"Sin responsable";if(id==="tercero")return"Un tercero";return S.puestos.get(id)?.nombre||id;}
+function reportesGG(){return[...S.puestos.entries()].filter(([,p])=>p.reportaGG).sort((a,b)=>(a[1].orden??99)-(b[1].orden??99));}
+function rama(pid){if(!pid||pid==="consolidado"||pid==="todos")return null;const out=new Set([pid]);let more=true;
+  while(more){more=false;for(const[id,p]of S.puestos){if(!out.has(id)&&p.superior&&out.has(p.superior)){out.add(id);more=true;}}}return out;}
+const inR=(x,set)=>!set||set.has(x.puesto);
+function cerrado(x){return x.estadoImpl==="descartado"||(x.estadoImpl==="completada"&&x.resultado&&x.resultado!=="sin_medir");}
+function terminado(x){return x.estadoImpl==="completada"||x.estadoImpl==="descartado";}
+function ultimaAct(x){return x.ultimaActividad||fechaDe(x.actualizado)||fechaDe(x.creado)||hoy();}
+function hilosArr(){return[...S.hilos.entries()].map(([id,x])=>({...x,id}));}
+function hijos(id){return hilosArr().filter(x=>x.padre===id);}
+
+/* ---------- Piezas visuales ---------- */
+function pillImpl(s){return h("span",{class:"pill p-"+(s||"sin_iniciar")},IMPL[s]||"Sin iniciar");}
+function pillDecide(x){if(x.estadoDecision!=="por_decidir")return null;
+  return h("span",{class:"pill p-decide",title:"Decisión pendiente"},"Decide: "+(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)));}
+function fechaSpan(x){if(!x.fechaCompromiso)return h("span",{class:"mono"},"sin fecha");
+  if(terminado(x))return h("span",{class:"mono"},fmt(x.fechaCompromiso));
+  const d=dias(hoy(),x.fechaCompromiso);
+  const cls=d<0?"date-bad":d<=7?"date-warn":"date-ok";
+  const txt=d<0?`vencido ${fmt(x.fechaCompromiso)}`:d===0?"vence hoy":`${fmt(x.fechaCompromiso)}`;
+  return h("span",{class:"mono "+cls},txt);}
+function hiloRow(x,opts={}){
+  const kids=hijos(x.id);const done=kids.filter(k=>k.estadoImpl==="completada").length;
+  const padre=x.padre&&S.hilos.get(x.padre);
+  return h("button",{type:"button",class:"row"+(opts.sub?" sub":""),onclick:()=>openEditor(x.id)},
+    h("span",{class:"t"},x.titulo||"(sin título)"),
+    h("span",{},pillImpl(x.estadoImpl)),
+    h("span",{class:"meta"},
+      opts.showParent&&padre?h("span",{class:"parent-ref"},"↳ "+padre.titulo):null,
+      h("span",{class:"tag"},puestoNombre(x.puesto)),
+      h("span",{},TIPO[x.tipo]||"Tarea"),
+      fechaSpan(x),
+      kids.length?h("span",{class:"mono"},`${done}/${kids.length} subtareas`):null,
+      x.proyecto?h("span",{},"◇ "+x.proyecto):null,
+      pillDecide(x),
+      x.confidencial?h("span",{class:"pill"},"Confidencial"):null,
+      opts.extra||null),
+    opts.why?h("span",{class:"why"},opts.why):null);}
+function quote(ev){const url=safeUrl(ev.enlace);
+  return h("div",{class:"quote"},ev.cita?"“"+ev.cita+"”":"(sin cita)",
+    h("span",{class:"src"},`${fmt(ev.fecha)} · ${ev.de||""}${ev.asunto?" · "+ev.asunto:""} `,
+      url?h("a",{href:url,target:"_blank",rel:"noopener noreferrer"},"Abrir correo"):null));}
+
+/* ---------- Render general ---------- */
+function renderTabs(){const nav=document.getElementById("tabs");nav.replaceChildren();
+  for(const[id,lbl]of TABS){const n=id==="borrador"?S.borrador.size:null;
+    nav.append(h("button",{type:"button",class:"tab",role:"tab","aria-selected":S.tab===id?"true":"false",
+      onclick:()=>{S.tab=id;try{localStorage.setItem("hilos.tab",id);}catch(e){}render();window.scrollTo(0,0);}},
+      lbl,n!=null?h("span",{class:"count"+(n?"":" zero")},String(n)):null));}}
+function renderSync(){const el=document.getElementById("sync");
+  el.textContent=S.ingesta?.ultimaCorrida?"Correo leído al "+fmtHora(S.ingesta.ultimaCorrida):"Aún sin lectura de correo";}
+function render(){renderTabs();renderSync();const m=document.getElementById("main");m.replaceChildren();
+  if(!S.loaded.p||!S.loaded.h||!S.loaded.b){m.append(h("p",{class:"empty",style:"padding-top:24px"},"Cargando HILOS…"));return;}
+  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos}[S.tab]||renderLunes)(m);}
+
+/* ---------- Publicación del lunes ---------- */
+function sec(title,items,emptyTxt){const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(items.length))));
+  s.append(items.length?h("div",{class:"list"},items):h("p",{class:"empty"},emptyTxt));return s;}
+function renderLunes(m){
+  const set=rama(S.rama);const fechaPub=S.pub?.fecha||hoy();const desde=addDays(fechaPub,-7);const hoyD=hoy();
+  const nombre=S.rama==="consolidado"?"Consolidado":puestoNombre(S.rama);
+  m.append(h("div",{class:"page-h"},h("h1",{},"Seguimiento del lunes"),
+    h("div",{class:"sub"},`${fmtLargo(fechaPub)} · semana del ${fmt(desde)} al ${fmt(fechaPub)}`+(S.pub?.generada?` · generada ${fmtHora(S.pub.generada)}`:" · aún sin publicación generada"))));
+  const chips=h("div",{class:"chips",role:"group","aria-label":"Puesto"});
+  for(const[id,lbl]of[["consolidado","Consolidado"],...reportesGG().map(([id,p])=>[id,p.nombre])])
+    chips.append(h("button",{type:"button",class:"chip","aria-pressed":S.rama===id?"true":"false",onclick:()=>{S.rama=id;render();}},lbl));
+  m.append(chips);
+  const todos=hilosArr();const vis=todos.filter(x=>inR(x,set));const abiertos=vis.filter(x=>!cerrado(x));
+  const resumen=S.rama==="consolidado"?S.pub?.resumenGeneral:S.pub?.porPuesto?.[S.rama]?.resumen;
+  if(resumen)m.append(h("section",{class:"sec"},h("div",{class:"lede"},h("p",{},resumen))));
+  if(S.rama==="consolidado"){
+    const grid=h("div",{class:"grid-sum"});
+    for(const[id,p]of reportesGG()){const r=rama(id);const ab=todos.filter(x=>inR(x,r)&&!cerrado(x));
+      const venc=ab.filter(x=>x.fechaCompromiso&&!terminado(x)&&x.fechaCompromiso<hoyD).length;
+      const dGG=ab.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").length;
+      const bor=[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto||d.puesto)).length;
+      grid.append(h("button",{type:"button",class:"sum",onclick:()=>{S.rama=id;render();}},h("span",{class:"name"},p.nombre),
+        h("dl",{},h("dt",{},"Hilos abiertos"),h("dd",{},String(ab.length)),h("dt",{},"Esperan su decisión"),h("dd",{class:dGG?"hot":""},String(dGG)),
+          h("dt",{},"Vencidos"),h("dd",{class:venc?"hot":""},String(venc)),h("dt",{},"Por confirmar en borrador"),h("dd",{},String(bor)))));}
+    m.append(h("section",{class:"sec"},h("h2",{},"Por puesto"),grid));}
+  const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort((a,b)=>ultimaAct(a).localeCompare(ultimaAct(b)));
+  m.append(sec("Espera su decisión",espGG.map(x=>hiloRow(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),"Nada espera su decisión."));
+  const alertas=[];const alerted=new Set();
+  for(const x of abiertos){if(terminado(x))continue;const why=[];
+    if(x.fechaCompromiso&&x.fechaCompromiso<hoyD)why.push(`Vencido hace ${dias(x.fechaCompromiso,hoyD)} días`);
+    const quieto=dias(ultimaAct(x),hoyD);if(quieto>14)why.push(`${quieto} días sin movimiento`);
+    if(!x.fechaCompromiso&&["tarea","proyecto"].includes(x.tipo||"tarea")&&x.estadoDecision!=="por_decidir")why.push("Sin fecha de cumplimiento");
+    if(!x.puesto)why.push("Sin puesto responsable");
+    if(why.length){alerted.add(x.id);alertas.push(hiloRow(x,{showParent:true,why:why.join(" · ")}));}}
+  m.append(sec("Alertas",alertas,"Sin alertas."));
+  const espOtros=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe!=="gg");
+  m.append(sec("Espera decisión de otros",espOtros.map(x=>hiloRow(x)),"Nada pendiente de decisión de otros."));
+  const cerradosSem=vis.filter(x=>terminado(x)&&(fechaDe(x.fechaCierre)||ultimaAct(x))>=desde);
+  const nov=vis.filter(x=>!terminado(x)&&(ultimaAct(x)>=desde||fechaDe(x.creado)>=desde)).sort((a,b)=>ultimaAct(b).localeCompare(ultimaAct(a)));
+  m.append(sec("Novedades de la semana",nov.map(x=>hiloRow(x,{showParent:true,why:(x.historial||[]).slice(-1)[0]?.texto||null})),"Sin movimientos registrados esta semana."));
+  const ejec=abiertos.filter(x=>!alerted.has(x.id)&&["sin_iniciar","en_proceso","en_revision","en_pausa"].includes(x.estadoImpl||"sin_iniciar")&&x.estadoDecision!=="por_decidir")
+    .sort((a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999"));
+  m.append(sec("En ejecución (al día)",ejec.map(x=>hiloRow(x,{showParent:true})),"No hay otros hilos en ejecución."));
+  const porMedir=vis.filter(x=>x.estadoImpl==="completada"&&(!x.resultado||x.resultado==="sin_medir"));
+  m.append(sec("Resultados por medir",porMedir.map(x=>hiloRow(x)),"Nada pendiente de medir."));
+  const bor=[...S.borrador.entries()].filter(([,d])=>!set||set.has(d.propuesta?.puesto||d.puesto)).map(([id,d])=>draftCard(id,d,{compact:true}));
+  m.append(sec("Detectado y por confirmar",bor,"No hay temas nuevos por confirmar."));
+  m.append(sec("Cerrados en la semana",cerradosSem.map(x=>hiloRow(x)),"Nada se cerró esta semana."));
+  const qs=S.rama==="consolidado"?(S.pub?.preguntasGenerales||[]):(S.pub?.porPuesto?.[S.rama]?.preguntas||[]);
+  const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
+  qsec.append(qs.length?h("ol",{class:"qs"},qs.map(q=>h("li",{},q))):h("p",{class:"empty"},"Se generan con cada publicación del lunes."));
+  m.append(qsec);}
+
+/* ---------- Borrador ---------- */
+function draftCard(id,d,opts={}){
+  const p=d.propuesta||{};const isUpd=d.tipo==="actualizacion";const target=isUpd?S.hilos.get(d.hilo):null;
+  const c=h("article",{class:"card"});
+  c.append(h("div",{class:"meta",style:"display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12.5px;color:var(--ink-3);align-items:center"},
+    h("span",{class:"tag"},isUpd?"Actualización sugerida":"Tema nuevo"),
+    h("span",{class:"tag"},puestoNombre(isUpd?target?.puesto:p.puesto)),
+    !isUpd?h("span",{},TIPO[p.tipo]||"Tarea"):null,
+    !isUpd?pillImpl(p.estadoImpl):null,
+    !isUpd&&p.estadoDecision==="por_decidir"?pillDecide(p):null,
+    !isUpd&&p.fechaCompromiso?h("span",{class:"mono"},"fecha "+fmt(p.fechaCompromiso)):null,
+    d.confianza?h("span",{class:"conf"},"confianza "+d.confianza):null));
+  c.append(h("h3",{},isUpd?(target?.titulo||"Hilo"):(p.titulo||"(sin título)")));
+  if(isUpd&&d.resumen)c.append(h("p",{class:"detail"},d.resumen));
+  if(!isUpd&&p.detalle&&!opts.compact)c.append(h("p",{class:"detail"},p.detalle));
+  if(!isUpd&&p.notas&&!opts.compact)c.append(h("p",{class:"hint"},p.notas));
+  const evs=(d.evidencia||[]).slice(0,opts.compact?1:3);for(const ev of evs)c.append(quote(ev));
+  const act=h("div",{class:"actions"});
+  if(isUpd){act.append(h("button",{type:"button",class:"btn primary sm",onclick:()=>applyUpdate(id,d)},"Aplicar"),
+      h("button",{type:"button",class:"btn sm",onclick:()=>resolveDraft(id,{estado:"rechazado"},"Sugerencia rechazada")},"Rechazar"));}
+  else{act.append(h("button",{type:"button",class:"btn primary sm",onclick:()=>quickConvert(id,d)},"Convertir en hilo"),
+      h("button",{type:"button",class:"btn sm",onclick:()=>openEditor(null,{...p,evidencia:d.evidencia||[]},{fromDraft:id})},"Editar y convertir"),
+      h("button",{type:"button",class:"btn ghost sm",onclick:()=>{S.discarding=S.discarding===id?null:id;render();}},"Descartar"));}
+  c.append(act);
+  if(S.discarding===id){const sel=h("select",{id:"motivo-"+id,"aria-label":"Motivo"},MOTIVOS.map(x=>h("option",{value:x},x)));
+    const txt=h("input",{id:"nota-"+id,type:"text",placeholder:"Comentario (opcional)","aria-label":"Comentario"});
+    c.append(h("div",{class:"discard-form"},sel,txt,h("button",{type:"button",class:"btn danger sm",
+      onclick:()=>{S.discarding=null;resolveDraft(id,{estado:"descartado",motivo:sel.value,comentario:txt.value.trim()||null},"Descartado");}},"Confirmar descarte")));}
+  return c;}
+function renderBorrador(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Borrador de tareas a agregar"),
+    h("div",{class:"sub"},"Temas detectados en las conversaciones internas. Usted decide cuáles se convierten en hilo y cuáles se descartan.")));
+  const ds=[...S.borrador.entries()].sort((a,b)=>String(b[1].detectado||"").localeCompare(String(a[1].detectado||"")));
+  if(!ds.length){m.append(h("p",{class:"empty"},"No hay nada por confirmar. La próxima lectura del correo dejará aquí los temas nuevos."));return;}
+  const byP=new Map();for(const[id,d]of ds){const pid=d.tipo==="actualizacion"?S.hilos.get(d.hilo)?.puesto:d.propuesta?.puesto;
+    const top=topPuesto(pid);if(!byP.has(top))byP.set(top,[]);byP.get(top).push([id,d]);}
+  for(const[pid,arr]of byP){m.append(h("div",{class:"group-h"},puestoNombre(pid),h("span",{class:"n"},String(arr.length))));
+    m.append(h("div",{class:"list"},arr.map(([id,d])=>draftCard(id,d))));}}
+function topPuesto(pid){let p=pid,guard=0;while(p&&guard++<10){const x=S.puestos.get(p);if(!x||x.reportaGG||!x.superior||x.superior==="gg")return p;p=x.superior;}return pid;}
+async function quickConvert(id,d){const p=d.propuesta||{};const hid=nuevoId("h");const now=new Date().toISOString();
+  const data=normalizeHilo({...p,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
+    ultimaActividad:p.ultimaActividad||hoy(),historial:[{fecha:now,texto:"Creado desde el borrador"}]});
+  try{await db.doc("hilos/"+hid).set(data);await db.doc("borrador/"+id).update({estado:"convertido",hiloId:hid,resuelto:now});toast("Hilo creado");}
+  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
+async function resolveDraft(id,patch,msg){try{await db.doc("borrador/"+id).update({...patch,resuelto:new Date().toISOString()});toast(msg);}
+  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
+async function applyUpdate(id,d){const x=S.hilos.get(d.hilo);if(!x){toast("El hilo ya no existe");return;}
+  const now=new Date().toISOString();const cambios={...(d.cambios||{})};
+  const patch={...cambios,actualizado:now,ultimaActividad:hoy(),
+    evidencia:[...(x.evidencia||[]),...(d.evidencia||[])],historial:[...(x.historial||[]),{fecha:now,texto:d.resumen||"Actualización aplicada"}]};
+  if(cambios.estadoImpl&&["completada","descartado"].includes(cambios.estadoImpl)&&!x.fechaCierre)patch.fechaCierre=now;
+  try{await db.doc("hilos/"+d.hilo).update(patch);await db.doc("borrador/"+id).update({estado:"aplicado",resuelto:now});toast("Actualización aplicada");}
+  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
+
+/* ---------- Hilos ---------- */
+function renderHilos(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Hilos"),h("div",{class:"sub"},"Todos los temas en seguimiento, agrupados por área, proyecto, estado o puesto.")));
+  const q=h("input",{type:"search",id:"f-q",placeholder:"Buscar",value:S.f.q,"aria-label":"Buscar"});
+  q.addEventListener("input",()=>{S.f.q=q.value;drawList();});
+  const sp=h("select",{id:"f-puesto","aria-label":"Puesto"},h("option",{value:"todos"},"Todos los puestos"),
+    [...S.puestos.entries()].sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>h("option",{value:id},p.nombre)));
+  sp.value=S.f.puesto;sp.addEventListener("change",()=>{S.f.puesto=sp.value;drawList();});
+  const sg=h("select",{id:"f-agrupar","aria-label":"Agrupar por"},[["area","Agrupar por área"],["proyecto","Agrupar por proyecto"],["estado","Agrupar por estado"],["puesto","Agrupar por puesto"]].map(([v,l])=>h("option",{value:v},l)));
+  sg.value=S.f.agrupar;sg.addEventListener("change",()=>{S.f.agrupar=sg.value;drawList();});
+  const cb=h("input",{type:"checkbox",id:"f-cerrados"});cb.checked=S.f.cerrados;cb.addEventListener("change",()=>{S.f.cerrados=cb.checked;drawList();});
+  m.append(h("div",{class:"toolbar"},q,sp,sg,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")));
+  const out=h("div",{id:"hilos-out"});m.append(out);
+  function drawList(){out.replaceChildren();const set=rama(S.f.puesto);const qq=S.f.q.trim().toLowerCase();
+    let arr=hilosArr().filter(x=>inR(x,set)&&(S.f.cerrados||!cerrado(x))&&(!qq||(x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
+    if(!arr.length){out.append(h("p",{class:"empty"},S.hilos.size?"Ningún hilo coincide con el filtro.":"Todavía no hay hilos. Conviértalos desde el Borrador o cree uno con “+ Hilo”."));return;}
+    const ids=new Set(arr.map(x=>x.id));
+    const key=x=>S.f.agrupar==="area"?(x.area||S.puestos.get(x.puesto)?.area||"Sin área"):S.f.agrupar==="proyecto"?(x.proyecto||"Sin proyecto"):S.f.agrupar==="estado"?(IMPL[x.estadoImpl]||"Sin iniciar"):puestoNombre(x.puesto);
+    const order=S.f.agrupar==="area"?AREAS:S.f.agrupar==="estado"?Object.values(IMPL):null;
+    const groups=new Map();for(const x of arr){if(x.padre&&ids.has(x.padre))continue;const k=key(x);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x);}
+    const ks=[...groups.keys()].sort((a,b)=>{if(order){const ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);}
+      if(a.startsWith("Sin "))return 1;if(b.startsWith("Sin "))return -1;return a.localeCompare(b,"es");});
+    for(const k of ks){const g=groups.get(k).sort((a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999"));
+      out.append(h("div",{class:"group-h"},k,h("span",{class:"n"},String(g.length))));
+      const list=h("div",{class:"list"});
+      for(const x of g){list.append(hiloRow(x,{showParent:!!x.padre}));
+        for(const c of arr.filter(y=>y.padre===x.id))list.append(hiloRow(c,{sub:true}));}
+      out.append(list);}}
+  drawList();}
+
+/* ---------- Editor de hilo ---------- */
+function normalizeHilo(x){const o={titulo:(x.titulo||"").trim(),detalle:x.detalle||"",tipo:x.tipo||"tarea",puesto:x.puesto||null,
+  area:x.area||S.puestos.get(x.puesto)?.area||null,proyecto:x.proyecto||null,padre:x.padre||null,
+  estadoDecision:x.estadoDecision||"no_requiere",decisionDe:x.estadoDecision==="por_decidir"?(x.decisionDe||null):null,
+  estadoImpl:x.estadoImpl||"sin_iniciar",resultado:x.resultado||null,resultadoNota:x.resultadoNota||null,
+  fechaCompromiso:x.fechaCompromiso||null,fechaOriginal:x.fechaOriginal||x.fechaCompromiso||null,reprogramaciones:x.reprogramaciones||0,
+  ultimaActividad:x.ultimaActividad||hoy(),creado:x.creado||new Date().toISOString(),actualizado:x.actualizado||new Date().toISOString(),
+  origen:x.origen||"manual",evidencia:x.evidencia||[],historial:x.historial||[],evaluacion:x.evaluacion||null,
+  confidencial:!!x.confidencial,fechaCierre:x.fechaCierre||null,notas:x.notas||null};
+  return o;}
+function closeLayer(){document.getElementById("layer").replaceChildren();}
+function field(lbl,ctrl,cls){return h("div",{class:"field"+(cls?" "+cls:"")},h("label",{for:ctrl.id},lbl),ctrl);}
+function sel(id,opts,val){const s=h("select",{id},opts.map(([v,l])=>h("option",{value:v},l)));s.value=val??opts[0][0];return s;}
+function puestoOpts(extra=[]){return[...extra,...[...S.puestos.entries()].sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>[id,p.nombre])];}
+function radios(name,map,val){return h("div",{class:"seg",role:"radiogroup"},Object.entries(map).map(([v,l])=>{const r=h("input",{type:"radio",name,value:v,id:name+"-"+v});r.checked=val===v;return h("label",{for:name+"-"+v},r,l);}));}
+function openEditor(id,preset,ctx={}){
+  const isNew=!id;const cur=isNew?normalizeHilo(preset||{}):{...S.hilos.get(id)};if(!cur)return;
+  const L=document.getElementById("layer");
+  const f={titulo:h("input",{id:"e-titulo",type:"text",value:cur.titulo||"",maxlength:"140",required:true}),
+    detalle:h("textarea",{id:"e-detalle"}),
+    tipo:sel("e-tipo",Object.entries(TIPO),cur.tipo),
+    puesto:sel("e-puesto",puestoOpts([["","Sin responsable"]]),cur.puesto||""),
+    area:sel("e-area",AREAS.map(a=>[a,a]),cur.area||S.puestos.get(cur.puesto)?.area||"Gerencia"),
+    proyecto:h("input",{id:"e-proyecto",type:"text",value:cur.proyecto||"",list:"dl-proyectos"}),
+    padre:sel("e-padre",[["","Ninguno (hilo principal)"],...hilosArr().filter(x=>x.id!==id&&!x.padre&&!cerrado(x)).map(x=>[x.id,x.titulo])],cur.padre||""),
+    estadoDecision:sel("e-dec",Object.entries(DEC),cur.estadoDecision),
+    decisionDe:sel("e-decde",puestoOpts([["gg","Gerencia General"],["tercero","Un tercero"]]).filter((v,i,a)=>a.findIndex(z=>z[0]===v[0])===i),cur.decisionDe||"gg"),
+    estadoImpl:sel("e-impl",Object.entries(IMPL),cur.estadoImpl),
+    fecha:h("input",{id:"e-fecha",type:"date",value:cur.fechaCompromiso||""}),
+    resultado:sel("e-res",[["","—"],...Object.entries(RES)],cur.resultado||""),
+    resultadoNota:h("input",{id:"e-resnota",type:"text",value:cur.resultadoNota||"",placeholder:"Dato que sustenta el resultado"}),
+    confidencial:h("input",{id:"e-conf",type:"checkbox"}),
+    ejecutor:h("input",{id:"e-ejecutor",type:"text",value:cur.evaluacion?.ejecutor||S.puestos.get(cur.puesto)?.ocupante||""}),
+    evalNota:h("input",{id:"e-evnota",type:"text",value:cur.evaluacion?.nota||""})};
+  f.detalle.value=cur.detalle||"";f.confidencial.checked=!!cur.confidencial;
+  const proys=[...new Set(hilosArr().map(x=>x.proyecto).filter(Boolean))];
+  const dl=h("datalist",{id:"dl-proyectos"},proys.map(p=>h("option",{value:p})));
+  const decWrap=field("Decisión pendiente de",f.decisionDe);
+  const syncDec=()=>{decWrap.hidden=f.estadoDecision.value!=="por_decidir";};f.estadoDecision.addEventListener("change",syncDec);
+  f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area)f.area.value=p.area;if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;});
+  const entrega=radios("e-entrega",ENTREGA,cur.evaluacion?.entrega);const ejecucion=radios("e-ejec",EJEC,cur.evaluacion?.ejecucion);
+  const evalBox=h("div",{class:"box full"},h("h3",{},"Evaluación de cumplimiento"),
+    h("div",{class:"field"},h("span",{class:"lbl"},"Entrega"),entrega),
+    h("div",{class:"field"},h("span",{class:"lbl"},"Ejecución"),ejecucion),
+    h("div",{class:"form"},field("Ejecutado por",f.ejecutor),field("Comentario",f.evalNota)),
+    h("p",{class:"hint",id:"e-sugerencia"}));
+  const resBox=h("div",{class:"form full"},field("Resultado",f.resultado),field("Sustento del resultado",f.resultadoNota));
+  const syncImpl=()=>{const done=f.estadoImpl.value==="completada";evalBox.hidden=!done;resBox.hidden=!done;
+    const s=evalBox.querySelector("#e-sugerencia");const fc=f.fecha.value;
+    s.textContent=done&&fc?(hoy()<=fc?"Según la fecha comprometida, la entrega es a tiempo.":`La fecha comprometida era ${fmt(fc)}; la entrega es tardía.`):"";};
+  f.estadoImpl.addEventListener("change",syncImpl);f.fecha.addEventListener("change",syncImpl);
+  const kids=isNew?[]:hijos(id);
+  const subBox=h("div",{class:"box full"},h("h3",{},"Subtareas"),
+    kids.length?h("div",{class:"list"},kids.map(k=>hiloRow(k))):h("p",{class:"hint"},isNew?"Guarde el hilo para agregarle subtareas.":"Sin subtareas."),
+    h("div",{},h("button",{type:"button",class:"btn sm",disabled:isNew||!!cur.padre,onclick:async()=>{const ok=await save(true);if(ok)openEditor(null,{padre:id,puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value||null,tipo:"tarea"});}},"+ Subtarea")));
+  const evid=(cur.evidencia||[]);
+  const histo=(cur.historial||[]).slice().reverse();
+  const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"e-h"},
+    h("div",{class:"sheet-h"},h("h2",{id:"e-h"},isNew?(ctx.fromDraft?"Convertir en hilo":cur.padre?"Nueva subtarea":"Nuevo hilo"):"Editar hilo"),
+      h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer,"aria-label":"Cerrar"},"Cerrar")),
+    cur.padre&&S.hilos.get(cur.padre)?h("p",{class:"hint"},"Subtarea de: "+S.hilos.get(cur.padre).titulo):null,
+    h("div",{class:"form"},
+      field("Título",f.titulo,"full"),field("Detalle",f.detalle,"full"),
+      field("Puesto responsable",f.puesto),field("Tipo",f.tipo),
+      field("Área",f.area),field("Proyecto",f.proyecto),
+      field("Fecha esperada de cumplimiento",f.fecha),field("Nivel de implementación",f.estadoImpl),
+      field("Estado de decisión",f.estadoDecision),decWrap,
+      !kids.length?field("Pertenece a (hilo padre)",f.padre,"full"):null,
+      resBox,evalBox,
+      h("label",{class:"check full",for:"e-conf"},f.confidencial,"Confidencial (salarios, disciplinarios, salud)")),
+    dl,
+    isNew?null:subBox,
+    evid.length?h("div",{class:"box"},h("h3",{},"Evidencia"),evid.map(quote)):null,
+    histo.length?h("div",{class:"box"},h("h3",{},"Historial"),h("ul",{class:"hist"},histo.map(e=>h("li",{},h("span",{class:"when"},fmtHora(e.fecha)),e.texto)))):null,
+    h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),
+      h("button",{type:"button",class:"btn primary",id:"e-save",onclick:()=>save(false)},isNew?"Guardar hilo":"Guardar cambios")));
+  syncDec();syncImpl();
+  const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
+  L.replaceChildren(scrim);setTimeout(()=>f.titulo.focus(),30);
+  async function save(stay){
+    const titulo=f.titulo.value.trim();if(!titulo){toast("Escriba un título");f.titulo.focus();return false;}
+    const now=new Date().toISOString();
+    const val={titulo,detalle:f.detalle.value.trim(),tipo:f.tipo.value,puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value.trim()||null,
+      padre:(f.padre&&f.padre.value)||cur.padre||null,estadoDecision:f.estadoDecision.value,decisionDe:f.estadoDecision.value==="por_decidir"?f.decisionDe.value:null,
+      estadoImpl:f.estadoImpl.value,fechaCompromiso:f.fecha.value||null,resultado:f.resultado.value||null,resultadoNota:f.resultadoNota.value.trim()||null,
+      confidencial:f.confidencial.checked};
+    if(kids.length)val.padre=cur.padre||null;
+    const ent=sheet.querySelector('input[name="e-entrega"]:checked')?.value||null;const eje=sheet.querySelector('input[name="e-ejec"]:checked')?.value||null;
+    if(val.estadoImpl==="completada"&&(ent||eje))val.evaluacion={entrega:ent,ejecucion:eje,ejecutor:f.ejecutor.value.trim()||null,nota:f.evalNota.value.trim()||null,fecha:cur.evaluacion?.fecha||now,puesto:val.puesto};
+    const cambios=[];
+    if(!isNew){
+      if(cur.estadoImpl!==val.estadoImpl)cambios.push(`Implementación: ${IMPL[cur.estadoImpl]||"—"} → ${IMPL[val.estadoImpl]}`);
+      if(cur.estadoDecision!==val.estadoDecision)cambios.push(`Decisión: ${DEC[cur.estadoDecision]||"—"} → ${DEC[val.estadoDecision]}`);
+      if((cur.puesto||null)!==val.puesto)cambios.push(`Responsable: ${puestoNombre(cur.puesto)} → ${puestoNombre(val.puesto)}`);
+      if((cur.fechaCompromiso||null)!==val.fechaCompromiso)cambios.push(`Fecha: ${fmt(cur.fechaCompromiso)} → ${fmt(val.fechaCompromiso)}`);
+      if((cur.resultado||null)!==val.resultado&&val.resultado)cambios.push(`Resultado: ${RES[val.resultado]}`);
+      if(val.evaluacion&&JSON.stringify([cur.evaluacion?.entrega,cur.evaluacion?.ejecucion])!==JSON.stringify([ent,eje]))cambios.push(`Evaluación: ${ENTREGA[ent]||"—"} · ${EJEC[eje]||"—"}`);
+      if(cur.titulo!==val.titulo||(cur.detalle||"")!==val.detalle||(cur.proyecto||null)!==val.proyecto||cur.tipo!==val.tipo||(cur.area||null)!==val.area)cambios.push("Detalle editado");}
+    try{
+      if(isNew){const hid=nuevoId("h");
+        const data=normalizeHilo({...cur,...val,fechaOriginal:val.fechaCompromiso,creado:now,actualizado:now,ultimaActividad:hoy(),
+          origen:ctx.fromDraft?(cur.origen||"correo"):"manual",historial:[{fecha:now,texto:ctx.fromDraft?"Creado desde el borrador":"Creado manualmente"}],
+          fechaCierre:terminado(val)?now:null});
+        await db.doc("hilos/"+hid).set(data);
+        if(ctx.fromDraft)await db.doc("borrador/"+ctx.fromDraft).update({estado:"convertido",hiloId:hid,resuelto:now});
+        toast(ctx.fromDraft?"Convertido en hilo":"Hilo creado");if(!stay)closeLayer();return hid;}
+      if(!cambios.length){if(!stay)closeLayer();return id;}
+      const patch={...val,actualizado:now,ultimaActividad:hoy(),historial:[...(cur.historial||[]),{fecha:now,texto:cambios.join(" · ")}]};
+      if(!cur.fechaOriginal&&val.fechaCompromiso)patch.fechaOriginal=val.fechaCompromiso;
+      if(cur.fechaCompromiso&&val.fechaCompromiso!==cur.fechaCompromiso)patch.reprogramaciones=(cur.reprogramaciones||0)+1;
+      if(terminado(val)&&!cur.fechaCierre)patch.fechaCierre=now;if(!terminado(val)&&cur.fechaCierre)patch.fechaCierre=null;
+      if(!val.evaluacion&&cur.evaluacion&&val.estadoImpl!=="completada")patch.evaluacion=null;
+      await db.doc("hilos/"+id).update(patch);toast("Cambios guardados");if(!stay)closeLayer();return id;}
+    catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));return false;}}}
+
+/* ---------- Desempeño ---------- */
+function renderDesempeno(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Desempeño"),h("div",{class:"sub"},"Cumplimiento evaluado al cerrar cada hilo o subtarea: entrega y ejecución, por persona.")));
+  const sp=sel("f-per",[["30","Últimos 30 días"],["90","Últimos 90 días"],["365","Último año"],["todo","Todo"]],S.per);
+  sp.addEventListener("change",()=>{S.per=sp.value;render();});m.append(h("div",{class:"toolbar"},sp));
+  const lim=S.per==="todo"?null:addDays(hoy(),-Number(S.per));
+  const ev=hilosArr().filter(x=>x.evaluacion&&(x.evaluacion.entrega||x.evaluacion.ejecucion)&&(!lim||fechaDe(x.evaluacion.fecha)>=lim));
+  if(!ev.length){m.append(h("p",{class:"empty"},"Aún no hay hilos evaluados en este período. La evaluación aparece al marcar un hilo como Completada."));return;}
+  const by=new Map();for(const x of ev){const k=(x.evaluacion.ejecutor||"—")+"|"+(x.evaluacion.puesto||x.puesto||"");
+    if(!by.has(k))by.set(k,{persona:x.evaluacion.ejecutor||"Sin nombre",puesto:puestoNombre(x.evaluacion.puesto||x.puesto),n:0,a_tiempo:0,tarde_justificado:0,tarde_injustificado:0,mejor:0,esperado:0,menos:0});
+    const r=by.get(k);r.n++;if(x.evaluacion.entrega)r[x.evaluacion.entrega]++;if(x.evaluacion.ejecucion)r[x.evaluacion.ejecucion]++;}
+  const pct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
+  const rows=[...by.values()].sort((a,b)=>b.n-a.n).map(r=>{const ne=r.a_tiempo+r.tarde_justificado+r.tarde_injustificado;
+    return h("tr",{},h("td",{},r.persona),h("td",{},r.puesto),h("td",{class:"num"},String(r.n)),
+      h("td",{class:"num"},`${r.a_tiempo} (${pct(r.a_tiempo,ne)})`),h("td",{class:"num"},String(r.tarde_justificado)),h("td",{class:"num"},String(r.tarde_injustificado)),
+      h("td",{class:"num"},String(r.mejor)),h("td",{class:"num"},String(r.esperado)),h("td",{class:"num"},String(r.menos)));});
+  m.append(h("div",{class:"tbl-wrap"},h("table",{},h("thead",{},h("tr",{},["Persona","Puesto","Evaluados","A tiempo","Tarde – Just.","Tarde – Injust.","Mejor","Lo esperado","Menos"].map((t,i)=>h("th",{class:i>1?"num":null},t)))),h("tbody",{},rows))));}
+
+/* ---------- Puestos ---------- */
+function renderPuestos(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Puestos"),h("div",{class:"sub"},"Los hilos se asignan al puesto. En la Fase 1 esta tabla se sincroniza con el perfil de Microsoft Entra (cargo, departamento y jefe directo).")));
+  m.append(h("div",{class:"toolbar"},h("button",{type:"button",class:"btn sm",onclick:()=>openPuesto(null)},"+ Puesto")));
+  const rows=[...S.puestos.entries()].sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>h("tr",{},
+    h("td",{},h("strong",{},p.nombre),p.inferido?h("div",{class:"hint"},"Por confirmar"):null),h("td",{},p.area||"—"),
+    h("td",{},(p.correos||[]).join(", ")||"—"),h("td",{},p.superior?puestoNombre(p.superior):"—"),h("td",{},p.ocupante||"—"),
+    h("td",{},h("button",{type:"button",class:"btn ghost sm",onclick:()=>openPuesto(id)},"Editar"))));
+  m.append(h("div",{class:"tbl-wrap"},h("table",{},h("thead",{},h("tr",{},["Puesto","Área","Correos","Superior","Ocupa hoy",""].map(t=>h("th",{},t)))),h("tbody",{},rows))));
+  if(S.ingesta)m.append(h("section",{class:"sec"},h("h2",{},"Lectura de correo"),h("p",{class:"empty"},
+    `Última lectura: ${S.ingesta.ultimaCorrida?fmtHora(S.ingesta.ultimaCorrida):"—"}. Solo entran conversaciones donde remitente y destinatarios son @hrsuplidora.com. `+
+    (S.ingesta.nota||""))));}
+function openPuesto(id){const cur=id?{...S.puestos.get(id)}:{nombre:"",area:"Gerencia",correos:[],superior:"gg",reportaGG:false,ocupante:"",orden:50};
+  const f={nombre:h("input",{id:"p-nombre",type:"text",value:cur.nombre||""}),area:sel("p-area",AREAS.map(a=>[a,a]),cur.area),
+    correos:h("input",{id:"p-correos",type:"text",value:(cur.correos||[]).join(", ")}),
+    superior:sel("p-sup",[["","Ninguno"],...puestoOpts().filter(([v])=>v!==id)],cur.superior||""),
+    ocupante:h("input",{id:"p-ocup",type:"text",value:cur.ocupante||""}),rep:h("input",{id:"p-rep",type:"checkbox"}),
+    orden:h("input",{id:"p-orden",type:"number",value:String(cur.orden??50)})};
+  f.rep.checked=!!cur.reportaGG;
+  const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"p-h"},
+    h("div",{class:"sheet-h"},h("h2",{id:"p-h"},id?"Editar puesto":"Nuevo puesto"),h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer},"Cerrar")),
+    h("div",{class:"form"},field("Nombre del puesto",f.nombre,"full"),field("Área",f.area),field("Superior",f.superior),
+      field("Correos (separados por coma)",f.correos,"full"),field("Ocupa hoy (para la evaluación)",f.ocupante),field("Orden",f.orden),
+      h("label",{class:"check full",for:"p-rep"},f.rep,"Reporta directamente a la Gerencia General")),
+    h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),h("button",{type:"button",class:"btn primary",onclick:async()=>{
+      const nombre=f.nombre.value.trim();if(!nombre){toast("Escriba el nombre del puesto");return;}
+      const data={nombre,area:f.area.value,correos:f.correos.value.split(",").map(s=>s.trim().toLowerCase()).filter(Boolean),superior:f.superior.value||null,
+        ocupante:f.ocupante.value.trim()||null,reportaGG:f.rep.checked,orden:Number(f.orden.value)||50,inferido:false};
+      try{if(id)await db.doc("puestos/"+id).update(data);else await db.doc("puestos/"+nuevoId("p")).set(data);toast("Puesto guardado");closeLayer();}
+      catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}},"Guardar")));
+  const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);document.getElementById("layer").replaceChildren(scrim);}
+
+/* ---------- Arranque ---------- */
+document.getElementById("btn-new").addEventListener("click",()=>{if(db)openEditor(null,{});});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeLayer();});
+function fail(msg){const m=document.getElementById("main");m.replaceChildren(h("div",{class:"notice"},msg));document.getElementById("sync").textContent="Sin conexión";}
+async function boot(){
+  renderTabs();
+  if(!window.claude||typeof window.claude.use!=="function"){fail("HILOS guarda sus datos en claude.ai. Abra esta página desde su cuenta de Claude para ver y editar los hilos.");return;}
+  try{db=await window.claude.use("db");}catch(e){db=null;}
+  if(!db){fail("No se pudo conectar con la base de datos de HILOS. Recargue la página; si el problema sigue, revise los permisos de la página en su cuenta de Claude.");return;}
+  const err=e=>{toast("Error de conexión: "+(e?.code||"desconocido"));};
+  db.collection("puestos").onSnapshot(s=>{S.puestos=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.p=true;render();},err);
+  db.collection("hilos").onSnapshot(s=>{S.hilos=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.h=true;render();},err);
+  db.collection("borrador").where("estado","==","pendiente").onSnapshot(s=>{S.borrador=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.b=true;render();},err);
+  db.collection("publicaciones").orderBy("fecha","desc").limit(1).onSnapshot(s=>{S.pub=s.docs[0]?.data()||null;render();},err);
+  db.doc("estado/ingesta").onSnapshot(s=>{S.ingesta=s.exists?s.data():null;renderSync();},err);}
+boot();
+</script>

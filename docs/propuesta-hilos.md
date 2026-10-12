@@ -194,21 +194,22 @@ En la Fase 1, HILOS absorbe el resumen diario que hoy corre en Zapier.
 
 ### 4.9 Evaluación de cumplimiento y desempeño **[D]**
 
-**[S]** La propuesta por defecto se debe ajustar a como se evalúa hoy en Asana (§13):
+Se usa la misma escala que hoy se aplica en Asana:
 
-- **Revisión antes del cierre.** Al pasar de `En revisión` a `Completada`, el revisor (quien asignó el hilo o el superior del puesto) aprueba o devuelve. Al aprobar, califica.
-- **Indicadores por persona y período:**
-
-| Indicador | Cálculo |
+| Dimensión | Opciones |
 |---|---|
-| Cumplimiento en plazo | % completado en o antes de la fecha comprometida. Se muestra contra la fecha original y contra la vigente. |
-| Reprogramaciones | Cuántas veces cambió la fecha y quién la cambió. |
-| Calidad | Calificación de 1 a 5 del revisor; comentario obligatorio si es 2 o menos. |
-| Retrabajo | Veces que un hilo volvió de `En revisión` a `En proceso`. |
-| Carga | Hilos abiertos y vencidos a cargo. |
+| **Entrega** | A tiempo · Tarde – Justificado · Tarde – Injustificado |
+| **Ejecución** | Mejor de lo esperado · Lo esperado · Menos de lo esperado |
 
-- Las subtareas se evalúan a su ejecutor. El hilo padre se evalúa a su responsable.
-- Si estos datos se van a usar para decisiones de compensación o disciplinarias, los criterios deben comunicarse de antemano y coordinarse con RRHH. Conviene validar con un abogado laboralista.
+- Se evalúa al marcar un hilo o subtarea como `Completada`. Quien revisa (quien asignó o el superior del puesto) escoge ambas dimensiones.
+- HILOS sugiere la entrega comparando la fecha comprometida con la de cierre. La justificación de un atraso la decide quien revisa.
+- La evaluación queda a nombre de la persona que ejecutó; el hilo, a nombre del puesto.
+- La vista de Desempeño muestra por persona y período:
+  - cuántos hilos tiene evaluados;
+  - la distribución de entrega y de ejecución;
+  - el porcentaje a tiempo.
+- Las reprogramaciones de fecha quedan registradas en el historial de cada hilo.
+- Si estos datos se usan para decisiones de compensación o disciplinarias, los criterios deben comunicarse de antemano y coordinarse con RRHH. Conviene validar con un abogado laboralista.
 
 ### 4.10 Permisos y confidencialidad
 
@@ -283,7 +284,16 @@ Principio: **todo servicio vive en una cuenta de la empresa, con al menos dos ad
 | **Credenciales** | Gestor de contraseñas empresarial con bóveda "HILOS – infraestructura" y acceso de emergencia. MFA en todas las cuentas. | Gerencia General y respaldo. |
 | **Documentación** | `docs/operacion.md`: quién tiene acceso a qué, cómo se rotan llaves, cómo se restaura y cómo se da o quita acceso. | Repositorio. |
 
-El administrador de respaldo es una decisión pendiente (§13). Puede ser una persona interna para la parte de cuentas y facturación, y un desarrollador externo para la parte técnica, cada uno con acceso solo a lo suyo.
+**[D]** Responsables:
+
+| Rol | Puesto | Cuenta |
+|---|---|---|
+| Administrador principal | Gerencia General | jmunoz@hrsuplidora.com |
+| Administrador de respaldo | Gerencia de Operaciones | jquesada@hrsuplidora.com |
+| Gestión de pagos y facturación | Asistente Contable | gestion@hrsuplidora.com |
+| Administración de Microsoft 365 (Entra, buzón `hilos@`, registro de la aplicación) | Gerencia General | jmunoz@hrsuplidora.com |
+
+La Asistente Contable entra solo a la parte de facturación de cada servicio (Anthropic, Supabase, Vercel, GitHub), sin acceso a datos ni a código.
 
 ## 9. Costos
 
@@ -339,10 +349,14 @@ Notas:
 
 Detalle de la Fase 0:
 
-- **Publicación del lunes:** una rutina programada lee la semana y deja la publicación en una página privada antes de las 6:45 a.m.
-- **Actas:** se envían con asunto "Acta 1:1". Una rutina el lunes en la noche las toma de los Elementos enviados.
+- **Página:** https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww. Es privada y solo la Gerencia General puede leer sus datos.
+- **Lectura del correo:** de lunes a viernes a las 6:50 p. m., y el lunes a las 5:50 a. m. antes de la publicación.
+- **Publicación del lunes:** lista antes de las 6:45 a. m., con aviso al celular a las 6:45.
+- **Actas:** un correo interno con asunto que empiece con "Acta". Se cargan en la lectura de ese mismo día.
 - **Borrador:** se gestiona desde la página. Se puede convertir, editar o descartar.
-- **Captura manual:** un correo a uno mismo con asunto "HILO:".
+- **Captura manual:**
+  - el botón "+ Hilo" de la página;
+  - un correo a uno mismo con asunto que empiece con "HILO:", lo que también sirve para reenviarse un correo externo.
 
 Criterios para pasar a la Fase 1:
 
@@ -394,9 +408,13 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 | Dependencia de la Gerencia General. | Cuentas de empresa con respaldo (§8) y dueño funcional interno desde la Fase 2. |
 | Costo de IA. | Tope mensual con alertas, procesamiento en lote y caché. |
 
-## 13. Pendientes
+## 13. Estado y pendientes
 
-1. ¿Cómo se evalúa hoy el cumplimiento en Asana (Mercadeo): campos, escalas y quién califica?
-2. ¿Quién será el administrador de respaldo (cuentas y facturación) y quién el técnico?
-3. ¿Quién administra hoy Microsoft 365 (proveedor externo o interno), para la depuración de perfiles y el registro de la aplicación?
-4. Inicio de la Fase 0.
+**[D]** La Fase 0 arrancó el 12 de octubre de 2026. El detalle operativo está en `fase0/RUTINA.md`.
+
+Pendientes para la Fase 1:
+
+1. Crear la organización de GitHub de HR Suplidora y transferir el repositorio (Gerencia General).
+2. Depurar los perfiles de Entra ID: cargo, departamento y jefe directo de cada cuenta, incluidas las de rol (Gerencia General).
+3. Crear el buzón compartido `hilos@hrsuplidora.com` (Gerencia General).
+4. Crear las cuentas de Anthropic (API), Supabase y Vercel a nombre de HR Suplidora con los responsables de §8 (Gerencia General y Asistente Contable).
