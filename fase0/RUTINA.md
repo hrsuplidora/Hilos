@@ -8,11 +8,13 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 ## Rutinas
 
-| Rutina | Cuándo (hora de Costa Rica) | Qué hace |
-|---|---|---|
-| HILOS – Procesamiento diario | Lunes a viernes, 6:50 p. m. | Procedimiento A |
-| HILOS – Publicación del lunes | Lunes, 5:50 a. m. | Procedimiento A y luego B |
-| HILOS – Aviso 6:45 | Lunes, 6:45 a. m. | Procedimiento C, con aviso al celular |
+| Rutina | Id | Cuándo (hora de Costa Rica) | Dónde corre | Qué hace |
+|---|---|---|---|---|
+| HILOS – Procesamiento diario | `trig_01VKGcaNBYnNLCeUwv38EnuJ` | Lunes a viernes, 6:50 p. m. | En la sesión de Claude Code que tiene el conector de Microsoft 365. Delega en un subagente. | Procedimiento A |
+| HILOS – Publicación del lunes | `trig_01Y78q7hTakLnsxAyGgMbEyr` | Lunes, 5:50 a. m. | En esa misma sesión, delegando en un subagente | Procedimiento A y luego B |
+| HILOS – Aviso 6:45 | `trig_01C4XL3AYm7rBKWN3JNKhWx7` | Lunes, 6:45 a. m. | En una sesión nueva, sin conectores, con aviso al celular | Procedimiento C |
+
+Las rutinas que abren una sesión nueva no heredan los conectores. Por eso la lectura del correo corre en la sesión que ya los tiene.
 
 ## Reglas que aplican siempre
 
@@ -92,6 +94,6 @@ Otros documentos:
 ## Procedimiento C · Aviso de las 6:45
 
 1. Leer `publicaciones` (la más reciente), `estado/ingesta`, `hilos` y `borrador` pendiente.
-2. Si existe la publicación de hoy, el mensaje final es una sola línea de menos de 200 caracteres, por ejemplo: "Publicación lista: 3 decisiones esperan por usted, 2 hilos vencidos, 5 temas por confirmar. https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww".
+2. Si existe la publicación de hoy, el mensaje final es una sola línea de menos de 200 caracteres, por ejemplo: "HILOS: publicación lista. 3 decisiones esperan por usted, 2 vencidos, 5 temas por confirmar. https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww". Las decisiones cuentan los hilos y los borradores pendientes con decisión de la Gerencia General.
 3. Si no existe, o si `estado/ingesta.error` tiene contenido, el mensaje dice qué falló.
 4. No escribir nada en la base de datos.

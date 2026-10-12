@@ -297,14 +297,17 @@ function renderLunes(m){
     const grid=h("div",{class:"grid-sum"});
     for(const[id,p]of reportesGG()){const r=rama(id);const ab=todos.filter(x=>inR(x,r)&&!cerrado(x));
       const venc=ab.filter(x=>x.fechaCompromiso&&!terminado(x)&&x.fechaCompromiso<hoyD).length;
-      const dGG=ab.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").length;
+      const dGG=ab.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").length+[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto)&&esDecGG(d)).length;
       const bor=[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto||d.puesto)).length;
       grid.append(h("button",{type:"button",class:"sum",onclick:()=>{S.rama=id;render();}},h("span",{class:"name"},p.nombre),
         h("dl",{},h("dt",{},"Hilos abiertos"),h("dd",{},String(ab.length)),h("dt",{},"Esperan su decisión"),h("dd",{class:dGG?"hot":""},String(dGG)),
           h("dt",{},"Vencidos"),h("dd",{class:venc?"hot":""},String(venc)),h("dt",{},"Por confirmar en borrador"),h("dd",{},String(bor)))));}
     m.append(h("section",{class:"sec"},h("h2",{},"Por puesto"),grid));}
   const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort((a,b)=>ultimaAct(a).localeCompare(ultimaAct(b)));
-  m.append(sec("Espera su decisión",espGG.map(x=>hiloRow(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),"Nada espera su decisión."));
+  const drafts=[...S.borrador.entries()].filter(([,d])=>!set||set.has(d.propuesta?.puesto||d.puesto));
+  const draftGG=drafts.filter(([,d])=>esDecGG(d));
+  m.append(sec("Espera su decisión",[...espGG.map(x=>hiloRow(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
+    ...draftGG.map(([id,d])=>draftCard(id,d,{compact:true}))],"Nada espera su decisión."));
   const alertas=[];const alerted=new Set();
   for(const x of abiertos){if(terminado(x))continue;const why=[];
     if(x.fechaCompromiso&&x.fechaCompromiso<hoyD)why.push(`Vencido hace ${dias(x.fechaCompromiso,hoyD)} días`);
@@ -323,8 +326,11 @@ function renderLunes(m){
   m.append(sec("En ejecución (al día)",ejec.map(x=>hiloRow(x,{showParent:true})),"No hay otros hilos en ejecución."));
   const porMedir=vis.filter(x=>x.estadoImpl==="completada"&&(!x.resultado||x.resultado==="sin_medir"));
   m.append(sec("Resultados por medir",porMedir.map(x=>hiloRow(x)),"Nada pendiente de medir."));
-  const bor=[...S.borrador.entries()].filter(([,d])=>!set||set.has(d.propuesta?.puesto||d.puesto)).map(([id,d])=>draftCard(id,d,{compact:true}));
-  m.append(sec("Detectado y por confirmar",bor,"No hay temas nuevos por confirmar."));
+  const resto=drafts.filter(([,d])=>!esDecGG(d));const LIM=S.rama==="consolidado"?8:40;
+  const bsec=sec("Detectado y por confirmar",resto.slice(0,LIM).map(([id,d])=>draftCard(id,d,{compact:true})),"No hay temas nuevos por confirmar.");
+  bsec.querySelector(".n").textContent=String(resto.length);
+  if(resto.length>LIM)bsec.append(h("p",{style:"margin-top:10px"},h("button",{type:"button",class:"btn sm",onclick:()=>{S.tab="borrador";render();window.scrollTo(0,0);}},`Ver los ${resto.length} en el Borrador`)));
+  m.append(bsec);
   m.append(sec("Cerrados en la semana",cerradosSem.map(x=>hiloRow(x)),"Nada se cerró esta semana."));
   const qs=S.rama==="consolidado"?(S.pub?.preguntasGenerales||[]):(S.pub?.porPuesto?.[S.rama]?.preguntas||[]);
   const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
@@ -369,6 +375,7 @@ function renderBorrador(m){
     const top=topPuesto(pid);if(!byP.has(top))byP.set(top,[]);byP.get(top).push([id,d]);}
   for(const[pid,arr]of byP){m.append(h("div",{class:"group-h"},puestoNombre(pid),h("span",{class:"n"},String(arr.length))));
     m.append(h("div",{class:"list"},arr.map(([id,d])=>draftCard(id,d))));}}
+function esDecGG(d){return d.tipo!=="actualizacion"&&d.propuesta?.estadoDecision==="por_decidir"&&d.propuesta?.decisionDe==="gg";}
 function topPuesto(pid){let p=pid,guard=0;while(p&&guard++<10){const x=S.puestos.get(p);if(!x||x.reportaGG||!x.superior||x.superior==="gg")return p;p=x.superior;}return pid;}
 async function quickConvert(id,d){const p=d.propuesta||{};const hid=nuevoId("h");const now=new Date().toISOString();
   const data=normalizeHilo({...p,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
