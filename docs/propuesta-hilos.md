@@ -1,317 +1,366 @@
-# HILOS — Propuesta de sistema (v0.1)
+# HILOS — Propuesta de sistema (v0.2)
 
-Borrador para afinar con Gerencia General. 12 de octubre de 2026.
+Borrador para afinar con la Gerencia General. 12 de octubre de 2026.
 
-Marcas usadas en el documento: **[H]** hecho verificado, **[S]** supuesto o estimación por validar.
+Marcas usadas en el documento: **[H]** hecho verificado, **[S]** supuesto o estimación por validar, **[D]** decisión tomada por la Gerencia General.
+
+## Cambios respecto a la v0.1
+
+- La publicación de seguimiento sale todos los lunes a las 6:45 a.m. y no depende del calendario. **[D]**
+- Todo se asigna a **puestos**, no a personas. La estructura se toma del perfil de Microsoft Entra ID. **[D]**
+- Se aceptan los estados `En pausa` y `Descartado`. **[D]**
+- Solo entran conversaciones internas: correo @hrsuplidora.com y el Slack de HR Suplidora. Lo que venga de terceros externos se agrega a mano. **[D]**
+- Nuevo **borrador de tareas a agregar**: el usuario decide qué se convierte en hilo y qué se descarta. Los hilos se pueden editar. **[D]**
+- Los 1:1 son presenciales y conversacionales. Al terminar, se envía un correo sencillo con los temas tratados y de ahí se cargan las tareas solas. **[D]**
+- Agrupación por área y por proyecto, con subtareas, y evaluación de cumplimiento para medir el desempeño del ejecutor. **[D]**
+- Nueva sección de seguridad (§6).
+- Nueva sección de cuentas, accesos y continuidad (§8), con un modelo de acceso delegable.
 
 ---
 
 ## 1. Problema y objetivo
 
-La Gerencia General pierde el hilo de lo conversado durante la semana con sus cuatro reportes directos y, en consecuencia, falla el seguimiento de temas estratégicos y operativos. Planner no logró adopción: exige documentar a mano y la vista no ayuda a leer el estado de las cosas.
+La Gerencia General pierde el hilo de lo conversado durante la semana con sus reportes directos y falla en el seguimiento de temas estratégicos y operativos. Planner no logró adopción.
 
 HILOS debe:
 
-1. Mantener, por cada reporte directo, la lista viva de temas abiertos con su estado de decisión, su nivel de implementación y su resultado.
-2. Alimentarse sola de las comunicaciones diarias (correo primero, Slack después) y permitir la captura manual.
+1. Mantener, para cada puesto que reporta a la Gerencia General, la lista viva de temas abiertos con su estado de decisión, nivel de implementación y resultado.
+2. Alimentarse de las conversaciones internas, con captura manual cuando haga falta.
 3. Mantener visible cada tema hasta su cierre formal.
-4. Empezar con la Gerencia General, extenderse a los cuatro reportes y luego al resto de la organización (incluida la eventual sustitución de Asana en Mercadeo).
-5. Reducir la dependencia operativa de la Gerencia General. Si un diseño exige su supervisión permanente para funcionar, es un mal diseño.
+4. Empezar con la Gerencia General, extenderse a sus reportes y luego al resto de la organización, con la posibilidad de sustituir Asana en Mercadeo.
+5. Funcionar sin depender de la presencia de la Gerencia General.
 
-## 2. Hallazgos que condicionan el diseño
+## 2. Concepto central
 
-Revisión de una semana de correo y calendario (5 al 12 de octubre de 2026) y de los permisos del conector de Microsoft 365:
+### 2.1 Hilo, tarea y subtarea
 
-| # | Hallazgo | Implicación para el diseño |
+Un **Hilo** es un tema que requiere seguimiento. Tipos: decisión, tarea, proyecto, idea, seguimiento de indicador, riesgo o problema.
+
+- Cada hilo pertenece a un **área**, la del puesto responsable por defecto, y opcionalmente a un **proyecto**. Un proyecto puede abarcar varias áreas.
+- Un hilo pesado o de trabajo en equipo se divide en **subtareas**, cada una con su propio puesto responsable y su propia fecha. Arrancamos con un nivel (hilo → subtareas) y se amplía si hace falta.
+- El avance del hilo padre muestra el porcentaje de subtareas completadas. El estado del padre lo decide su responsable.
+
+### 2.2 Puestos, no personas **[D]**
+
+- Los hilos se asignan a un **puesto** (por ejemplo, Gerencia Comercial). La persona que ocupa el puesto hoy se toma del directorio.
+- Si alguien renuncia, sale o cambia de puesto, los hilos se quedan con el puesto y los ve quien llegue.
+- Si el puesto queda vacante, sus hilos se muestran al superior del puesto, marcados como "puesto vacante".
+- La **evaluación de desempeño sí es de la persona**: cada cierre guarda quién lo ejecutó en ese momento (§4.9).
+
+**Fuente de la estructura: Microsoft Entra ID.** HILOS sincroniza cada día, por cada usuario:
+
+| Campo de Entra | Uso en HILOS | Requisito |
 |---|---|---|
-| 1 | **[H]** Los 1:1 son presenciales ("Oficina Jeremy"), los lunes a las 2:00, 3:00 y 4:00 p.m. (Comercial, Operaciones, RRHH). | Los acuerdos más importantes de la semana se toman fuera del correo. |
-| 2 | **[H]** Hay correos posteriores que citan acuerdos del 1:1 de memoria ("en los acuerdos de la semana pasada en el 1:1 quedamos que…"), con versiones que no coinciden. | Si HILOS lee solo el correo, pierde la fuente principal. El 1:1 tiene que ser una fuente de primer nivel (§4.5). |
-| 3 | **[H]** No aparece en el calendario un 1:1 recurrente con la Asistente Contable. | Confirmar si existe y por qué canal se hace el seguimiento con ella. |
-| 4 | **[H]** RRHH opera con un buzón de rol (`recursoshumanos@`). | Los temas se asignan a un **rol** además de a una persona; si la persona cambia, el rol conserva su historial. |
-| 5 | **[H]** El buzón de la Gerencia mezcla temas operativos con temas legales y patrimoniales (ya existe la categoría de Outlook "P2 - Legal y patrimonial"). | Las reglas de exclusión son obligatorias desde el primer día (§4.10). |
-| 6 | **[H]** El conector de Microsoft 365 disponible en Claude es de solo lectura (correo, calendario, Teams, transcripciones de reuniones de Teams). No tiene permisos sobre Planner ni para enviar correo. | Sirve para el prototipo (Fase 0). Producción necesita su propia aplicación registrada en el Entra ID de HR Suplidora. |
-| 7 | **[H]** En Entra ID, el cargo de la cuenta de la Gerencia General figura como "Gerente Comercial". | Corregirlo si HILOS va a usar el directorio para asignar roles. |
+| Cargo (`jobTitle`) | Puesto | Catálogo único de nombres de puesto, escritos siempre igual. |
+| Departamento (`department`) | Área | Catálogo único de áreas. |
+| Jefe directo (`manager`) | Superior; de ahí salen pares y reportes directos | Lleno en el 100% de los colaboradores. |
+| Correo | Vínculo con correo y Slack | El correo de Slack debe coincidir con el de Microsoft. |
+| Estado de la cuenta | Detectar salidas y vacantes | Desactivar la cuenta el día de la salida. |
 
-## 3. Concepto central
+**[H]** Hoy el cargo de la cuenta de la Gerencia General figura como "Gerente Comercial". No pude revisar el resto de perfiles porque el conector de Claude no tiene permiso para leer el directorio completo. La depuración de perfiles es una tarea previa a la Fase 1 que puede hacer RRHH junto con quien administre Microsoft 365.
 
-### 3.1 La unidad: el Hilo
+**[S]** Si RRHH trabaja desde un buzón de rol (`recursoshumanos@`), se asocia ese buzón al puesto además de la cuenta personal.
 
-Un **Hilo** es un tema que requiere seguimiento, desde que aparece hasta que se cierra. Tipos:
+### 2.3 Ciclo de vida (tres ejes)
 
-- **Decisión**: alguien tiene que escoger entre opciones.
-- **Acción**: alguien tiene que ejecutar algo concreto.
-- **Proyecto**: acción de largo aliento con hitos (puede tener subhilos).
-- **Idea**: tema sin compromiso todavía; puede convertirse en decisión o acción.
-- **Seguimiento de indicador**: KPI u OKR que se revisa en el 1:1.
-- **Riesgo / problema**: algo que puede salir mal o ya salió mal.
+**Decisión:** por decidir (por la Gerencia General, por el responsable o por un tercero), decidido, no requiere decisión.
 
-### 3.2 Ciclo de vida (tres ejes independientes)
+**Implementación:** `Sin iniciar` → `En proceso` → `En revisión` → `Completada`, más `En pausa` y `Descartado`. **[D]**
 
-**Eje 1. Decisión**
+**Resultado:** cuando la implementación está completada, `Sin medir`, `Logrado`, `Parcial` o `No logrado`.
 
-| Estado | Significado |
+**Regla de visibilidad:** un hilo aparece en los seguimientos hasta que esté `Completada` con resultado, o `Descartado`. Luego pasa al archivo.
+
+### 2.4 Evidencia
+
+Todo hilo y todo cambio guarda su fuente: cita, enlace al correo o mensaje, fecha y quién lo confirmó. Si falta información, el campo queda "por confirmar". Nunca se rellena por inferencia.
+
+## 3. Fuentes de información
+
+### 3.1 Solo conversaciones internas **[D]**
+
+| Fuente | Regla de entrada |
 |---|---|
-| Por decidir: Gerencia General | La pelota está en la cancha de la Gerencia. |
-| Por decidir: responsable | La pelota está en la cancha del reporte. |
-| Por decidir: tercero | Proveedor, abogado, contador, cliente. |
-| Decidido | Hay decisión, con fecha y evidencia. |
-| No requiere decisión | Acciones que ya vienen definidas. |
+| Correo | Entra si el remitente y **todos** los destinatarios (Para y CC) son @hrsuplidora.com. Un correo externo reenviado de forma interna sí entra, porque el reenvío es una conversación interna. Quedan fuera las direcciones internas de sistemas o notificaciones automáticas (lista configurable). |
+| Slack | Solo el workspace de HR Suplidora. Quedan fuera los canales compartidos con otras organizaciones (Slack Connect) y los usuarios invitados externos. |
+| Externos | Si un tercero externo genera una tarea, se agrega manualmente (§4.4). |
 
-**Eje 2. Nivel de implementación** (los cuatro estados solicitados, más dos de cierre o excepción)
+Cobertura por fase:
 
-`Sin iniciar` → `En proceso` → `En revisión` → `Completada`, más `En pausa / bloqueado` y `Descartado`.
+| Fase | Cobertura |
+|---|---|
+| 0–1 | Conversaciones donde participa la Gerencia General. |
+| 2 | Buzones y Slack de los puestos que reportan a la Gerencia. |
+| 3 | Toda la organización. |
 
-**Eje 3. Resultado** (solo cuando la implementación está completada)
+### 3.2 Lo que ya no se usa
 
-`Sin medir` · `Logrado` · `Parcial` · `No logrado`, con el dato que lo sustenta.
+No se usa el calendario. La publicación y las actas no dependen de que haya una reunión agendada. **[D]**
 
-**Regla de visibilidad:** un hilo aparece en el reporte de su responsable hasta que esté `Completada` con resultado registrado, o `Descartado`. Se muestra una vez en "Cerrados esta semana" y luego pasa al archivo, donde se puede consultar.
+## 4. Capacidades
 
-### 3.3 Evidencia obligatoria
+### 4.1 Motor de IA
 
-Todo cambio de estado lleva su fuente: cita textual, enlace al correo o mensaje original, fecha y quién lo confirmó. Si la IA no encuentra evidencia suficiente, el campo queda como "por confirmar"; nunca se rellena por inferencia.
+Para cada conversación interna nueva, el motor:
 
-## 4. Características y capacidades
+1. Decide si toca un hilo existente, si propone uno nuevo o si es ruido.
+2. Extrae la decisión (tomada o pendiente, y de quién), el compromiso, el puesto responsable, la fecha y el resultado reportado.
+3. Busca coincidencias semánticas con los hilos abiertos para no duplicar.
+4. Deja su propuesta en el borrador (§4.2) con la cita que la justifica.
+5. Aprende de las ediciones y descartes del usuario: glosario de apodos, siglas, códigos de producto y criterios de qué sí es un hilo.
 
-### 4.1 Ingesta automática
+### 4.2 Borrador de tareas a agregar **[D]**
 
-- **Correo (Outlook)**: lectura incremental cada 15 minutos de los hilos de correo donde participen la Gerencia General y al menos uno de los reportes directos. En Fase 2 se suman los buzones de los reportes con sus equipos.
-- **Slack**: canales y mensajes directos autorizados (Fase 2).
-- **Calendario**: detecta los 1:1 y otras reuniones para anclar la agenda y los acuerdos.
-- **Transcripciones de Teams** (opcional): si un 1:1 se registra como reunión de Teams con transcripción activada, aunque sea presencial, HILOS puede extraer los acuerdos directamente.
-- **Adjuntos** (Fase 2+): texto de PDF y Excel cuando el contenido del tema esté ahí.
+Bandeja con dos secciones:
 
-### 4.2 Motor de IA
+- **Nuevos temas detectados.** Por cada uno, el usuario:
+  - lo **convierte en hilo**, editando antes o después el detalle, la fecha esperada, el puesto responsable (cualquier puesto de la organización), el área, el proyecto y las subtareas; o
+  - lo **descarta**, con una razón opcional que el motor usa para aprender.
+- **Actualizaciones sugeridas** a hilos existentes (por ejemplo, "ya se entregó" pasa a `En revisión`): se aceptan o se rechazan con un toque.
 
-Para cada mensaje nuevo, el motor:
+Un hilo es editable en todo momento y cada cambio queda en la bitácora. En la Fase 2, cada usuario tiene su propio borrador con lo detectado en sus conversaciones.
 
-1. Decide si toca un hilo existente, si crea uno nuevo o si es ruido (saludos, avisos automáticos).
-2. Extrae: decisión tomada o solicitada (y de quién), compromiso, responsable, fecha comprometida, cambio de estado y resultado reportado.
-3. Empareja contra los hilos abiertos con búsqueda semántica, para no duplicar temas que se escribieron con otras palabras.
-4. Produce una **propuesta** con nivel de confianza y la cita que la justifica.
-5. Aprende de las correcciones: cada corrección queda como ejemplo para la siguiente vez, junto con un glosario de personas, apodos, códigos de producto y siglas internas.
+### 4.3 Acta del 1:1 por correo **[D]**
 
-Niveles de autonomía configurables:
+- Al terminar el 1:1, quien lo dirige envía un correo sencillo al otro participante con **copia a `hilos@hrsuplidora.com`**. El cuerpo es libre: una lista de temas, y si se quiere, responsable y fecha. No hace falta plantilla.
+- HILOS lo procesa en menos de 5 minutos **[S]**:
+  - lo que se refiere a un hilo existente se actualiza;
+  - lo nuevo se crea como hilo, porque quien envía el acta ya lo validó;
+  - lo ambiguo (sin responsable claro, por ejemplo) queda en el borrador.
+- HILOS responde al remitente con una confirmación: qué cargó, qué actualizó, qué quedó en borrador y el enlace.
+- Ambos participantes quedan con el mismo registro por escrito. Eso elimina las versiones distintas de un mismo acuerdo.
+- Solo se aceptan actas de cuentas internas verificadas (§6).
 
-| Tipo de cambio | Fase 0–1 | Fase 2+ (si la precisión lo justifica) |
-|---|---|---|
-| Hilo nuevo | Requiere confirmación | Requiere confirmación |
-| Actualización de estado con evidencia explícita | Requiere confirmación | Se aplica sola y se notifica |
-| Cierre / descarte | Requiere confirmación | Requiere confirmación |
+### 4.4 Captura manual
 
-### 4.3 Bandeja de propuestas
+Todo dentro de la aplicación HILOS (§7), más dos atajos:
 
-Una sola vista donde se confirman, corrigen o rechazan en lote las propuestas de la IA. Meta de uso: menos de 10 minutos por semana **[S]**. En Fase 2 cada reporte confirma las propuestas de sus propios hilos, de modo que la Gerencia deja de ser el cuello de botella.
+- Botón "+ Hilo" en la aplicación web, que también se instala en el celular como ícono (PWA, sin tienda de aplicaciones).
+- Reenviar un correo (también de externos) a `hilos@hrsuplidora.com` con una nota: queda en el borrador.
+- En Slack: comando `/hilo` o reacción 🧵 sobre un mensaje, que también queda en el borrador.
 
-### 4.4 Reporte 1:1 por reporte directo
+### 4.5 Publicación del lunes 6:45 a.m. **[D]**
 
-Se genera el domingo en la noche y se entrega el lunes temprano (web y correo). Secciones:
+- Una publicación por cada puesto que reporta a la Gerencia General, más una vista consolidada. Se envía por correo a las 6:45 a.m. hora de Costa Rica y queda en la aplicación.
+- Secciones:
+  1. Requiere decisión de la Gerencia General, con días de espera.
+  2. Requiere decisión del puesto.
+  3. Novedades de la semana, con evidencia.
+  4. En ejecución, con nivel de implementación, fecha, avance de subtareas y semáforo.
+  5. Alertas: vencidos, más de 14 días sin movimiento, sin fecha o sin responsable, acuerdos contradictorios.
+  6. Resultados por medir.
+  7. Pendientes en el borrador.
+  8. Cerrados en la semana.
+  9. Preguntas sugeridas.
+- En la Fase 2, cada puesto recibe también su propia publicación, para que ambos lleguen al 1:1 con la misma lista.
 
-1. **Requiere tu decisión**: lo que espera de la Gerencia General, con días de espera.
-2. **Requiere decisión de [persona]**.
-3. **Novedades de la semana**: cambios de estado, con evidencia.
-4. **En ejecución**: mediano y largo plazo, con nivel de implementación, fecha y semáforo.
-5. **Alertas**: vencidos, sin movimiento por más de 14 días, compromisos sin fecha o sin responsable, versiones contradictorias de un mismo acuerdo.
-6. **Resultados por medir**: lo implementado que aún no tiene resultado registrado.
-7. **Temas nuevos detectados**: por confirmar.
-8. **Cerrados esta semana**.
-9. **Preguntas sugeridas para el 1:1**.
+### 4.6 Vistas
 
-### 4.5 Modo 1:1 en vivo y acta
+- Por puesto: la publicación viva.
+- Lo que espera de la Gerencia General.
+- Por área.
+- Por proyecto.
+- Tablero por nivel de implementación.
+- Línea de tiempo.
+- OKR.
+- Archivo.
+- Desempeño (§4.9).
 
-- Durante el 1:1, la agenda se abre en pantalla (computadora o tablet) y cada acuerdo se marca con un toque: decidido, responsable, fecha.
-- Al cerrar, HILOS genera el **acta** y la envía por correo al reporte. El acta es la versión oficial del acuerdo y alimenta de vuelta al sistema.
-- Alternativa sin pantalla: nota de voz o transcripción de Teams que la IA convierte en propuestas.
-
-### 4.6 Captura manual
-
-- Botón "+ Hilo" en web y móvil (instalable como app, PWA).
-- Reenviar un correo a `hilos@hrsuplidora.com` con una nota: crea una propuesta.
-- En Slack: comando `/hilo` o reacción 🧵 sobre un mensaje (Fase 2).
-
-### 4.7 Vistas
-
-- **Por persona**: el reporte 1:1 vivo.
-- **Lo que espera de mí**: todas las decisiones pendientes de la Gerencia General.
-- **Tablero**: columnas por nivel de implementación, con filtros por área, tipo y horizonte.
-- **Línea de tiempo**: hilos de mediano y largo plazo con hitos.
-- **OKR 2026**: hilos vinculados a cada objetivo y resultado clave.
-- **Archivo**: búsqueda en todo lo cerrado, con su historia.
-
-### 4.8 Termómetro de delegación
+### 4.7 Termómetro de delegación
 
 Indicadores semanales:
 
-- Decisiones pendientes de la Gerencia General (cantidad y días promedio de espera).
-- Porcentaje de hilos que el equipo cerró sin intervención de la Gerencia.
-- Porcentaje de hilos con responsable distinto de la Gerencia General.
-- Temas que se escalaron a la Gerencia y que pudieron resolverse en el área.
+- Decisiones pendientes de la Gerencia General: cantidad y días promedio de espera.
+- Porcentaje de hilos cerrados sin intervención de la Gerencia.
+- Porcentaje de hilos con un puesto responsable distinto de la Gerencia General.
 
-Si la delegación avanza, la primera línea baja y las otras suben.
+### 4.8 Notificaciones
 
-### 4.9 Notificaciones
+- Publicación del lunes.
+- Recordatorio semanal a cada responsable con lo que vence.
+- Confirmación de actas.
+- Aviso de borrador acumulado.
 
-- Lunes 6:30 a.m.: reportes 1:1.
-- Recordatorio a cada responsable: compromisos que vencen esa semana.
-- Resumen diario: en Fase 1 HILOS absorbe el resumen diario que hoy corre en Zapier, para no tener dos pipelines de IA leyendo el mismo buzón.
+En la Fase 1, HILOS absorbe el resumen diario que hoy corre en Zapier.
 
-### 4.10 Permisos, confidencialidad y exclusiones
+### 4.9 Evaluación de cumplimiento y desempeño **[D]**
 
-- Inicio de sesión con la cuenta de Microsoft 365 de HR Suplidora (SSO).
-- La Gerencia General ve todo. Cada reporte ve sus hilos y los de su equipo. Seguridad aplicada a nivel de fila en la base de datos, no solo en pantalla.
-- **Nunca se ingieren**: correos con la categoría "P2 - Legal y patrimonial" (o la que se defina), hilos solo con externos sin participación de un reporte y remitentes en lista de exclusión (abogados, bancos, contador externo, temas familiares).
-- Hilos marcados como **confidenciales** (salarios, disciplinarios, salud): visibles solo para las personas autorizadas, incluso si el sistema se extiende a toda la organización.
-- Bitácora inmutable de quién cambió qué y cuándo.
+**[S]** La propuesta por defecto se debe ajustar a como se evalúa hoy en Asana (§13):
 
-### 4.11 Escalabilidad organizacional (Fase 3)
+- **Revisión antes del cierre.** Al pasar de `En revisión` a `Completada`, el revisor (quien asignó el hilo o el superior del puesto) aprueba o devuelve. Al aprobar, califica.
+- **Indicadores por persona y período:**
 
-- Espacios por área: Gerencia, Comercial, Mercadeo, Operaciones, RRHH, Contabilidad.
-- Subhilos, dependencias, plantillas (por ejemplo, "lanzamiento de producto", "importación China"), tareas recurrentes, comentarios con @menciones y adjuntos enlazados a SharePoint.
-- Sustitución de Asana en Mercadeo: solo después de comparar con datos (uso real, costo de licencias, flujo creativo de aprobaciones). No es un objetivo en sí mismo.
-- Integración posterior con SAP B1 para registrar resultados con datos duros (por ejemplo, ventas de un lanzamiento).
-
-### 4.12 Requisitos no funcionales
-
-Interfaz en español, zona horaria de Costa Rica, uso cómodo en celular, exportación a Excel, respaldos diarios, tope de gasto mensual en IA con alerta y datos portables (base de datos estándar exportable, sin dependencia de un proveedor cerrado).
-
-## 5. Modelo de datos (borrador)
-
-| Entidad | Campos principales |
+| Indicador | Cálculo |
 |---|---|
-| **Rol** | nombre (Gerencia Comercial…), área, persona actual, buzón(es) |
-| **Persona** | nombre, correo(s), usuario de Slack, rol |
-| **Hilo** | título, descripción, tipo, área, rol responsable, persona responsable, contraparte, prioridad (P1–P3), horizonte (corto ≤2 semanas, mediano ≤3 meses, largo >3 meses), OKR vinculado, fecha compromiso, estado de decisión, nivel de implementación, resultado, confidencialidad, hilo padre |
-| **Evento** | hilo, fecha, fuente (correo, Slack, 1:1, manual), cita, enlace al original, cambio aplicado, confianza, confirmado por |
-| **Propuesta** | evento candidato, estado (pendiente, aceptada, corregida, rechazada), corrección |
-| **Reunión 1:1** | fecha, rol, agenda generada, acta, acuerdos (eventos) |
-| **Mensaje fuente** | id externo, canal, remitente, fecha, procesado, excluido (y por qué) |
+| Cumplimiento en plazo | % completado en o antes de la fecha comprometida. Se muestra contra la fecha original y contra la vigente. |
+| Reprogramaciones | Cuántas veces cambió la fecha y quién la cambió. |
+| Calidad | Calificación de 1 a 5 del revisor; comentario obligatorio si es 2 o menos. |
+| Retrabajo | Veces que un hilo volvió de `En revisión` a `En proceso`. |
+| Carga | Hilos abiertos y vencidos a cargo. |
 
-## 6. Arquitectura y herramientas
+- Las subtareas se evalúan a su ejecutor. El hilo padre se evalúa a su responsable.
+- Si estos datos se van a usar para decisiones de compensación o disciplinarias, los criterios deben comunicarse de antemano y coordinarse con RRHH. Conviene validar con un abogado laboralista.
 
-### 6.1 Recomendación
+### 4.10 Permisos y confidencialidad
 
-| Capa | Herramienta | Por qué |
-|---|---|---|
-| Frontend | **Next.js + TypeScript + Tailwind + shadcn/ui**, instalable como PWA | Estándar de mercado, buena experiencia móvil, fácil de mantener por cualquier desarrollador o por Claude Code. |
-| Hosting frontend | **Vercel** | Vista previa automática de cada cambio antes de publicarlo: la Gerencia revisa desde el celular y aprueba. |
-| Backend y base de datos | **Supabase** (PostgreSQL, autenticación con Microsoft Entra, seguridad por fila, almacenamiento, funciones programadas, colas, búsqueda semántica con pgvector) | Un solo servicio administrado cubre base de datos, permisos, tareas programadas y búsqueda semántica. Es PostgreSQL estándar: los datos son portables. |
-| Ingesta de correo | **Microsoft Graph API** con una aplicación registrada en el Entra ID de HR Suplidora, con permiso de lectura limitado a los buzones autorizados (RBAC para aplicaciones de Exchange Online) | Acceso de producción independiente de cualquier cuenta personal. |
-| Ingesta de Slack | Bot de Slack en el workspace de HR Suplidora | Lectura de canales autorizados y comando `/hilo`. |
-| IA | **Claude API**: Claude Opus 5.5 para extracción y síntesis semanal; evaluar con datos un filtro previo con Claude Haiku 5.5. Batch API (−50%) para lo que no es urgente y caché de prompts. | Calidad de extracción en español con evidencia citada. |
-| Envío de correo | Microsoft Graph desde el buzón `hilos@hrsuplidora.com` | Las actas y los reportes salen del dominio de la empresa. |
-| Código y despliegue | **GitHub** (este repositorio) + GitHub Actions | Historial completo, revisión de cambios y despliegue automático. |
+- La Gerencia General ve todo.
+- Cada puesto ve sus hilos, los de sus reportes y los que comparte con pares.
+- Los hilos marcados como confidenciales (salarios, disciplinarios, salud) los ven solo las personas autorizadas.
+- Los permisos se aplican en la base de datos, no solo en pantalla.
 
-### 6.2 Flujo
+## 5. Escalabilidad organizacional
+
+Espacios por área, proyectos con plantillas (lanzamiento de producto, importación de China), tareas recurrentes, comentarios con @menciones y adjuntos enlazados a SharePoint. La sustitución de Asana en Mercadeo se decide comparando uso real, flujo creativo y costo. Más adelante, se integra con SAP B1 para medir resultados con datos duros.
+
+## 6. Seguridad
+
+Ningún sistema es inmune. La meta es defensa en capas: que una falla en una capa no exponga la información, que todo quede registrado y que un incidente se detecte y se contenga rápido.
+
+| Capa | Medidas |
+|---|---|
+| **Identidad** | Solo inicio de sesión con cuentas de Microsoft 365 de HR Suplidora, sin contraseñas propias de HILOS. MFA obligatoria por política de acceso condicional de Entra. Sesiones con expiración. |
+| **Autorización** | Permisos por puesto aplicados en la base de datos (seguridad a nivel de fila). Mínimo privilegio en todo. |
+| **Acceso a correo** | Aplicación registrada en Entra con permiso de **solo lectura** y limitada a los buzones autorizados (RBAC para aplicaciones de Exchange Online). Autenticación por certificado, no por clave, con rotación programada. El buzón `hilos@` es compartido y no tiene inicio de sesión propio. |
+| **IA sin poderes** | El motor de IA no tiene herramientas: no envía correos, no borra ni modifica nada. Solo devuelve una propuesta en formato estructurado que el sistema valida. El contenido de los correos se trata como dato y nunca como instrucción. Así un correo malicioso no puede ordenarle nada al sistema. |
+| **Actas entrantes** | Se aceptan solo de remitentes internos, con verificación de autenticidad del correo (SPF, DKIM y DMARC aprobados) y remitente activo en el directorio. Esto evita correos falsificados que inyecten tareas. |
+| **Minimización de datos** | Se guardan extractos y enlaces, no copias completas de los correos. Retención definida. Cifrado en tránsito y en reposo. |
+| **Secretos** | Llaves y certificados solo en las bóvedas de configuración de Vercel y Supabase. Nunca en el código, en el chat ni en sesiones de desarrollo. Escaneo de secretos en GitHub con bloqueo de envío. |
+| **Código** | Rama principal protegida: todo cambio entra por pull request con pruebas aprobadas y aprobación humana. Revisión de seguridad automática en cada cambio. Alertas y actualización de dependencias vulnerables. |
+| **Ambientes** | Desarrollo con datos de prueba, separado de producción. Las vistas previas de cada cambio exigen inicio de sesión. |
+| **Monitoreo** | Bitácora inmutable de accesos y cambios. Alertas por accesos anómalos, picos de gasto de IA o fallos de ingesta. |
+| **Continuidad** | Respaldos diarios con prueba de restauración trimestral. Procedimiento de respuesta a incidentes en `docs/`. |
+| **Verificación externa** | Prueba de penetración liviana por un tercero antes de abrir el sistema a toda la organización (Fase 3). |
+
+## 7. Arquitectura y herramientas
+
+| Capa | Herramienta |
+|---|---|
+| Aplicación (web y celular) | Next.js + TypeScript, instalable como PWA, publicada en Vercel |
+| Base de datos, permisos y tareas programadas | Supabase (PostgreSQL, inicio de sesión con Microsoft Entra, seguridad por fila, búsqueda semántica) |
+| Correo y directorio | Microsoft Graph con aplicación propia de HR Suplidora |
+| Slack | Bot en el workspace de HR Suplidora |
+| IA | Claude API: Claude Opus 5.5. Se evalúa con datos un filtro previo con Claude Haiku 5.5. |
+| Código | GitHub (organización de HR Suplidora, §8) |
 
 ```
-Outlook / Slack / 1:1 / manual
-        │ (cada 15 min, lectura incremental)
-        ▼
-Exclusiones ──► descartados (con razón registrada)
+Correo interno / Slack interno / Acta (hilos@) / Manual
         │
         ▼
-Motor IA (Claude API) ──► Propuestas con evidencia
-        │                         │
-        │                 Bandeja de confirmación
-        ▼                         │
-     Hilos + Eventos (Supabase) ◄─┘
+Filtro "solo interno" ──► fuera (registrado)
         │
-        ├──► Vistas web/móvil (Vercel)
-        ├──► Reporte 1:1 (domingo noche) ──► correo lunes 6:30 a.m.
-        └──► Acta post-1:1 ──► correo al reporte ──► vuelve a la ingesta
+        ▼
+Motor IA ──► Borrador ──► usuario: convierte / edita / descarta
+        │                      │
+        └──► Acta ─────────────┤ (carga directa, lo ambiguo va al borrador)
+                               ▼
+                 Hilos, subtareas, evaluaciones (Supabase)
+                               │
+          ┌────────────────────┼─────────────────────┐
+          ▼                    ▼                     ▼
+   Aplicación web/celular  Lunes 6:45 a.m.     Termómetro y desempeño
 ```
 
-### 6.3 Alternativas evaluadas
+## 8. Cuentas, accesos y continuidad
 
-| Opción | Ventaja | Por qué no como base |
+Principio: **todo servicio vive en una cuenta de la empresa, con al menos dos administradores y acceso por rol**, para que cualquiera de ellos pueda operar si la Gerencia General no está. Ninguna cuenta personal es indispensable.
+
+| Servicio | Cómo se organiza | Quién tiene acceso |
 |---|---|---|
-| Ecosistema Microsoft (Planner Premium o Listas + Power Automate + Copilot Studio) | Todo queda dentro del tenant y el equipo ya usa Microsoft 365. | Se mantiene la misma experiencia visual que ya no funcionó. Power Automate se vuelve frágil con lógica compleja y el licenciamiento premium es por usuario. |
-| Knack (ya conectado a Claude) | No-code, rápido para prototipar formularios y tablas. | Débil para tableros, agenda de 1:1 y lógica de IA; el motor tendría que vivir fuera de todas formas. Además, hoy se usa para otro proyecto; conviene mantener separadas las plataformas de cada empresa. |
-| Asana, ClickUp o Notion con IA | Producto maduro, sin desarrollo. | Ninguno se alimenta del correo con trazabilidad de decisiones. Licencias por usuario y datos en un sistema cerrado. |
-| Desarrollo en Azure (Functions + SQL + Static Web Apps) | Datos dentro del ecosistema Microsoft. | Más operación y más costo de mantenimiento para una PYME. Solo se justifica si se exige que todo viva en el tenant. |
+| **GitHub** | Organización de HR Suplidora (por ejemplo, `github.com/hrsuplidora`). Se transfiere ahí el repositorio actual, que conserva historial e incidencias. Plan Team (~USD 4 por usuario al mes, verificar), necesario para proteger la rama principal en repositorios privados. | Dueños: Gerencia General y un administrador de respaldo. Desarrolladores externos: miembros con acceso solo a este repositorio. Nadie ve los repositorios personales. |
+| **Claude (desarrollo)** | La cuenta personal sigue sirviendo para desarrollar. A mediano plazo conviene una cuenta Claude de la empresa (plan Team) con el correo corporativo. | Un tercero que desarrolle usa su propia cuenta de Claude y trabaja sobre el repositorio de la organización. Nunca entra a la cuenta de la Gerencia General. |
+| **Claude API (producción)** | Organización de HR Suplidora en la consola de Anthropic, con correo corporativo y tarjeta de la empresa. Espacios separados de desarrollo y producción, con tope de gasto y alertas. | Administradores: Gerencia General y respaldo. Las llaves viven solo en Vercel y Supabase. |
+| **Supabase y Vercel** | Organización o equipo a nombre de HR Suplidora, con correo corporativo. | Dueños: Gerencia General y respaldo. Desarrollador: acceso a desarrollo; a producción solo si se autoriza. |
+| **Microsoft 365** | Aplicación HILOS registrada en el Entra de la empresa. Buzón compartido `hilos@` (no requiere licencia). | Administradores globales de Microsoft 365 (Gerencia General y respaldo). |
+| **Credenciales** | Gestor de contraseñas empresarial con bóveda "HILOS – infraestructura" y acceso de emergencia. MFA en todas las cuentas. | Gerencia General y respaldo. |
+| **Documentación** | `docs/operacion.md`: quién tiene acceso a qué, cómo se rotan llaves, cómo se restaura y cómo se da o quita acceso. | Repositorio. |
 
-## 7. Costos estimados **[S]**
+El administrador de respaldo es una decisión pendiente (§13). Puede ser una persona interna para la parte de cuentas y facturación, y un desarrollador externo para la parte técnica, cada uno con acceso solo a lo suyo.
 
-Tipo de cambio de referencia: ₡507 por USD.
+## 9. Costos
 
-| Rubro | USD/mes | CRC/mes | Nota |
-|---|---|---|---|
-| Claude API, Fase 1 (~1.000–1.500 correos/mes) | 25–100 | ₡12.700–50.700 | El extremo bajo asume Batch API y filtro previo; el alto, todo con Opus 5.5 sin optimizar. Precios vigentes a octubre de 2026: Opus 5.5 USD 4 / 20, Haiku 5.5 USD 0,10 / 0,50 por millón de tokens de entrada / salida. |
-| Supabase (plan Pro) | ~25 | ~₡12.700 | Precio público de referencia; verificar. |
-| Vercel (plan Pro, 1 usuario) | ~20 | ~₡10.100 | Precio público de referencia; verificar. El plan gratuito no permite uso comercial. |
-| **Total Fase 1** | **~70–145** | **~₡35.500–73.500** | |
-| Fase 2–3 (5+ buzones) | 150–350 | ₡76.000–177.000 | El costo de IA crece con el volumen de mensajes, no con los usuarios. |
+### 9.1 Qué cuesta y qué no
 
-No incluye el tiempo de la Gerencia General ni la suscripción de Claude que se usa para desarrollar, que ya existe.
+- **Revisar cada 15 minutos si hay correos o mensajes nuevos no tiene costo relevante.** Microsoft Graph y la API de Slack no cobran por consulta: está incluido en las licencias actuales, dentro de sus límites de uso. La tarea programada corre dentro del plan de Supabase.
+- **Lo que cuesta es procesar cada mensaje con IA**, y cada mensaje se procesa una sola vez, cualquiera que sea la frecuencia. Revisar cada 15 minutos o una vez al día cuesta prácticamente lo mismo.
+- **Lo que sí ahorra es agrupar.** Procesar en lote dos veces al día con la Batch API cuesta 50% menos que procesar al instante, y procesar la conversación completa da mejor contexto y menos duplicados. Las actas se procesan al instante.
 
-## 8. Fases
+### 9.2 Estimación
 
-| Fase | Duración **[S]** | Alcance | Criterio de salida |
-|---|---|---|---|
-| **0. Prototipo sin software** | 3 semanas | Rutina programada de Claude que el domingo en la noche lee los correos de la semana con cada reporte (conector actual de Microsoft 365), mantiene el estado de los hilos y publica una página privada con los cuatro reportes 1:1. La Gerencia corrige y las correcciones alimentan la siguiente corrida. | Al menos 80% de los hilos detectados son correctos según la Gerencia y la corrección toma menos de 15 minutos por semana. Taxonomía y estados validados. |
-| **1. MVP para la Gerencia** | 5–6 semanas | Aplicación web: ingesta automática, bandeja de propuestas, reporte 1:1, modo en vivo y acta, captura manual, exclusiones, absorción del resumen diario de Zapier. | Cuatro 1:1 consecutivos dirigidos desde HILOS. Planner deja de usarse para este fin. |
-| **2. Apertura a los reportes** | 6–8 semanas | Acceso de los cuatro reportes, confirmación de sus propios hilos, Slack, sus buzones, política de uso comunicada al personal. | Cada reporte mantiene sus hilos sin intervención de la Gerencia; el termómetro de delegación mejora. |
-| **3. Escalamiento organizacional** | Por definir con datos | Espacios por área, proyectos y plantillas, evaluación de reemplazo de Asana, integración con SAP B1. | Decisión documentada para cada herramienta que se sustituya. |
+*(se completa con el volumen real medido; ver §9.3)*
 
-## 9. Gestión del proyecto con Claude en la nube
+### 9.3 Volumen medido
 
-### 9.1 Separación de papeles
+*(pendiente)*
 
-- **Gerencia General = dueño de producto** en Fases 0–1: define qué se construye, prioriza y aprueba. Desde la Fase 2 se designa un **dueño funcional interno** para el día a día.
-- **Claude Code en la nube = equipo de desarrollo**: diseña, programa, prueba, documenta y mantiene. Cada sesión trabaja en un contenedor aislado sobre este repositorio.
-- **Claude API dentro de HILOS = motor de producción**. El sistema en operación **no depende** de sesiones de Claude Code ni de la cuenta personal de nadie: corre con sus propias credenciales, contratadas a nombre de quien sea dueño del sistema (ver §10).
+## 10. Fases
 
-### 9.2 Repositorio como fuente de verdad
+| Fase | Duración **[S]** | Alcance |
+|---|---|---|
+| **0. Prototipo** | 3–4 semanas | Corre con la cuenta de Claude de la Gerencia General y el conector actual de Microsoft 365 (solo lectura). Detalle abajo. |
+| **1. Aplicación para la Gerencia** | 6–8 semanas | Aplicación completa: ingesta interna, borrador, actas por `hilos@`, áreas, proyectos, subtareas, evaluación, publicación del lunes, seguridad de §6 y cuentas de §8. Absorbe el resumen diario de Zapier. Antes de empezar: depurar los perfiles de Entra. |
+| **2. Puestos que reportan a la Gerencia** | 6–8 semanas | Acceso de los reportes, borrador propio, Slack, sus buzones, publicación propia, política de uso comunicada al personal. |
+| **3. Organización** | Por definir | Espacios por área, plantillas, prueba de penetración, decisión sobre Asana, SAP B1. |
 
-- `CLAUDE.md`: contexto del negocio, convenciones y reglas (no inventar datos, español costarricense, evidencia obligatoria).
-- `docs/`: esta propuesta, decisiones de arquitectura (una por archivo, con su razón) y glosario.
-- Backlog en GitHub Issues, con un hito por fase.
+Detalle de la Fase 0:
 
-### 9.3 Ciclo de cada cambio
+- **Publicación del lunes:** una rutina programada lee la semana y deja la publicación en una página privada antes de las 6:45 a.m.
+- **Actas:** se envían con asunto "Acta 1:1". Una rutina el lunes en la noche las toma de los Elementos enviados.
+- **Borrador:** se gestiona desde la página. Se puede convertir, editar o descartar.
+- **Captura manual:** un correo a uno mismo con asunto "HILO:".
 
-1. La Gerencia describe la necesidad en español, desde la app de Claude (también desde el celular).
-2. Claude crea una rama, implementa, corre las pruebas y abre un pull request.
-3. Vercel genera una vista previa; la Gerencia la revisa desde el celular.
-4. Con la aprobación, se fusiona y se publica automáticamente.
-5. Claude vigila el pull request (pruebas, comentarios) hasta que queda limpio.
+Criterios para pasar a la Fase 1:
 
-### 9.4 Entorno en la nube
+- Al menos 80% de lo detectado es útil.
+- El borrador toma menos de 15 minutos por semana.
+- Los campos, los estados y la evaluación quedan validados.
 
-- **Secretos** (llaves de Supabase de desarrollo, Claude API de desarrollo): se guardan en la configuración del entorno, nunca en el repositorio ni en el chat.
-- **Red**: se habilitan solo los dominios necesarios (Supabase, Vercel, Anthropic, Microsoft Graph). Referencia: https://code.claude.com/docs/en/cloud-environments#network-access
-- **Script de inicio**: instala dependencias y corre pruebas al abrir cada sesión.
-- **Dos ambientes**: Claude Code trabaja contra un proyecto de **desarrollo** con datos de prueba. Las credenciales de producción (buzones reales) viven solo en Vercel y Supabase de producción, nunca en una sesión de desarrollo.
+## 11. Gestión del proyecto con Claude en la nube
 
-### 9.5 Rutinas programadas
+**Papeles separados:**
 
-- **Fase 0**: la rutina semanal que genera los reportes 1:1.
-- **Desde la Fase 1**: una rutina semanal de "salud del sistema" (costo de IA, errores de ingesta, precisión medida por las correcciones) con un informe corto a la Gerencia.
+- La Gerencia General es la dueña de producto: decide y aprueba.
+- Claude Code en la nube es el equipo de desarrollo.
+- La Claude API dentro de HILOS es el motor de producción. Corre con cuentas de la empresa y no depende de sesiones de Claude Code ni de cuentas personales.
 
-### 9.6 Calidad de la IA
+**Repositorio como memoria:**
 
-Las correcciones de la Fase 0 se convierten en un **set de evaluación**: un grupo de correos reales con la respuesta correcta. Ningún cambio en las instrucciones del motor se publica sin superar ese set.
+- `CLAUDE.md` con el contexto del negocio y las reglas.
+- `docs/` con esta propuesta, las decisiones tomadas y la operación.
+- El backlog en GitHub Issues, por fase.
 
-### 9.7 Dedicación estimada de la Gerencia General **[S]**
+Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 
-Fases 0–1: una sesión semanal de 30–45 minutos para revisar y decidir, más la corrección semanal de propuestas. Fase 2 en adelante: revisión quincenal; el dueño funcional asume el resto.
+**Ciclo de cada cambio:**
 
-## 10. Riesgos y mitigación
+1. Solicitud en español.
+2. Claude crea una rama, implementa, prueba y abre un pull request con revisión de seguridad.
+3. La Gerencia revisa la vista previa en el celular y aprueba.
+4. El cambio se publica automáticamente.
+
+**Entorno de desarrollo:**
+
+- Las llaves de desarrollo se guardan en la configuración del entorno de la nube, nunca en el chat.
+- Solo se habilitan los dominios necesarios.
+- Un script de inicio instala dependencias y corre pruebas.
+- Las credenciales de producción nunca entran a una sesión de desarrollo.
+
+**Calidad de la IA:** las ediciones y descartes del borrador en la Fase 0 forman el set de prueba. Ningún cambio al motor se publica sin superarlo.
+
+## 12. Riesgos
 
 | Riesgo | Mitigación |
 |---|---|
-| **Propiedad del sistema y de los datos.** El repositorio está en la cuenta personal de GitHub y el desarrollo se hace con una cuenta personal de Claude; los datos procesados son de HR Suplidora. | Definir con el abogado quién es dueño del código (HR Suplidora, la Gerencia General a título personal o una sociedad que lo licencie) **antes** de la Fase 1, y contratar los servicios de producción a nombre de ese titular. |
-| **Datos personales.** Correos de colaboradores y clientes procesados por terceros en la nube (Ley 8968 de Protección de la Persona frente al Tratamiento de sus Datos Personales). | Validar con el abogado; política de uso comunicada al personal antes de la Fase 2; exclusiones y retención limitada (solo extractos y enlaces, no copias completas de los correos). |
-| **Dependencia de la Gerencia** como dueña del producto. | Dueño funcional interno desde la Fase 2; documentación en el repositorio; stack estándar mantenible por cualquier desarrollador. |
-| **Errores de la IA** (temas inventados o estados mal leídos). | Evidencia obligatoria, confirmación humana, set de evaluación y métricas de precisión. |
-| **Baja adopción** de los reportes, como pasó con Planner. | Fase 2 solo después de que la Gerencia lo use cuatro semanas; los reportes reciben valor (actas claras, menos preguntas repetidas) antes de que se les pida esfuerzo. |
-| **Costo de IA** creciente. | Tope mensual con alerta, Batch API, caché de prompts y filtro previo si los datos lo respaldan. |
+| Perfiles de Entra desordenados: el sistema asigna mal los puestos. | Depuración previa a la Fase 1 y sincronización diaria con alertas de inconsistencias (puesto sin jefe, cargo fuera del catálogo). |
+| Temas importantes que solo existen con externos. | Captura manual y reenvío a `hilos@`. Revisar en la Fase 0 cuánto se pierde. |
+| Errores de la IA. | Borrador con decisión humana, evidencia obligatoria y set de prueba. |
+| Baja adopción, como con Planner. | Fase 2 solo después de cuatro semanas de uso por la Gerencia General. Las actas dan valor inmediato a los reportes. |
+| Evaluación de desempeño percibida como vigilancia. | Criterios conocidos de antemano, coordinados con RRHH y aplicados igual a todos los puestos. |
+| Dependencia de la Gerencia General. | Cuentas de empresa con respaldo (§8) y dueño funcional interno desde la Fase 2. |
+| Costo de IA. | Tope mensual con alertas, procesamiento en lote y caché. |
 
-## 11. Decisiones pendientes para cerrar el requerimiento
+## 13. Pendientes
 
-1. Titularidad del código, de las cuentas de nube y de los datos (consulta con el abogado).
-2. Fuente del 1:1: captura en vivo en pantalla, transcripción de Teams o ambas.
-3. Exclusiones: categorías, remitentes y temas que nunca entran.
-4. Aceptación de los estados adicionales `En pausa / bloqueado` y `Descartado`.
-5. 1:1 con la Asistente Contable: frecuencia y correo.
-6. Aprobación del stack (§6.1) o preferencia por mantener todo dentro de Microsoft.
-7. Arranque de la Fase 0.
+1. ¿Cómo se evalúa hoy el cumplimiento en Asana (Mercadeo): campos, escalas y quién califica?
+2. ¿Quién será el administrador de respaldo (cuentas y facturación) y quién el técnico?
+3. ¿Quién administra hoy Microsoft 365 (proveedor externo o interno), para la depuración de perfiles y el registro de la aplicación?
+4. Inicio de la Fase 0.
