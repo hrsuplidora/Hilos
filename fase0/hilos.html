@@ -373,9 +373,9 @@ function renderLunes(m){
 
 /* ---------- Borrador ---------- */
 /* Decisión: un solo control que combina estado de decisión y quién decide. */
-function decOpts(){return[["no_requiere","No requiere"],["decidido","Ya decidido"],["gg","Decide GG"],
-  ...[...S.puestos.entries()].filter(([id])=>id!=="gg").sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>["p:"+id,"Decide "+p.nombre]),
-  ["tercero","Decide un tercero"],["pd","Por decidir (¿quién?)"]];}
+function decOpts(){return[["no_requiere","Nadie (no requiere)"],["decidido","Nadie (ya decidido)"],["gg","Gerencia General"],
+  ...[...S.puestos.entries()].filter(([id])=>id!=="gg").sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>["p:"+id,p.nombre]),
+  ["tercero","Un tercero"],["pd","Por definir quién"]];}
 function decValue(p){if(p.estadoDecision==="por_decidir"){if(p.decisionDe==="gg")return"gg";if(p.decisionDe==="tercero")return"tercero";return p.decisionDe?"p:"+p.decisionDe:"pd";}
   return p.estadoDecision==="decidido"?"decidido":"no_requiere";}
 function decParse(v){if(v==="no_requiere"||v==="decidido")return{estadoDecision:v,decisionDe:null};
@@ -386,7 +386,7 @@ S.edits=new Map();
 function editOf(id){if(!S.edits.has(id))S.edits.set(id,{});return S.edits.get(id);}
 function draftTable(entries){
   const t=h("div",{class:"dtable"});
-  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Estado"),h("span",{},"Decide"),h("span",{})));
+  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Estado"),h("span",{},"Espera decisión de"),h("span",{})));
   for(const[id,d]of entries)t.append(d.tipo==="actualizacion"?updRow(id,d):draftRow(id,d));
   return t;}
 function cell(lbl,ctrl,cls){return h("label",{class:"cell"+(cls?" "+cls:""),for:ctrl.id},h("span",{class:"cl"},lbl),ctrl);}
@@ -424,7 +424,7 @@ function draftRow(id,d){
   del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id);save.disabled=del.disabled=false;});
   return h("div",{class:"drow"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Tarea"),titulo,chips,ctxBlock(id,ctx,d.evidencia)),
-    cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Estado",est),cell("Decide",dec),
+    cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Estado",est),cell("Espera decisión de",dec),
     h("div",{class:"c-act"},save,del));}
 function updRow(id,d){
   const x=S.hilos.get(d.hilo);const cambios=d.cambios||{};
@@ -437,7 +437,7 @@ function updRow(id,d){
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Actualización sugerida"),h("p",{class:"t-ro"},x?.titulo||"(hilo no encontrado)"),
       ctxBlock(id,d.resumen||"",d.evidencia,desc?h("p",{class:"chg"},desc):null)),
     ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),
-    ro("Estado",IMPL[cambios.estadoImpl||x?.estadoImpl]||"—"),ro("Decide",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
+    ro("Estado",IMPL[cambios.estadoImpl||x?.estadoImpl]||"—"),ro("Espera decisión de",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
     h("div",{class:"c-act"},save,del));}
 async function saveDraft(id,d,vals){
   const hid=nuevoId("h");const now=new Date().toISOString();const p={...(d.propuesta||{}),...vals};
