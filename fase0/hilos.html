@@ -283,7 +283,7 @@ function toast(msg,undo){document.querySelectorAll(".toast").forEach(x=>x.remove
   document.body.append(t);setTimeout(()=>t.remove(),undo?7000:3200);}
 function puestoNombre(id){if(!id)return"Sin responsable";if(id==="tercero")return"Un tercero";return S.puestos.get(id)?.nombre||id;}
 function reportesGG(){return[...S.puestos.entries()].filter(([,p])=>p.reportaGG).sort((a,b)=>(a[1].orden??99)-(b[1].orden??99));}
-function rama(pid){if(!pid||pid==="consolidado"||pid==="todos")return null;const out=new Set([pid]);let more=true;
+function rama(pid){if(!pid||pid==="consolidado"||pid==="todos")return null;if(pid==="gg")return new Set(["gg"]);const out=new Set([pid]);let more=true;
   while(more){more=false;for(const[id,p]of S.puestos){if(!out.has(id)&&p.superior&&out.has(p.superior)){out.add(id);more=true;}}}return out;}
 const inR=(x,set)=>!set||set.has(x.puesto);
 function cerrado(x){return x.estadoImpl==="descartado"||(x.estadoImpl==="completada"&&x.resultado&&x.resultado!=="sin_medir");}
@@ -376,7 +376,7 @@ function renderLunes(m){
   m.append(h("div",{class:"page-h"},h("h1",{},"Seguimiento del lunes"),
     h("div",{class:"sub"},`${fmtLargo(fechaPub)} · semana del ${fmt(desde)} al ${fmt(fechaPub)}`+(S.pub?.generada?` · generada ${fmtHora(S.pub.generada)}`:" · aún sin publicación generada"))));
   const chips=h("div",{class:"chips",role:"group","aria-label":"Puesto"});
-  for(const[id,lbl]of[["consolidado","Consolidado"],...reportesGG().map(([id,p])=>[id,p.nombre])])
+  for(const[id,lbl]of[["consolidado","Consolidado"],...reportesGG().map(([id,p])=>[id,p.nombre]),["gg","Gerencia General (mis tareas)"]])
     chips.append(h("button",{type:"button",class:"chip","aria-pressed":S.rama===id?"true":"false",onclick:()=>{S.rama=id;render();}},lbl));
   m.append(chips);
   const todos=hilosArr();const vis=todos.filter(x=>inR(x,set));const abiertos=vis.filter(x=>!cerrado(x));
@@ -384,7 +384,7 @@ function renderLunes(m){
   if(resumen)m.append(h("section",{class:"sec"},h("div",{class:"lede"},h("p",{},resumen))));
   if(S.rama==="consolidado"){
     const grid=h("div",{class:"grid-sum"});
-    for(const[id,p]of reportesGG()){const r=rama(id);const ab=todos.filter(x=>inR(x,r)&&!cerrado(x));
+    for(const[id,p]of[...reportesGG(),["gg",{nombre:"Gerencia General (mis tareas)"}]]){const r=rama(id);const ab=todos.filter(x=>inR(x,r)&&!cerrado(x));
       const venc=ab.filter(x=>x.fechaCompromiso&&!terminado(x)&&x.fechaCompromiso<hoyD).length;
       const dGG=ab.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").length+[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto)&&esDecGG(d)).length;
       const bor=[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto||d.puesto)).length;

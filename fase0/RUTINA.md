@@ -96,6 +96,7 @@ Otros documentos:
    - `resumenGeneral`: 2 o 3 frases sobre la semana. Qué espera decisión de la Gerencia General, qué está vencido o detenido, y qué se cerró.
    - `preguntasGenerales`: de 3 a 5 preguntas concretas para la semana.
    - `porPuesto`: para cada puesto con `reportaGG: true`, un `resumen` (2 o 3 frases) y de 3 a 5 `preguntas` para el 1:1, basadas en hilos reales. Cada pregunta nombra el tema.
+   - `porPuesto.gg`: lo mismo para las tareas cuyo responsable es la propia Gerencia General: qué tiene pendiente de ejecutar, qué está vencido y qué puede delegar. Las preguntas van dirigidas a ella misma, por ejemplo "¿Este tema lo puede ejecutar otro puesto?".
 3. Español costarricense, directo, sin relleno ni adulación. Las cifras llevan su unidad. No se inventa nada que no esté en los hilos o en el borrador.
 
 ## Procedimiento C · Aviso de las 6:45
