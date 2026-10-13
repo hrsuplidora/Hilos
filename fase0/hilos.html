@@ -142,6 +142,29 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
   .drow .c-task>.cl{display:none}
 }
 
+/* Tabla de hilos */
+.htable{--hcols:minmax(0,1fr) 158px 88px 126px 148px 160px 118px;display:grid;gap:6px}
+.hhead{display:none}
+.hrow{appearance:none;font:inherit;color:inherit;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px;align-items:center;cursor:pointer}
+.hrow:hover{border-color:var(--ink-3)}
+.hrow .c-task{grid-column:1/-1}
+.hc{display:grid;gap:2px;min-width:0;font-size:13.5px;justify-items:start}
+.ht{font-weight:600;overflow-wrap:anywhere;line-height:1.35}
+.hsub{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:var(--ink-3);align-items:center}
+.hwhy{font-size:12.5px;color:var(--ink-2)}
+.muted{color:var(--ink-3)}
+.hrow.sub{margin-left:20px;width:calc(100% - 20px)}
+.hrow.sub .ht::before{content:"↳ ";color:var(--ink-3);font-weight:400}
+.hrow .p-decide{white-space:normal;text-align:left}
+@media (min-width:900px){
+  .hhead{display:grid;grid-template-columns:var(--hcols);gap:12px;padding:0 13px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em}
+  .hrow{grid-template-columns:var(--hcols)}
+  .hrow.sub{grid-template-columns:minmax(0,1fr) 158px 88px 126px 148px 160px 118px}
+  .hrow .c-task{grid-column:auto}
+  .hrow .cl{display:none}
+}
+
 /* Resumen por puesto */
 .grid-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
 .sum{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;display:grid;gap:8px}
@@ -296,6 +319,33 @@ function hiloRow(x,opts={}){
       x.confidencial?h("span",{class:"pill"},"Confidencial"):null,
       opts.extra||null),
     opts.why?h("span",{class:"why"},opts.why):null);}
+/* Tabla de hilos (filas y columnas). HR() describe una fila; sec() y las vistas la agrupan en tabla. */
+function HR(x,opts={}){return{__h:true,x,opts};}
+function decideTxt(x){if(x.estadoDecision!=="por_decidir")return null;return x.decisionDe==="gg"?"Gerencia General":x.decisionDe?puestoNombre(x.decisionDe):"Por definir quién";}
+function hiloTable(descs){
+  const t=h("div",{class:"htable"});
+  t.append(h("div",{class:"hhead","aria-hidden":"true"},["Tarea","Responsable","Tipo","Fecha","Proyecto","Espera decisión de","Estado"].map(c=>h("span",{},c))));
+  for(const d of descs)t.append(hrowEl(d.x,d.opts||{}));
+  return t;}
+function hrowEl(x,o){
+  const kids=hijos(x.id);const done=kids.filter(k=>k.estadoImpl==="completada").length;const padre=x.padre&&S.hilos.get(x.padre);
+  const dec=decideTxt(x);
+  const c=(lbl,...v)=>h("span",{class:"hc"},h("span",{class:"cl"},lbl),...v);
+  return h("button",{type:"button",class:"hrow"+(o.sub?" sub":""),onclick:()=>openEditor(x.id)},
+    h("span",{class:"hc c-task"},
+      h("span",{class:"ht"},x.titulo||"(sin título)"),
+      (o.showParent&&padre)||kids.length||x.confidencial||o.extra?h("span",{class:"hsub"},
+        o.showParent&&padre?h("span",{},"↳ "+padre.titulo):null,
+        kids.length?h("span",{class:"mono"},`${done}/${kids.length} subtareas`):null,
+        x.confidencial?h("span",{class:"pill"},"Confidencial"):null,
+        o.extra||null):null,
+      o.why?h("span",{class:"hwhy"},o.why):null),
+    c("Responsable",h("span",{class:"tag"},puestoNombre(x.puesto))),
+    c("Tipo",TIPO[x.tipo]||"Tarea"),
+    c("Fecha",fechaSpan(x)),
+    c("Proyecto",x.proyecto?h("span",{},x.proyecto):h("span",{class:"muted"},"—")),
+    c("Espera decisión de",dec?h("span",{class:"pill p-decide"},dec):h("span",{class:"muted"},"—")),
+    c("Estado",pillImpl(x.estadoImpl)));}
 function quote(ev){const url=safeUrl(ev.enlace);
   return h("div",{class:"quote"},ev.cita?"“"+ev.cita+"”":"(sin cita)",
     h("span",{class:"src"},`${fmt(ev.fecha)} · ${ev.de||""}${ev.asunto?" · "+ev.asunto:""} `,
@@ -314,7 +364,11 @@ function render(){renderTabs();renderSync();const m=document.getElementById("mai
   ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
 
 /* ---------- Publicación del lunes ---------- */
-function sec(title,items,emptyTxt,count){const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(count??items.length))));
+function sec(title,items,emptyTxt,count){
+  const out=[];let run=[];for(const it of items){if(it&&it.__h){run.push(it);continue;}if(run.length){out.push(hiloTable(run));run=[];}out.push(it);}
+  if(run.length)out.push(hiloTable(run));
+  const n=count??items.length;items=out;
+  const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(n))));
   s.append(items.length?h("div",{class:"list"},items):h("p",{class:"empty"},emptyTxt));return s;}
 function renderLunes(m){
   const set=rama(S.rama);const fechaPub=S.pub?.fecha||hoy();const desde=addDays(fechaPub,-7);const hoyD=hoy();
@@ -341,7 +395,7 @@ function renderLunes(m){
   const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort((a,b)=>ultimaAct(a).localeCompare(ultimaAct(b)));
   const drafts=[...S.borrador.entries()].filter(([,d])=>!set||set.has(d.propuesta?.puesto||d.puesto));
   const draftGG=drafts.filter(([,d])=>esDecGG(d));
-  m.append(sec("Espera su decisión",[...espGG.map(x=>hiloRow(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
+  m.append(sec("Espera su decisión",[...espGG.map(x=>HR(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
     draftGG.length?draftTable(draftGG):null].filter(Boolean),"Nada espera su decisión.",espGG.length+draftGG.length));
   const alertas=[];const alerted=new Set();
   for(const x of abiertos){if(terminado(x))continue;const why=[];
@@ -349,23 +403,23 @@ function renderLunes(m){
     const quieto=dias(ultimaAct(x),hoyD);if(quieto>14)why.push(`${quieto} días sin movimiento`);
     if(!x.fechaCompromiso&&["tarea","proyecto"].includes(x.tipo||"tarea")&&x.estadoDecision!=="por_decidir")why.push("Sin fecha de cumplimiento");
     if(!x.puesto)why.push("Sin puesto responsable");
-    if(why.length){alerted.add(x.id);alertas.push(hiloRow(x,{showParent:true,why:why.join(" · ")}));}}
+    if(why.length){alerted.add(x.id);alertas.push(HR(x,{showParent:true,why:why.join(" · ")}));}}
   m.append(sec("Alertas",alertas,"Sin alertas."));
   const espOtros=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe!=="gg");
-  m.append(sec("Espera decisión de otros",espOtros.map(x=>hiloRow(x)),"Nada pendiente de decisión de otros."));
+  m.append(sec("Espera decisión de otros",espOtros.map(x=>HR(x)),"Nada pendiente de decisión de otros."));
   const cerradosSem=vis.filter(x=>terminado(x)&&(fechaDe(x.fechaCierre)||ultimaAct(x))>=desde);
   const nov=vis.filter(x=>!terminado(x)&&(ultimaAct(x)>=desde||fechaDe(x.creado)>=desde)).sort((a,b)=>ultimaAct(b).localeCompare(ultimaAct(a)));
-  m.append(sec("Novedades de la semana",nov.map(x=>hiloRow(x,{showParent:true,why:(x.historial||[]).slice(-1)[0]?.texto||null})),"Sin movimientos registrados esta semana."));
+  m.append(sec("Novedades de la semana",nov.map(x=>HR(x,{showParent:true,why:(x.historial||[]).slice(-1)[0]?.texto||null})),"Sin movimientos registrados esta semana."));
   const ejec=abiertos.filter(x=>!alerted.has(x.id)&&["sin_iniciar","en_proceso","en_revision","en_pausa"].includes(x.estadoImpl||"sin_iniciar")&&x.estadoDecision!=="por_decidir")
     .sort((a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999"));
-  m.append(sec("En ejecución (al día)",ejec.map(x=>hiloRow(x,{showParent:true})),"No hay otros hilos en ejecución."));
+  m.append(sec("En ejecución (al día)",ejec.map(x=>HR(x,{showParent:true})),"No hay otros hilos en ejecución."));
   const porMedir=vis.filter(x=>x.estadoImpl==="completada"&&(!x.resultado||x.resultado==="sin_medir"));
-  m.append(sec("Resultados por medir",porMedir.map(x=>hiloRow(x)),"Nada pendiente de medir."));
+  m.append(sec("Resultados por medir",porMedir.map(x=>HR(x)),"Nada pendiente de medir."));
   const resto=drafts.filter(([,d])=>!esDecGG(d));const LIM=S.rama==="consolidado"?8:40;
   const bsec=sec("Detectado y por confirmar",resto.length?[draftTable(resto.slice(0,LIM))]:[],"No hay temas nuevos por confirmar.",resto.length);
   if(resto.length>LIM)bsec.append(h("p",{style:"margin-top:10px"},h("button",{type:"button",class:"btn sm",onclick:()=>{S.tab="borrador";render();window.scrollTo(0,0);}},`Ver los ${resto.length} en el Borrador`)));
   m.append(bsec);
-  m.append(sec("Cerrados en la semana",cerradosSem.map(x=>hiloRow(x)),"Nada se cerró esta semana."));
+  m.append(sec("Cerrados en la semana",cerradosSem.map(x=>HR(x)),"Nada se cerró esta semana."));
   const qs=S.rama==="consolidado"?(S.pub?.preguntasGenerales||[]):(S.pub?.porPuesto?.[S.rama]?.preguntas||[]);
   const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
   qsec.append(qs.length?h("ol",{class:"qs"},qs.map(q=>h("li",{},q))):h("p",{class:"empty"},"Se generan con cada publicación del lunes."));
@@ -499,10 +553,10 @@ function renderHilos(m){
       if(a.startsWith("Sin "))return 1;if(b.startsWith("Sin "))return -1;return a.localeCompare(b,"es");});
     for(const k of ks){const g=groups.get(k).sort((a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999"));
       out.append(h("div",{class:"group-h"},k,h("span",{class:"n"},String(g.length))));
-      const list=h("div",{class:"list"});
-      for(const x of g){list.append(hiloRow(x,{showParent:!!x.padre}));
-        for(const c of arr.filter(y=>y.padre===x.id))list.append(hiloRow(c,{sub:true}));}
-      out.append(list);}}
+      const rows=[];
+      for(const x of g){rows.push(HR(x,{showParent:!!x.padre}));
+        for(const c of arr.filter(y=>y.padre===x.id))rows.push(HR(c,{sub:true}));}
+      out.append(hiloTable(rows));}}
   drawList();}
 
 /* ---------- Editor de hilo ---------- */
