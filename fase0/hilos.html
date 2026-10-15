@@ -151,6 +151,7 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
 .hrow .c-task{grid-column:1/-1}
 .hc{display:grid;gap:2px;min-width:0;font-size:13.5px;justify-items:start}
 .ht{font-weight:600;overflow-wrap:anywhere;line-height:1.35}
+.hnum{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--ink-3);margin-right:6px;font-variant-numeric:tabular-nums}
 .hsub{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:var(--ink-3);align-items:center}
 .hwhy{font-size:12.5px;color:var(--ink-2)}
 .muted{color:var(--ink-3)}
@@ -291,6 +292,13 @@ function terminado(x){return x.estadoImpl==="completada"||x.estadoImpl==="descar
 function ultimaAct(x){return x.ultimaActividad||fechaDe(x.actualizado)||fechaDe(x.creado)||hoy();}
 function hilosArr(){return[...S.hilos.entries()].map(([id,x])=>({...x,id}));}
 function hijos(id){return hilosArr().filter(x=>x.padre===id);}
+function numTxt(x){return x&&x.num?"#"+String(x.num).padStart(3,"0"):"";}
+/* Número consecutivo: contador en config/contador, protegido contra un contador atrasado con el máximo local. */
+async function nextNum(){const ref=db.doc("config/contador");let n=1;
+  try{const sn=await ref.get();if(sn.exists)n=Number(sn.data().siguiente)||1;}catch(e){}
+  n=Math.max(n,Math.max(0,...hilosArr().map(x=>Number(x.num)||0))+1);
+  try{await ref.set({siguiente:n+1});}catch(e){}
+  return n;}
 
 /* ---------- Piezas visuales ---------- */
 function pillImpl(s){return h("span",{class:"pill p-"+(s||"sin_iniciar")},IMPL[s]||"Sin iniciar");}
@@ -306,7 +314,7 @@ function hiloRow(x,opts={}){
   const kids=hijos(x.id);const done=kids.filter(k=>k.estadoImpl==="completada").length;
   const padre=x.padre&&S.hilos.get(x.padre);
   return h("button",{type:"button",class:"row"+(opts.sub?" sub":""),onclick:()=>openEditor(x.id)},
-    h("span",{class:"t"},x.titulo||"(sin título)"),
+    h("span",{class:"t"},x.num?h("span",{class:"hnum"},numTxt(x)):null,x.titulo||"(sin título)"),
     h("span",{},pillImpl(x.estadoImpl)),
     h("span",{class:"meta"},
       opts.showParent&&padre?h("span",{class:"parent-ref"},"↳ "+padre.titulo):null,
@@ -333,9 +341,9 @@ function hrowEl(x,o){
   const c=(lbl,...v)=>h("span",{class:"hc"},h("span",{class:"cl"},lbl),...v);
   return h("button",{type:"button",class:"hrow"+(o.sub?" sub":""),onclick:()=>openEditor(x.id)},
     h("span",{class:"hc c-task"},
-      h("span",{class:"ht"},x.titulo||"(sin título)"),
+      h("span",{class:"ht"},x.num?h("span",{class:"hnum"},numTxt(x)):null,x.titulo||"(sin título)"),
       (o.showParent&&padre)||kids.length||x.confidencial||o.extra?h("span",{class:"hsub"},
-        o.showParent&&padre?h("span",{},"↳ "+padre.titulo):null,
+        o.showParent&&padre?h("span",{},"↳ "+(padre.num?numTxt(padre)+" · ":"")+padre.titulo):null,
         kids.length?h("span",{class:"mono"},`${done}/${kids.length} subtareas`):null,
         x.confidencial?h("span",{class:"pill"},"Confidencial"):null,
         o.extra||null):null,
@@ -494,8 +502,8 @@ function updRow(id,d){
     ro("Estado",IMPL[cambios.estadoImpl||x?.estadoImpl]||"—"),ro("Espera decisión de",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
     h("div",{class:"c-act"},save,del));}
 async function saveDraft(id,d,vals){
-  const hid=nuevoId("h");const now=new Date().toISOString();const p={...(d.propuesta||{}),...vals};
-  const data=normalizeHilo({...p,area:S.puestos.get(p.puesto)?.area||p.area,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
+  const hid=nuevoId("h");const now=new Date().toISOString();const p={...(d.propuesta||{}),...vals};const num=await nextNum();
+  const data=normalizeHilo({...p,num,area:S.puestos.get(p.puesto)?.area||p.area,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
     ultimaActividad:p.ultimaActividad||hoy(),historial:[{fecha:now,texto:"Creado desde el borrador"}],fechaCierre:terminado(p)?now:null});
   try{await db.doc("hilos/"+hid).set(data);await db.doc("borrador/"+id).update({estado:"convertido",hiloId:hid,resuelto:now});S.edits.delete(id);
     toast("Guardado como hilo",async()=>{await db.doc("hilos/"+hid).delete();await db.doc("borrador/"+id).update({estado:"pendiente",hiloId:null,resuelto:null});});}
@@ -532,7 +540,7 @@ async function applyUpdate(id,d){const x=S.hilos.get(d.hilo);if(!x){toast("El hi
 /* ---------- Hilos ---------- */
 function renderHilos(m){
   m.append(h("div",{class:"page-h"},h("h1",{},"Hilos"),h("div",{class:"sub"},"Todos los temas en seguimiento, agrupados por área, proyecto, estado o puesto.")));
-  const q=h("input",{type:"search",id:"f-q",placeholder:"Buscar",value:S.f.q,"aria-label":"Buscar"});
+  const q=h("input",{type:"search",id:"f-q",placeholder:"Buscar por título o #ID",value:S.f.q,"aria-label":"Buscar"});
   q.addEventListener("input",()=>{S.f.q=q.value;drawList();});
   const sp=h("select",{id:"f-puesto","aria-label":"Puesto"},h("option",{value:"todos"},"Todos los puestos"),
     [...S.puestos.entries()].sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>h("option",{value:id},p.nombre)));
@@ -543,7 +551,7 @@ function renderHilos(m){
   m.append(h("div",{class:"toolbar"},q,sp,sg,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")));
   const out=h("div",{id:"hilos-out"});m.append(out);
   function drawList(){out.replaceChildren();const set=rama(S.f.puesto);const qq=S.f.q.trim().toLowerCase();
-    let arr=hilosArr().filter(x=>inR(x,set)&&(S.f.cerrados||!cerrado(x))&&(!qq||(x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
+    let arr=hilosArr().filter(x=>inR(x,set)&&(S.f.cerrados||!cerrado(x))&&(!qq||(numTxt(x)+" "+(x.num||"")+" "+x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
     if(!arr.length){out.append(h("p",{class:"empty"},S.hilos.size?"Ningún hilo coincide con el filtro.":"Todavía no hay hilos. Conviértalos desde el Borrador o cree uno con “+ Hilo”."));return;}
     const ids=new Set(arr.map(x=>x.id));
     const key=x=>S.f.agrupar==="area"?(x.area||S.puestos.get(x.puesto)?.area||"Sin área"):S.f.agrupar==="proyecto"?(x.proyecto||"Sin proyecto"):S.f.agrupar==="estado"?(IMPL[x.estadoImpl]||"Sin iniciar"):puestoNombre(x.puesto);
@@ -567,13 +575,23 @@ function normalizeHilo(x){const o={titulo:(x.titulo||"").trim(),detalle:x.detall
   fechaCompromiso:x.fechaCompromiso||null,fechaOriginal:x.fechaOriginal||x.fechaCompromiso||null,reprogramaciones:x.reprogramaciones||0,
   ultimaActividad:x.ultimaActividad||hoy(),creado:x.creado||new Date().toISOString(),actualizado:x.actualizado||new Date().toISOString(),
   origen:x.origen||"manual",evidencia:x.evidencia||[],historial:x.historial||[],evaluacion:x.evaluacion||null,
-  confidencial:!!x.confidencial,fechaCierre:x.fechaCierre||null,notas:x.notas||null};
+  confidencial:!!x.confidencial,fechaCierre:x.fechaCierre||null,notas:x.notas||null,num:x.num||null};
   return o;}
 function closeLayer(){document.getElementById("layer").replaceChildren();}
 function field(lbl,ctrl,cls){return h("div",{class:"field"+(cls?" "+cls:"")},h("label",{for:ctrl.id},lbl),ctrl);}
 function sel(id,opts,val){const s=h("select",{id},opts.map(([v,l])=>h("option",{value:v},l)));s.value=val??opts[0][0];return s;}
 function puestoOpts(extra=[]){return[...extra,...[...S.puestos.entries()].sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>[id,p.nombre])];}
 function radios(name,map,val){return h("div",{class:"seg",role:"radiogroup"},Object.entries(map).map(([v,l])=>{const r=h("input",{type:"radio",name,value:v,id:name+"-"+v});r.checked=val===v;return h("label",{for:name+"-"+v},r,l);}));}
+/* Hilo padre: solo hilos principales (un nivel de subtareas), abiertos, agrupados por área y con su #ID. El padre actual siempre aparece. */
+function padreSel(id,actual){
+  const s=h("select",{id:"e-padre"});s.append(h("option",{value:""},"Ninguno (es un hilo principal)"));
+  const cand=hilosArr().filter(x=>x.id!==id&&!x.padre&&(!cerrado(x)||x.id===actual));
+  const byA=new Map();for(const x of cand){const a=x.area||S.puestos.get(x.puesto)?.area||"Sin área";if(!byA.has(a))byA.set(a,[]);byA.get(a).push(x);}
+  const areas=[...byA.keys()].sort((a,b)=>{const ia=AREAS.indexOf(a),ib=AREAS.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
+  for(const a of areas){const g=h("optgroup",{label:a});
+    for(const x of byA.get(a).sort((p,q)=>(p.num||9e9)-(q.num||9e9)))g.append(h("option",{value:x.id},(x.num?numTxt(x)+" · ":"")+x.titulo+(cerrado(x)?" (cerrado)":"")));
+    s.append(g);}
+  s.value=actual||"";return s;}
 function openEditor(id,preset,ctx={}){
   const isNew=!id;const cur=isNew?normalizeHilo(preset||{}):{...S.hilos.get(id)};if(!cur)return;
   const L=document.getElementById("layer");
@@ -583,7 +601,7 @@ function openEditor(id,preset,ctx={}){
     puesto:sel("e-puesto",puestoOpts([["","Sin responsable"]]),cur.puesto||""),
     area:sel("e-area",AREAS.map(a=>[a,a]),cur.area||S.puestos.get(cur.puesto)?.area||"Gerencia"),
     proyecto:h("input",{id:"e-proyecto",type:"text",value:cur.proyecto||"",list:"dl-proyectos"}),
-    padre:sel("e-padre",[["","Ninguno (hilo principal)"],...hilosArr().filter(x=>x.id!==id&&!x.padre&&!cerrado(x)).map(x=>[x.id,x.titulo])],cur.padre||""),
+    padre:padreSel(id,cur.padre),
     estadoDecision:sel("e-dec",Object.entries(DEC),cur.estadoDecision),
     decisionDe:sel("e-decde",puestoOpts([["gg","Gerencia General"],["tercero","Un tercero"]]).filter((v,i,a)=>a.findIndex(z=>z[0]===v[0])===i),cur.decisionDe||"gg"),
     estadoImpl:sel("e-impl",Object.entries(IMPL),cur.estadoImpl),
@@ -617,9 +635,9 @@ function openEditor(id,preset,ctx={}){
   const evid=(cur.evidencia||[]);
   const histo=(cur.historial||[]).slice().reverse();
   const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"e-h"},
-    h("div",{class:"sheet-h"},h("h2",{id:"e-h"},isNew?(ctx.fromDraft?"Convertir en hilo":cur.padre?"Nueva subtarea":"Nuevo hilo"):"Editar hilo"),
+    h("div",{class:"sheet-h"},h("h2",{id:"e-h"},isNew?(ctx.fromDraft?"Convertir en hilo":cur.padre?"Nueva subtarea":"Nuevo hilo"):("Editar hilo "+numTxt(cur)).trim()),
       h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer,"aria-label":"Cerrar"},"Cerrar")),
-    cur.padre&&S.hilos.get(cur.padre)?h("p",{class:"hint"},"Subtarea de: "+S.hilos.get(cur.padre).titulo):null,
+    cur.padre&&S.hilos.get(cur.padre)?h("p",{class:"hint"},"Subtarea de: "+(numTxt(S.hilos.get(cur.padre))+" ").trimStart()+S.hilos.get(cur.padre).titulo):null,
     h("div",{class:"form"},
       field("Título",f.titulo,"full"),field("Detalle",f.detalle,"full"),
       field("Puesto responsable",f.puesto),field("Tipo",f.tipo),
@@ -642,7 +660,7 @@ function openEditor(id,preset,ctx={}){
     const titulo=f.titulo.value.trim();if(!titulo){toast("Escriba un título");f.titulo.focus();return false;}
     const now=new Date().toISOString();
     const val={titulo,detalle:f.detalle.value.trim(),tipo:f.tipo.value,puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value.trim()||null,
-      padre:(f.padre&&f.padre.value)||cur.padre||null,estadoDecision:f.estadoDecision.value,decisionDe:f.estadoDecision.value==="por_decidir"?f.decisionDe.value:null,
+      padre:f.padre?(f.padre.value||null):(cur.padre||null),estadoDecision:f.estadoDecision.value,decisionDe:f.estadoDecision.value==="por_decidir"?f.decisionDe.value:null,
       estadoImpl:f.estadoImpl.value,fechaCompromiso:f.fecha.value||null,resultado:f.resultado.value||null,resultadoNota:f.resultadoNota.value.trim()||null,
       confidencial:f.confidencial.checked};
     if(kids.length)val.padre=cur.padre||null;
@@ -658,8 +676,8 @@ function openEditor(id,preset,ctx={}){
       if(val.evaluacion&&JSON.stringify([cur.evaluacion?.entrega,cur.evaluacion?.ejecucion])!==JSON.stringify([ent,eje]))cambios.push(`Evaluación: ${ENTREGA[ent]||"—"} · ${EJEC[eje]||"—"}`);
       if(cur.titulo!==val.titulo||(cur.detalle||"")!==val.detalle||(cur.proyecto||null)!==val.proyecto||cur.tipo!==val.tipo||(cur.area||null)!==val.area)cambios.push("Detalle editado");}
     try{
-      if(isNew){const hid=nuevoId("h");
-        const data=normalizeHilo({...cur,...val,fechaOriginal:val.fechaCompromiso,creado:now,actualizado:now,ultimaActividad:hoy(),
+      if(isNew){const hid=nuevoId("h");const num=await nextNum();
+        const data=normalizeHilo({...cur,...val,num,fechaOriginal:val.fechaCompromiso,creado:now,actualizado:now,ultimaActividad:hoy(),
           origen:ctx.fromDraft?(cur.origen||"correo"):"manual",historial:[{fecha:now,texto:ctx.fromDraft?"Creado desde el borrador":"Creado manualmente"}],
           fechaCierre:terminado(val)?now:null});
         await db.doc("hilos/"+hid).set(data);

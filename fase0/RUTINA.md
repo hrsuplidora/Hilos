@@ -30,6 +30,13 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 5. **No inventar.** Cada campo se sostiene en una cita. Lo dudoso queda en null y se explica en `notas`.
 6. **Los hilos son del puesto.** Se usan los ids de la colección `puestos`, y el correo del remitente o del destinatario se asocia al puesto con `puestos.correos`.
 7. **Toda escritura en la base va fijada** con `if_version` cuando el documento ya existe, en lotes de 50 como máximo.
+8. **Número de hilo.** Cada hilo nuevo lleva un campo `num`: un entero consecutivo que en pantalla se ve como #001. Para asignarlo:
+   - leer `config/contador` (campo `siguiente`);
+   - usar el mayor entre ese valor y el `num` más alto de los hilos más 1;
+   - escribir `config/contador` con `siguiente` + 1, fijado con `if_version`, y reintentar si hay conflicto;
+   - crear el hilo con ese `num`.
+
+   Los borradores no llevan número; lo reciben cuando se convierten en hilo.
 
 ## Esquemas en la base de datos
 
@@ -48,7 +55,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 `hilos/{h-AAAAMMDD-xxxxxx}`: los mismos campos de `propuesta`, más:
 
 ```json
-{"padre":null,"resultadoNota":null,"fechaOriginal":null,"reprogramaciones":0,"creado":"ISO","actualizado":"ISO","origen":"correo|acta|manual",
+{"num":70,"padre":null,"resultadoNota":null,"fechaOriginal":null,"reprogramaciones":0,"creado":"ISO","actualizado":"ISO","origen":"correo|acta|manual",
  "evidencia":[...],"historial":[{"fecha":"ISO","texto":"…"}],"evaluacion":null,"fechaCierre":null}
 ```
 
