@@ -239,7 +239,7 @@ No existe una "tarea de dar seguimiento" separada: dar seguimiento es ser el sol
 
 Si usted cambia la fecha del hilo #045, su reporte ve el cambio en su panel al instante, y viceversa. Queda registrado quién cambió qué.
 
-### Quién ve qué (visibilidad) **[S] por decidir**
+### Quién ve qué (visibilidad) **[D] Opción B**
 
 Las reglas se aplican en la base de datos (seguridad por fila), no solo en pantalla.
 
@@ -247,7 +247,8 @@ Las reglas se aplican en la base de datos (seguridad por fila), no solo en panta
 |---|---|
 | Participación | El puesto responsable, el solicitante, quien debe decidir y los seguidores. |
 | Jerarquía | El superior del puesto responsable y, hacia arriba, toda la cadena hasta la Gerencia General. |
-| Equipo gerencial (recomendado) | Los cuatro puestos que reportan a la Gerencia General ven, **en solo lectura**, los hilos no confidenciales de los demás gerentes. Así pueden coordinarse entre ellos sin que la Gerencia General sea el punto de paso. |
+| Entre pares | **No** se ven entre sí **[D]**: cada gerente ve solo lo suyo, lo de su equipo y aquello en que participa. Se descartó la visibilidad de lectura entre gerentes (opción A). |
+| Subtareas **[S]** | Quien tiene una subtarea ve la subtarea completa y un **contexto mínimo** del hilo padre en solo lectura: número, título, puesto responsable, estado y fecha. No ve el detalle del padre, su evidencia ni las otras subtareas. Si el padre es confidencial, solo ve "Hilo confidencial". |
 | Colaboradores sin reportes | Solo lo suyo y aquello en que participan. |
 | Confidencial | Prevalece sobre todo lo anterior: solo la Gerencia General, el puesto responsable y las personas agregadas explícitamente. |
 
