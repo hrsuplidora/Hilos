@@ -239,6 +239,20 @@ No existe una "tarea de dar seguimiento" separada: dar seguimiento es ser el sol
 
 Si usted cambia la fecha del hilo #045, su reporte ve el cambio en su panel al instante, y viceversa. Queda registrado quién cambió qué.
 
+### Quién ve qué (visibilidad) **[S] por decidir**
+
+Las reglas se aplican en la base de datos (seguridad por fila), no solo en pantalla.
+
+| Regla | Ve el hilo |
+|---|---|
+| Participación | El puesto responsable, el solicitante, quien debe decidir y los seguidores. |
+| Jerarquía | El superior del puesto responsable y, hacia arriba, toda la cadena hasta la Gerencia General. |
+| Equipo gerencial (recomendado) | Los cuatro puestos que reportan a la Gerencia General ven, **en solo lectura**, los hilos no confidenciales de los demás gerentes. Así pueden coordinarse entre ellos sin que la Gerencia General sea el punto de paso. |
+| Colaboradores sin reportes | Solo lo suyo y aquello en que participan. |
+| Confidencial | Prevalece sobre todo lo anterior: solo la Gerencia General, el puesto responsable y las personas agregadas explícitamente. |
+
+Editar un hilo solo lo pueden hacer el responsable, el solicitante y la cadena jerárquica hacia arriba. El administrador técnico de respaldo administra cuentas y accesos, pero no tiene por eso visibilidad del contenido de los hilos.
+
 ### Cómo se evita la duplicación (cinco barreras)
 
 1. **Identificador único del correo.** El mismo correo tiene el mismo `internetMessageId` en sus Enviados y en la Bandeja del destinatario. HILOS lleva **un registro global** de correos procesados, no uno por buzón: el correo se procesa una vez, desde el primer buzón donde aparece, y en el otro se salta.
