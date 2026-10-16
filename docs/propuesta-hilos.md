@@ -248,7 +248,7 @@ Las reglas se aplican en la base de datos (seguridad por fila), no solo en panta
 | Participación | El puesto responsable, el solicitante, quien debe decidir y los seguidores. |
 | Jerarquía | El superior del puesto responsable y, hacia arriba, toda la cadena hasta la Gerencia General. |
 | Entre pares | **No** se ven entre sí **[D]**: cada gerente ve solo lo suyo, lo de su equipo y aquello en que participa. Se descartó la visibilidad de lectura entre gerentes (opción A). |
-| Subtareas **[S]** | Quien tiene una subtarea ve la subtarea completa y un **contexto mínimo** del hilo padre en solo lectura: número, título, puesto responsable, estado y fecha. No ve el detalle del padre, su evidencia ni las otras subtareas. Si el padre es confidencial, solo ve "Hilo confidencial". |
+| Subtareas **[D]** | Quien tiene una subtarea, y su jefe, ve la subtarea completa y un **contexto mínimo** del hilo padre en solo lectura: número, título, puesto responsable, estado y fecha. No ve el detalle del padre, su evidencia ni las otras subtareas. Si el padre es confidencial, solo ve "Hilo confidencial". |
 | Colaboradores sin reportes | Solo lo suyo y aquello en que participan. |
 | Confidencial | Prevalece sobre todo lo anterior: solo la Gerencia General, el puesto responsable y las personas agregadas explícitamente. |
 
