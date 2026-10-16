@@ -609,7 +609,7 @@ function openEditor(id,preset,ctx={}){
     resultado:sel("e-res",[["","—"],...Object.entries(RES)],cur.resultado||""),
     resultadoNota:h("input",{id:"e-resnota",type:"text",value:cur.resultadoNota||"",placeholder:"Dato que sustenta el resultado"}),
     confidencial:h("input",{id:"e-conf",type:"checkbox"}),
-    ejecutor:h("input",{id:"e-ejecutor",type:"text",value:cur.evaluacion?.ejecutor||S.puestos.get(cur.puesto)?.ocupante||""}),
+    ejecutor:h("input",{id:"e-ejecutor",type:"text",list:"dl-personas",placeholder:"Nombre de quien lo ejecutó",value:cur.evaluacion?.ejecutor||S.puestos.get(cur.puesto)?.ocupante||""}),
     evalNota:h("input",{id:"e-evnota",type:"text",value:cur.evaluacion?.nota||""})};
   f.detalle.value=cur.detalle||"";f.confidencial.checked=!!cur.confidencial;
   const proys=[...new Set(hilosArr().map(x=>x.proyecto).filter(Boolean))];
@@ -622,6 +622,8 @@ function openEditor(id,preset,ctx={}){
     h("div",{class:"field"},h("span",{class:"lbl"},"Entrega"),entrega),
     h("div",{class:"field"},h("span",{class:"lbl"},"Ejecución"),ejecucion),
     h("div",{class:"form"},field("Ejecutado por",f.ejecutor),field("Comentario",f.evalNota)),
+    h("datalist",{id:"dl-personas"},[...new Set([...[...S.puestos.values()].map(p=>p.ocupante),...hilosArr().map(x=>x.evaluacion?.ejecutor)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")).map(n=>h("option",{value:n}))),
+    h("p",{class:"hint"},"La persona que hizo el trabajo. El hilo es del puesto, pero la evaluación queda a nombre de la persona. Se propone quien ocupa hoy el puesto; cámbielo si lo ejecutó otra persona."),
     h("p",{class:"hint",id:"e-sugerencia"}));
   const resBox=h("div",{class:"form full"},field("Resultado",f.resultado),field("Sustento del resultado",f.resultadoNota));
   const syncImpl=()=>{const done=f.estadoImpl.value==="completada";evalBox.hidden=!done;resBox.hidden=!done;
@@ -665,7 +667,7 @@ function openEditor(id,preset,ctx={}){
       confidencial:f.confidencial.checked};
     if(kids.length)val.padre=cur.padre||null;
     const ent=sheet.querySelector('input[name="e-entrega"]:checked')?.value||null;const eje=sheet.querySelector('input[name="e-ejec"]:checked')?.value||null;
-    if(val.estadoImpl==="completada"&&(ent||eje))val.evaluacion={entrega:ent,ejecucion:eje,ejecutor:f.ejecutor.value.trim()||null,nota:f.evalNota.value.trim()||null,fecha:cur.evaluacion?.fecha||now,puesto:val.puesto};
+    if(val.estadoImpl==="completada"&&(ent||eje))val.evaluacion={entrega:ent,ejecucion:eje,ejecutor:f.ejecutor.value.trim()||S.puestos.get(val.puesto)?.ocupante||null,nota:f.evalNota.value.trim()||null,fecha:cur.evaluacion?.fecha||now,puesto:val.puesto};
     const cambios=[];
     if(!isNew){
       if(cur.estadoImpl!==val.estadoImpl)cambios.push(`Implementación: ${IMPL[cur.estadoImpl]||"—"} → ${IMPL[val.estadoImpl]}`);
