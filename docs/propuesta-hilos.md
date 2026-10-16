@@ -218,6 +218,35 @@ Se usa la misma escala que hoy se aplica en Asana:
 - Los hilos marcados como confidenciales (salarios, disciplinarios, salud) los ven solo las personas autorizadas.
 - Los permisos se aplican en la base de datos, no solo en pantalla.
 
+## 4bis. Fase 2: un solo registro, vistas por rol y cero duplicados
+
+### Un hilo, no una copia por persona
+
+Todos los hilos viven en una sola base. Cada hilo tiene:
+
+- **Puesto responsable:** quien ejecuta.
+- **Solicitante:** quien lo pidió.
+- **Espera decisión de:** si está frenado, quién debe decidir.
+- **Seguidores** (opcional).
+
+No existe una "tarea de dar seguimiento" separada: dar seguimiento es ser el solicitante del hilo.
+
+| Quién | Qué ve |
+|---|---|
+| Gerencia General | Todo. Su Publicación por puesto, como hoy. |
+| Reporte directo | **Mis hilos:** donde su puesto es responsable. **Lo que pedí:** donde es solicitante. **Mi equipo:** los hilos de sus subordinados. **Espera mi decisión.** |
+| Colaborador sin reportes | Sus hilos y lo que pidió. |
+
+Si usted cambia la fecha del hilo #045, su reporte ve el cambio en su panel al instante, y viceversa. Queda registrado quién cambió qué.
+
+### Cómo se evita la duplicación (cinco barreras)
+
+1. **Identificador único del correo.** El mismo correo tiene el mismo `internetMessageId` en sus Enviados y en la Bandeja del destinatario. HILOS lleva **un registro global** de correos procesados, no uno por buzón: el correo se procesa una vez, desde el primer buzón donde aparece, y en el otro se salta.
+2. **Conversación.** Las respuestas del mismo hilo de correo (`conversationId`) se agregan como evidencia o actualización del hilo existente. No crean uno nuevo.
+3. **Coincidencia por significado.** Un correo distinto sobre el mismo tema se compara con los hilos abiertos (puesto, área, proyecto y similitud del texto). Por ejemplo, el reporte reenvía la instrucción a su equipo. Si coincide, se propone como actualización o como **subtarea** del hilo existente, no como un hilo nuevo.
+4. **Un solo procesamiento, en orden.** Una sola tarea central lee todos los buzones, uno tras otro, contra el mismo registro. Dos lecturas en paralelo no pueden crear el mismo hilo.
+5. **Confirmación humana.** El tema detectado va al Borrador de **quien lo pidió**. Si el sistema sospecha un duplicado, lo marca "Posible duplicado de #045", con un botón para fusionar. Al guardarlo, aparece directamente en los hilos del responsable, sin pasar por su borrador.
+
 ## 5. Escalabilidad organizacional
 
 Espacios por área, proyectos con plantillas (lanzamiento de producto, importación de China), tareas recurrentes, comentarios con @menciones y adjuntos enlazados a SharePoint. La sustitución de Asana en Mercadeo se decide comparando uso real, flujo creativo y costo. Más adelante, se integra con SAP B1 para medir resultados con datos duros.
