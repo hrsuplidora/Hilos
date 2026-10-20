@@ -122,7 +122,7 @@ a{color:var(--accent)}
 .discard-form select,.discard-form input{min-width:0;flex:1 1 160px}
 
 /* Tabla de revisión del borrador */
-.dtable{--dcols:minmax(0,1fr) 168px 148px 132px 168px 104px;display:grid;gap:8px}
+.dtable{--dcols:minmax(0,1fr) 160px 140px 160px 128px 160px 104px;display:grid;gap:8px}
 .dhead{display:none}
 .drow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;gap:10px 12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
 .drow.upd{border-style:dashed}
@@ -194,6 +194,26 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
   .hrow .in.dirty{border-color:var(--accent)}
   .hrow .in.dirty:not(.due){background-color:var(--accent-soft)}
 }
+
+/* Proyectos */
+.ps-abierto{background:var(--ok-soft);color:var(--ok)}
+.ps-en_pausa{background:var(--warn-soft);color:var(--warn)}
+.ps-cerrado{background:var(--mute-soft);color:var(--ink-2)}
+.ps-cancelado{background:var(--mute-soft);color:var(--ink-3);text-decoration:line-through}
+td.wrap-td{min-width:220px;max-width:46ch;color:var(--ink-2)}
+.merge{background:var(--warn-soft);border-radius:var(--r);padding:10px 12px;display:grid;gap:8px;font-size:14px}
+.merge[hidden]{display:none}
+
+/* Vista previa del correo al puesto */
+.mailmeta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:14px}
+.mailmeta dt{color:var(--ink-3)}
+.mailmeta dd{margin:0;overflow-wrap:anywhere}
+.mailprev{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--bg);font-size:13.5px;overflow-x:auto}
+.mailprev p{margin:0 0 10px}
+.mailprev h3{font-size:14px;margin:14px 0 6px}
+.mailprev table{border-collapse:collapse;width:100%;font-size:12.5px}
+.mailprev th,.mailprev td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.mailprev th{font-size:11px;letter-spacing:.04em}
 
 /* Resumen por puesto */
 .grid-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
@@ -276,10 +296,11 @@ const ENTREGA = {a_tiempo:"A tiempo",tarde_justificado:"Tarde – Justificado",t
 const EJEC = {mejor:"Mejor de lo esperado",esperado:"Lo esperado",menos:"Menos de lo esperado"};
 const AREAS = ["Gerencia","Comercial","Operaciones","RRHH","Contabilidad"];
 const MOTIVOS = ["No es un tema de seguimiento","Ya está resuelto","Duplicado","No me corresponde","Otro"];
-const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["desempeno","Desempeño"],["puestos","Puestos"],["ayuda","Cómo se usa"]];
+const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["proyectos","Proyectos"],["desempeno","Desempeño"],["puestos","Puestos"],["ayuda","Cómo se usa"]];
+const PEST = {abierto:"Abierto",en_pausa:"En pausa",cerrado:"Cerrado",cancelado:"Cancelado"};
 
 /* ---------- Estado ---------- */
-const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),pub:null,ingesta:null,
+const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),proyectos:new Map(),pub:null,ingesta:null,
   tab:"lunes",rama:"consolidado",loaded:{p:false,h:false,b:false},
   f:{q:"",puesto:"todos",agrupar:"area",cerrados:false},
   per:"90",fb:"todos",sort:{k:"fecha",dir:1},mias:false,hedits:new Map()};
@@ -378,7 +399,13 @@ function cmpHilos(a,b){const{k,dir}=S.sort;const va=sortVal(a,k),vb=sortVal(b,k)
 function setSort(k,dir){S.sort={k,dir:dir??(S.sort.k===k?-S.sort.dir:1)};try{localStorage.setItem("hilos.sort",JSON.stringify(S.sort));}catch(e){}render();}
 function sortBar(){const s=sel("f-sort",SORTS.map(([k,l])=>[k,"Ordenar por: "+l]),S.sort.k);s.addEventListener("change",()=>setSort(s.value,1));
   return h("div",{class:"toolbar only-narrow"},s,h("button",{type:"button",class:"btn sm",onclick:()=>setSort(S.sort.k)},S.sort.dir>0?"↑ Ascendente":"↓ Descendente"));}
-function proyDL(){return h("datalist",{id:"dl-proy"},[...new Set(hilosArr().map(x=>x.proyecto).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")).map(p=>h("option",{value:p})));}
+/* Proyecto: se elige de la lista de la pestaña Proyectos. Solo se ofrecen los abiertos; el proyecto actual siempre aparece, con su estado si no está abierto. */
+function proyectoSel(id,actual){const s=h("select",{id},h("option",{value:""},"Sin proyecto"));
+  const ps=[...S.proyectos.values()];
+  const abiertos=ps.filter(p=>(p.estado||"abierto")==="abierto").map(p=>p.nombre).filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+  for(const n of abiertos)s.append(h("option",{value:n},n));
+  if(actual&&!abiertos.includes(actual)){const p=ps.find(q=>q.nombre===actual);s.append(h("option",{value:actual},`${actual} (${p?PEST[p.estado].toLowerCase():"no está en la lista"})`));}
+  s.value=actual||"";return s;}
 function hiloTable(descs){
   const t=h("div",{class:"htable"});
   t.append(h("div",{class:"hhead"},SORTS.map(([k,l])=>h("button",{type:"button",class:"sh","data-dir":S.sort.k===k?(S.sort.dir>0?"asc":"desc"):null,
@@ -393,7 +420,7 @@ function hrowEl(x,o){
   const orig={titulo:x.titulo||"",puesto:x.puesto||"",tipo:x.tipo||"tarea",fechaCompromiso:x.fechaCompromiso||"",proyecto:x.proyecto||"",dec:decValue(x),estadoImpl:x.estadoImpl||"sin_iniciar"};
   const ctl={titulo:h("textarea",{id:"ht-"+id,rows:"1","aria-label":"Tarea "+numTxt(x),class:"t-in"}),
     puesto:sel("hr-"+id,puestoOpts([["","Sin responsable"]]),""),tipo:sel("hy-"+id,Object.entries(TIPO),"tarea"),
-    fechaCompromiso:h("input",{type:"date",id:"hf-"+id}),proyecto:h("input",{type:"text",id:"hp-"+id,list:"dl-proy",placeholder:"—",maxlength:"80"}),
+    fechaCompromiso:h("input",{type:"date",id:"hf-"+id}),proyecto:proyectoSel("hp-"+id,orig.proyecto),
     dec:sel("hd-"+id,decOpts(),"no_requiere"),estadoImpl:sel("he-"+id,Object.entries(IMPL),"sin_iniciar")};
   for(const[k,c]of Object.entries(ctl)){c.classList.add("in");c.value=k in e?e[k]:orig[k];}
   const row=h("div",{class:"hrow"+(o.sub?" sub":"")});
@@ -407,7 +434,7 @@ function hrowEl(x,o){
   const doSave=async()=>{const t=ctl.titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");ctl.titulo.focus();return;}
     save.disabled=cancel.disabled=true;
     const ok=await saveInline(id,{titulo:t,puesto:ctl.puesto.value||null,tipo:ctl.tipo.value,fechaCompromiso:ctl.fechaCompromiso.value||null,
-      proyecto:ctl.proyecto.value.trim()||null,estadoImpl:ctl.estadoImpl.value,...decParse(ctl.dec.value)});
+      proyecto:ctl.proyecto.value||null,estadoImpl:ctl.estadoImpl.value,...decParse(ctl.dec.value)});
     save.disabled=cancel.disabled=false;if(ok)trasGuardar();};
   save.addEventListener("click",doSave);cancel.addEventListener("click",reset);
   row.addEventListener("keydown",ev=>{if(!ev.target.classList.contains("in"))return;
@@ -472,7 +499,7 @@ function trasGuardar(){const a=document.activeElement;if(a&&a.closest&&a.closest
 function render(){if(editandoFila()||ptrDown){S.pendiente=true;return;}S.pendiente=false;
   renderTabs();renderSync();const m=document.getElementById("main");m.replaceChildren();
   if(!S.loaded.p||!S.loaded.h||!S.loaded.b){m.append(h("p",{class:"empty",style:"padding-top:24px"},"Cargando HILOS…"));return;}
-  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
+  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,proyectos:renderProyectos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
 
 /* ---------- Publicación del lunes ---------- */
 function sec(title,items,emptyTxt,count,desc){
@@ -502,7 +529,9 @@ function renderLunes(m){
   for(const[id,lbl]of[["consolidado","Consolidado"],...reportesGG().map(([id,p])=>[id,p.nombre]),["gg","Gerencia General (mis tareas)"]])
     chips.append(h("button",{type:"button",class:"chip","aria-pressed":S.rama===id?"true":"false",onclick:()=>{S.rama=id;render();}},lbl));
   m.append(chips);
-  const mias=miasBox(S.rama,"f-mias-p");if(mias)m.append(h("div",{class:"toolbar"},mias));
+  const mias=miasBox(S.rama,"f-mias-p");
+  if(mias){const oc=(S.puestos.get(S.rama)?.ocupante||"").trim().split(/\s+/)[0];
+    m.append(h("div",{class:"toolbar"},mias,h("button",{type:"button",class:"btn sm",style:"margin-left:auto",onclick:()=>openCorreo(S.rama)},"Preparar correo para "+(oc||puestoNombre(S.rama)))));}
   const set=rama(S.rama);const todos=hilosArr();
   const abiertos=visibles(S.rama,!!mias&&S.mias).filter(x=>!cerrado(x));
   const resumen=S.rama==="consolidado"?S.pub?.resumenGeneral:S.pub?.porPuesto?.[S.rama]?.resumen;
@@ -521,7 +550,7 @@ function renderLunes(m){
   if(drafts.length){const nGG=drafts.filter(esDecGG).length;
     m.append(h("p",{class:"bnote"},h("span",{},(drafts.length===1?"1 tema detectado espera":`${drafts.length} temas detectados esperan`)+" confirmación en el Borrador"+(nGG?` (${nGG} con decisión suya)`:"")+"."),
       h("button",{type:"button",class:"btn sm",onclick:irBorrador},"Ir al Borrador")));}
-  m.append(legend(),sortBar(),proyDL());
+  m.append(legend(),sortBar());
   const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(cmpHilos);const enEsp=new Set(espGG.map(x=>x.id));
   const porMedir=abiertos.filter(x=>!enEsp.has(x.id)&&x.estadoImpl==="completada").sort(cmpHilos);const enMed=new Set(porMedir.map(x=>x.id));
   const resto=abiertos.filter(x=>!enEsp.has(x.id)&&!enMed.has(x.id)).sort(cmpHilos);
@@ -535,6 +564,67 @@ function renderLunes(m){
   const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
   qsec.append(qs.length?h("ol",{class:"qs"},qs.map(q=>h("li",{},q))):h("p",{class:"empty"},"Se generan con cada publicación del lunes."));
   m.append(qsec);}
+
+/* ---------- Correo al puesto ---------- */
+/* Arma el listado de tareas abiertas del puesto (sin confidenciales) y deja un borrador en el Outlook de la Gerencia General
+   con el conector Microsoft 365. La página solo puede crear borradores: nunca envía. El asunto empieza con "Seguimiento HILOS",
+   que la lectura nocturna excluye para no volver a cargar el listado como acta. */
+const M365="Microsoft 365";
+let mcpP=null;
+function mcpNs(){if(!mcpP)mcpP=window.claude&&typeof window.claude.use==="function"?window.claude.use("mcp").catch(()=>null):Promise.resolve(null);return mcpP;}
+function plazoTxt(x){return x.estadoImpl==="completada"?"—":{"due-late":"Vencida","due-soon":"Vence pronto","due-ok":"A tiempo","due-none":"Sin fecha"}[dueClass(x.fechaCompromiso,x.estadoImpl)]||"—";}
+function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);const hoyD=hoy();
+  const abiertos=hilosArr().filter(x=>inR(x,r)&&!cerrado(x));const lista=abiertos.filter(x=>!x.confidencial);
+  const porFecha=(a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999")||(a.num||9e9)-(b.num||9e9);
+  const esp=lista.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(porFecha);const e1=new Set(esp.map(x=>x.id));
+  const med=lista.filter(x=>!e1.has(x.id)&&x.estadoImpl==="completada").sort(porFecha);const e2=new Set(med.map(x=>x.id));
+  const seg=lista.filter(x=>!e1.has(x.id)&&!e2.has(x.id)).sort(porFecha);
+  const tabla=arr=>h("table",{},h("thead",{},h("tr",{},["ID","Tarea","Responsable","Fecha","Plazo","Estado","Espera decisión de"].map(t=>h("th",{},t)))),
+    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},h("td",{},numTxt(x)),h("td",{},x.titulo||""),h("td",{},puestoNombre(x.puesto)),
+      h("td",{},x.fechaCompromiso?fmtF(x.fechaCompromiso):"—"),h("td",{},pl==="Vencida"?h("strong",{},pl):pl),h("td",{},IMPL[x.estadoImpl||"sin_iniciar"]),h("td",{},decideTxt(x)||"—"));})));
+  const nombre=(p.ocupante||"").trim().split(/\s+/)[0];
+  const node=h("div",{},h("p",{},nombre?`Hola, ${nombre}:`:"Hola:"),
+    lista.length?h("p",{},`Este es el listado de temas abiertos a cargo de ${p.nombre||puestoNombre(pid)} al ${fmtLargo(hoyD)}. Si algo no corresponde o cambió, favor responder este correo.`)
+      :h("p",{},`Al ${fmtLargo(hoyD)} no hay temas abiertos a cargo de ${p.nombre||puestoNombre(pid)}.`),
+    [["Esperan mi decisión",esp],["En seguimiento",seg],["Completadas, falta registrar el resultado",med]].map(([t,arr])=>arr.length?[h("h3",{},`${t} (${arr.length})`),tabla(arr)]:[]));
+  const[y,mm,dd]=hoyD.split("-");
+  return{nombre,to:(p.correos||[]).slice(0,1),subject:`Seguimiento HILOS · ${p.nombre||puestoNombre(pid)} · ${+dd} ${MESES[+mm-1]} ${y}`,
+    node,html:node.innerHTML,n:lista.length,conf:abiertos.length-lista.length};}
+/* El resultado de la herramienta no se ha observado: se busca cualquier enlace de Outlook en la respuesta, sin depender de un nombre de campo. */
+function buscarEnlace(o,depth=0){if(depth>4||o==null)return null;if(typeof o==="string")return/^https:\/\//.test(o)?safeUrl(o):null;
+  if(typeof o==="object")for(const v of Object.values(o)){const r=buscarEnlace(v,depth+1);if(r)return r;}return null;}
+function mcpMsg(e){const c=e?.code;return({
+  needs_reauth:"La conexión con Microsoft 365 venció. Vuelva a conectarla en claude.ai → Configuración → Conectores y pruebe de nuevo.",
+  server_not_connected:"Microsoft 365 no está conectado en su cuenta de Claude. Conéctelo en claude.ai → Configuración → Conectores.",
+  selection_required:"Hay más de una conexión de Microsoft 365. Elija cuál usar en el aviso de Claude y pruebe de nuevo.",
+  not_in_manifest:"Esta página no tiene permiso para crear borradores. Actívelo en el menú Permisos de la página y pruebe de nuevo.",
+  consent_required:"No se dio permiso para crear el borrador. Pulse de nuevo para que Claude lo pida.",
+  approval_required:"Hace falta aprobar el permiso. Pulse de nuevo y acepte el aviso de Claude.",
+  blocked_by_policy:"La política de la organización no permite crear borradores desde esta página.",
+  not_granted:"Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai.",
+  capability_disabled:"Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai.",
+  capability_removed:"Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai.",
+  tool_error:"Outlook no aceptó el borrador: "+(e?.message||"sin detalle")+"."}[c])
+  ||"No hubo respuesta clara de Microsoft 365. Revise su carpeta Borradores antes de volver a intentarlo, para no duplicarlo.";}
+function openCorreo(pid){const c=correoPuesto(pid);
+  const status=h("p",{class:"hint",role:"status"});
+  const btn=h("button",{type:"button",class:"btn primary",disabled:!c.to.length},"Crear borrador en Outlook");
+  const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"c-h"},
+    h("div",{class:"sheet-h"},h("h2",{id:"c-h"},"Correo para "+(c.nombre||puestoNombre(pid))),h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer},"Cerrar")),
+    h("dl",{class:"mailmeta"},h("dt",{},"Para"),h("dd",{},c.to.join(", ")||"El puesto no tiene correo registrado (pestaña Puestos)."),h("dt",{},"Asunto"),h("dd",{},c.subject)),
+    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+(c.conf?`. No incluye ${c.conf} confidencial${c.conf===1?"":"es"}.`:".")+" Queda como borrador en su carpeta Borradores de Outlook: revíselo y envíelo desde ahí."),
+    h("div",{class:"mailprev"},c.node),status,
+    h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),btn));
+  btn.addEventListener("click",async()=>{btn.disabled=true;status.textContent="Creando el borrador…";
+    const mcp=await mcpNs();
+    if(!mcp){status.textContent="Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai, en la computadora.";btn.disabled=false;return;}
+    try{const r=await mcp.callTool(M365,"outlook_create_draft",{to:c.to,subject:c.subject,body:c.html,bodyType:"html"},{cache:false});
+      const link=buscarEnlace(r?.payload??r?.structuredContent??null);
+      status.replaceChildren("Borrador creado en su carpeta Borradores de Outlook. ",link?h("a",{href:link,target:"_blank",rel:"noopener noreferrer"},"Abrir en Outlook"):null);
+      btn.textContent="Borrador creado";}
+    catch(e){status.textContent=mcpMsg(e);btn.disabled=false;}});
+  const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
+  document.getElementById("layer").replaceChildren(scrim);}
 
 /* ---------- Borrador ---------- */
 /* Decisión: un solo control que combina estado de decisión y quién decide. */
@@ -551,7 +641,7 @@ S.edits=new Map();
 function editOf(id){if(!S.edits.has(id))S.edits.set(id,{});return S.edits.get(id);}
 function draftTable(entries){
   const t=h("div",{class:"dtable"});
-  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Estado"),h("span",{},"Espera decisión de"),h("span",{})));
+  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Proyecto"),h("span",{},"Estado"),h("span",{},"Espera decisión de"),h("span",{})));
   for(const[id,d]of entries)t.append(d.tipo==="actualizacion"?updRow(id,d):draftRow(id,d));
   return t;}
 function cell(lbl,ctrl,cls){return h("label",{class:"cell"+(cls?" "+cls:""),for:ctrl.id},h("span",{class:"cl"},lbl),ctrl);}
@@ -573,23 +663,24 @@ function draftRow(id,d){
   const fecha=h("input",{type:"date",id:"bf-"+id,"aria-label":"Fecha esperada"});fecha.value=v("fechaCompromiso",p.fechaCompromiso||"");
   const est=sel("be-"+id,Object.entries(IMPL).filter(([k])=>k!=="descartado"),v("estadoImpl",p.estadoImpl||"sin_iniciar"));
   const dec=sel("bd-"+id,decOpts(),v("dec",decValue(p)));
-  for(const c of[resp,fecha,est,dec])c.classList.add("in");
+  const proy=proyectoSel("bp-"+id,p.proyecto||"");proy.value=v("proyecto",p.proyecto||"");
+  for(const c of[resp,fecha,est,dec,proy])c.classList.add("in");
   const mark=()=>{titulo.classList.toggle("dirty",titulo.value!==(p.titulo||""));resp.classList.toggle("dirty",resp.value!==(p.puesto||""));
     fecha.classList.toggle("dirty",fecha.value!==(p.fechaCompromiso||""));est.classList.toggle("dirty",est.value!==(p.estadoImpl||"sin_iniciar"));
-    dec.classList.toggle("dirty",dec.value!==decValue(p));fecha.classList.toggle("empty",!fecha.value);};
+    dec.classList.toggle("dirty",dec.value!==decValue(p));proy.classList.toggle("dirty",proy.value!==(p.proyecto||""));fecha.classList.toggle("empty",!fecha.value);};
   titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;mark();});
   fecha.addEventListener("change",()=>{e.fechaCompromiso=fecha.value;mark();});est.addEventListener("change",()=>{e.estadoImpl=est.value;mark();});
-  dec.addEventListener("change",()=>{e.dec=dec.value;mark();});mark();
-  const chips=h("div",{class:"dchips"},h("span",{},TIPO[p.tipo]||"Tarea"),p.proyecto?h("span",{},"◇ "+p.proyecto):null,
+  dec.addEventListener("change",()=>{e.dec=dec.value;mark();});proy.addEventListener("change",()=>{e.proyecto=proy.value;mark();});mark();
+  const chips=h("div",{class:"dchips"},h("span",{},TIPO[p.tipo]||"Tarea"),
     p.confidencial?h("span",{class:"pill"},"Confidencial"):null,d.confianza?h("span",{class:"conf"},"confianza "+d.confianza):null);
   const ctx=[p.detalle,p.notas].filter(Boolean).join(" · ");
   const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const del=h("button",{type:"button",class:"btn ghost sm"},"Descartar");
   save.addEventListener("click",async()=>{const t=titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");titulo.focus();return;}
-    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,puesto:resp.value||null,fechaCompromiso:fecha.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;trasGuardar();});
+    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,puesto:resp.value||null,fechaCompromiso:fecha.value||null,proyecto:proy.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;trasGuardar();});
   del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id);save.disabled=del.disabled=false;trasGuardar();});
   return h("div",{class:"drow"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Tarea"),titulo,chips,ctxBlock(id,ctx,d.evidencia)),
-    cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Estado",est),cell("Espera decisión de",dec),
+    cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Proyecto",proy),cell("Estado",est),cell("Espera decisión de",dec),
     h("div",{class:"c-act"},save,del));}
 function updRow(id,d){
   const x=S.hilos.get(d.hilo);const cambios=d.cambios||{};
@@ -601,7 +692,7 @@ function updRow(id,d){
   return h("div",{class:"drow upd"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Actualización sugerida"),h("p",{class:"t-ro"},x?.titulo||"(hilo no encontrado)"),
       ctxBlock(id,d.resumen||"",d.evidencia,desc?h("p",{class:"chg"},desc):null)),
-    ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),
+    ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),ro("Proyecto",x?.proyecto||"—"),
     ro("Estado",IMPL[cambios.estadoImpl||x?.estadoImpl]||"—"),ro("Espera decisión de",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
     h("div",{class:"c-act"},save,del));}
 async function saveDraft(id,d,vals){
@@ -652,7 +743,7 @@ function renderHilos(m){
   sg.value=S.f.agrupar;sg.addEventListener("change",()=>{S.f.agrupar=sg.value;drawList();});
   const cb=h("input",{type:"checkbox",id:"f-cerrados"});cb.checked=S.f.cerrados;cb.addEventListener("change",()=>{S.f.cerrados=cb.checked;drawList();});
   const mias=miasBox(S.f.puesto,"f-mias-h");
-  m.append(h("div",{class:"toolbar"},q,sp,sg,mias,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")),legend(),sortBar(),proyDL());
+  m.append(h("div",{class:"toolbar"},q,sp,sg,mias,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")),legend(),sortBar());
   const out=h("div",{id:"hilos-out"});m.append(out);
   function drawList(){out.replaceChildren();const qq=S.f.q.trim().toLowerCase();
     let arr=visibles(S.f.puesto,!!mias&&S.mias).filter(x=>(S.f.cerrados||!cerrado(x))&&(!qq||(numTxt(x)+" "+(x.num||"")+" "+x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
@@ -704,7 +795,7 @@ function openEditor(id,preset,ctx={}){
     tipo:sel("e-tipo",Object.entries(TIPO),cur.tipo),
     puesto:sel("e-puesto",puestoOpts([["","Sin responsable"]]),cur.puesto||""),
     area:sel("e-area",AREAS.map(a=>[a,a]),cur.area||S.puestos.get(cur.puesto)?.area||"Gerencia"),
-    proyecto:h("input",{id:"e-proyecto",type:"text",value:cur.proyecto||"",list:"dl-proyectos"}),
+    proyecto:proyectoSel("e-proyecto",cur.proyecto||""),
     padre:padreSel(id,cur.padre),
     estadoDecision:sel("e-dec",Object.entries(DEC),cur.estadoDecision),
     decisionDe:sel("e-decde",puestoOpts([["gg","Gerencia General"],["tercero","Un tercero"]]).filter((v,i,a)=>a.findIndex(z=>z[0]===v[0])===i),cur.decisionDe||"gg"),
@@ -716,8 +807,6 @@ function openEditor(id,preset,ctx={}){
     ejecutor:h("input",{id:"e-ejecutor",type:"text",list:"dl-personas",placeholder:"Nombre de quien lo ejecutó",value:cur.evaluacion?.ejecutor||S.puestos.get(cur.puesto)?.ocupante||""}),
     evalNota:h("input",{id:"e-evnota",type:"text",value:cur.evaluacion?.nota||""})};
   f.detalle.value=cur.detalle||"";f.confidencial.checked=!!cur.confidencial;
-  const proys=[...new Set(hilosArr().map(x=>x.proyecto).filter(Boolean))];
-  const dl=h("datalist",{id:"dl-proyectos"},proys.map(p=>h("option",{value:p})));
   const decWrap=field("Decisión pendiente de",f.decisionDe);
   const syncDec=()=>{decWrap.hidden=f.estadoDecision.value!=="por_decidir";};f.estadoDecision.addEventListener("change",syncDec);
   /* En las tareas de la Gerencia General, el área es la que se relaciona con el tema: define dónde aparece con "Ver mis tareas asociadas". */
@@ -755,7 +844,6 @@ function openEditor(id,preset,ctx={}){
       !kids.length?field("Pertenece a (hilo padre)",f.padre,"full"):null,
       resBox,evalBox,
       h("label",{class:"check full",for:"e-conf"},f.confidencial,"Confidencial (salarios, disciplinarios, salud)")),
-    dl,
     isNew?null:subBox,
     evid.length?h("div",{class:"box"},h("h3",{},"Evidencia"),evid.map(quote)):null,
     histo.length?h("div",{class:"box"},h("h3",{},"Historial"),h("ul",{class:"hist"},histo.map(e=>h("li",{},h("span",{class:"when"},fmtHora(e.fecha)),e.texto)))):null,
@@ -767,7 +855,7 @@ function openEditor(id,preset,ctx={}){
   async function save(stay){
     const titulo=f.titulo.value.trim();if(!titulo){toast("Escriba un título");f.titulo.focus();return false;}
     const now=new Date().toISOString();
-    const val={titulo,detalle:f.detalle.value.trim(),tipo:f.tipo.value,puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value.trim()||null,
+    const val={titulo,detalle:f.detalle.value.trim(),tipo:f.tipo.value,puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value||null,
       padre:f.padre?(f.padre.value||null):(cur.padre||null),estadoDecision:f.estadoDecision.value,decisionDe:f.estadoDecision.value==="por_decidir"?f.decisionDe.value:null,
       estadoImpl:f.estadoImpl.value,fechaCompromiso:f.fecha.value||null,resultado:f.resultado.value||null,resultadoNota:f.resultadoNota.value.trim()||null,
       confidencial:f.confidencial.checked};
@@ -799,6 +887,70 @@ function openEditor(id,preset,ctx={}){
       if(!val.evaluacion&&cur.evaluacion&&val.estadoImpl!=="completada")patch.evaluacion=null;
       await db.doc("hilos/"+id).update(patch);toast("Cambios guardados");if(!stay)closeLayer();return id;}
     catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));return false;}}}
+
+/* ---------- Proyectos ---------- */
+/* Las tareas guardan el nombre del proyecto; cambiar el nombre o unir dos proyectos actualiza las tareas y los temas del borrador que lo usan. */
+function proyStats(nombre){const hs=hilosArr().filter(x=>x.proyecto===nombre);return{total:hs.length,abiertas:hs.filter(x=>!cerrado(x)).length};}
+function verHilosProyecto(n){S.f={...S.f,q:n,puesto:"todos",agrupar:"proyecto",cerrados:true};S.tab="hilos";try{localStorage.setItem("hilos.tab","hilos");}catch(e){}render();window.scrollTo(0,0);}
+async function moverProyecto(de,a){
+  for(const x of hilosArr().filter(x=>x.proyecto===de))await db.doc("hilos/"+x.id).update({proyecto:a});
+  for(const[id,d]of S.borrador)if(d.propuesta?.proyecto===de)await db.doc("borrador/"+id).update({propuesta:{...d.propuesta,proyecto:a}});}
+function renderProyectos(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Proyectos"),
+    h("div",{class:"sub"},"Solo los proyectos abiertos se pueden elegir al asignar una tarea. Si cambia el nombre de un proyecto, sus tareas se actualizan solas.")));
+  m.append(h("div",{class:"toolbar"},h("button",{type:"button",class:"btn sm",onclick:()=>openProyecto(null)},"+ Proyecto")));
+  const ORD=Object.keys(PEST);
+  const ps=[...S.proyectos.entries()].sort((a,b)=>ORD.indexOf(a[1].estado||"abierto")-ORD.indexOf(b[1].estado||"abierto")||String(a[1].nombre).localeCompare(String(b[1].nombre),"es"));
+  const fuera=[...new Set(hilosArr().map(x=>x.proyecto).filter(Boolean))].filter(n=>!ps.some(([,p])=>p.nombre===n)).sort((a,b)=>a.localeCompare(b,"es"));
+  if(!ps.length&&!fuera.length){m.append(h("p",{class:"empty"},"Aún no hay proyectos. Cree el primero con “+ Proyecto”."));return;}
+  const tareas=n=>{const st=proyStats(n);return st.total?h("button",{type:"button",class:"more",onclick:()=>verHilosProyecto(n)},`${st.abiertas} de ${st.total}`):"0";};
+  const rows=ps.map(([id,p])=>h("tr",{},
+    h("td",{},h("strong",{},p.nombre)),h("td",{class:"wrap-td"},p.detalle||h("span",{class:"muted"},"—")),
+    h("td",{},p.lider?puestoNombre(p.lider):h("span",{class:"muted"},"Sin líder"),p.liderInferido?h("div",{class:"hint"},"Líder por confirmar"):null),
+    h("td",{},h("span",{class:"pill ps-"+(p.estado||"abierto")},PEST[p.estado||"abierto"])),
+    h("td",{class:"num"},tareas(p.nombre)),
+    h("td",{},h("button",{type:"button",class:"btn ghost sm",onclick:()=>openProyecto(id)},"Editar"))));
+  for(const n of fuera)rows.push(h("tr",{},h("td",{},h("strong",{},n)),h("td",{class:"wrap-td muted"},"Usado en tareas, pero no está en la lista."),
+    h("td",{},"—"),h("td",{},"—"),h("td",{class:"num"},tareas(n)),
+    h("td",{},h("button",{type:"button",class:"btn ghost sm",onclick:()=>openProyecto(null,{nombre:n})},"Agregar"))));
+  m.append(h("div",{class:"tbl-wrap"},h("table",{},h("thead",{},h("tr",{},["Proyecto","Detalle","Líder","Status","Tareas abiertas",""].map((t,i)=>h("th",{class:i===4?"num":null},t)))),h("tbody",{},rows))));}
+function openProyecto(id,preset={}){
+  const cur=id?{...S.proyectos.get(id)}:{nombre:preset.nombre||"",detalle:"",lider:null,estado:"abierto"};
+  const f={nombre:h("input",{id:"pr-nombre",type:"text",value:cur.nombre||"",maxlength:"80"}),detalle:h("textarea",{id:"pr-detalle"}),
+    lider:sel("pr-lider",puestoOpts([["","Sin líder"]]),cur.lider||""),estado:sel("pr-estado",Object.entries(PEST),cur.estado||"abierto")};
+  f.detalle.value=cur.detalle||"";
+  const st=id?proyStats(cur.nombre):{total:0,abiertas:0};
+  const merge=h("div",{class:"merge",hidden:true});
+  const saveBtn=h("button",{type:"button",class:"btn primary"},"Guardar");
+  const del=id&&!st.total?h("button",{type:"button",class:"btn ghost danger",onclick:async()=>{
+    try{await db.doc("proyectos/"+id).delete();closeLayer();toast("Proyecto eliminado",()=>db.doc("proyectos/"+id).set(S.proyectos.get(id)||cur));}
+    catch(e){toast("No se pudo eliminar: "+(e?.message||e?.code||"error"));}}},"Eliminar"):null;
+  const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"pr-h"},
+    h("div",{class:"sheet-h"},h("h2",{id:"pr-h"},id?"Editar proyecto":"Nuevo proyecto"),h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer},"Cerrar")),
+    h("div",{class:"form"},field("Proyecto",f.nombre,"full"),field("Detalle",f.detalle,"full"),field("Líder (puesto)",f.lider),field("Status",f.estado),
+      id?h("p",{class:"hint full"},st.total?`Tiene ${st.total} tarea${st.total>1?"s":""} (${st.abiertas} abierta${st.abiertas===1?"":"s"}). Si cambia el nombre, se actualizan todas.`:"No tiene tareas asignadas."):null),
+    merge,
+    h("div",{class:"sheet-f"},del,h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),saveBtn));
+  saveBtn.addEventListener("click",async()=>{
+    const nombre=f.nombre.value.trim().replace(/\s+/g," ");if(!nombre){toast("Escriba el nombre del proyecto");f.nombre.focus();return;}
+    const now=new Date().toISOString();
+    const data={nombre,detalle:f.detalle.value.trim()||null,lider:f.lider.value||null,estado:f.estado.value,liderInferido:false,actualizado:now};
+    const dup=[...S.proyectos.entries()].find(([k,p])=>k!==id&&String(p.nombre||"").toLowerCase()===nombre.toLowerCase());
+    if(dup){
+      if(!id&&!preset.nombre){toast("Ya existe un proyecto con ese nombre");return;}
+      const n=proyStats(cur.nombre).total;
+      merge.replaceChildren(h("span",{},`Ya existe el proyecto “${dup[1].nombre}”. ¿Unir los dos? `+(n?`Las ${n} tareas de “${cur.nombre}” pasan a “${dup[1].nombre}”`:`“${cur.nombre}” no tiene tareas`)+(id?" y este proyecto se elimina.":".")),
+        h("div",{class:"actions"},h("button",{type:"button",class:"btn sm",onclick:()=>{merge.hidden=true;}},"No"),h("button",{type:"button",class:"btn primary sm",onclick:async()=>{
+          try{await moverProyecto(cur.nombre,dup[1].nombre);if(id)await db.doc("proyectos/"+id).delete();closeLayer();toast("Proyectos unidos");}
+          catch(e){toast("No se pudo unir: "+(e?.message||e?.code||"error"));}}},"Unir proyectos")));
+      merge.hidden=false;return;}
+    saveBtn.disabled=true;
+    try{if(id){if(nombre!==cur.nombre)await moverProyecto(cur.nombre,nombre);await db.doc("proyectos/"+id).update(data);}
+      else await db.doc("proyectos/"+nuevoId("pr")).set({...data,creado:now});
+      closeLayer();toast("Proyecto guardado");}
+    catch(e){saveBtn.disabled=false;toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}});
+  const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
+  document.getElementById("layer").replaceChildren(scrim);setTimeout(()=>f.nombre.focus(),30);}
 
 /* ---------- Desempeño ---------- */
 function renderDesempeno(m){
@@ -857,6 +1009,8 @@ const AYUDA=[
  ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
  ["Color de la fecha","Rojo: vencida. Ámbar: vence en 7 días o menos. Verde: a tiempo. Gris: sin fecha. Las tareas completadas o descartadas no llevan color."],
  ["Mis tareas asociadas","Al filtrar por Comercial, Operaciones, RRHH o Contabilidad, marque “Ver mis tareas asociadas” para sumar sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El Área relacionada se cambia al abrir el hilo con el #ID."],
+ ["Proyectos","En la pestaña Proyectos se administra la lista: nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). Al asignar un proyecto a una tarea solo se ofrecen los abiertos; la tarea conserva su proyecto aunque luego se cierre. Si cambia el nombre de un proyecto, sus tareas se actualizan; si le pone el nombre de otro existente, se ofrece unirlos."],
+ ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de sus tareas abiertas (sin las confidenciales) y, al confirmar, queda un borrador en su carpeta Borradores de Outlook para revisarlo y enviarlo. HILOS no envía correos. La primera vez, Claude le pedirá permiso para que la página use Microsoft 365."],
  ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. Ajuste en la fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento."],
  ["Acta del 1:1","Al terminar el 1:1, envíe al otro participante un correo con los temas y acuerdos, en lista libre. Cualquier asunto sirve: HILOS reconoce el acta por su contenido. Lo claro se carga directo como hilo esa misma noche; lo dudoso queda en el Borrador."],
  ["Correo de un externo","Reenvíeselo a usted mismo con la palabra HILO al inicio del asunto (por ejemplo, “HILO RV: Cotización…”): se crea el hilo directo esa noche. Sin la palabra HILO, queda en el Borrador para que lo confirme."],
@@ -881,6 +1035,8 @@ async function boot(){
   db.collection("hilos").onSnapshot(s=>{S.hilos=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.h=true;render();},err);
   db.collection("borrador").where("estado","==","pendiente").onSnapshot(s=>{S.borrador=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.b=true;render();},err);
   db.collection("publicaciones").orderBy("fecha","desc").limit(1).onSnapshot(s=>{S.pub=s.docs[0]?.data()||null;render();},err);
-  db.doc("estado/ingesta").onSnapshot(s=>{S.ingesta=s.exists?s.data():null;renderSync();},err);}
+  db.doc("estado/ingesta").onSnapshot(s=>{S.ingesta=s.exists?s.data():null;renderSync();},err);
+  db.collection("proyectos").onSnapshot(s=>{S.proyectos=new Map(s.docs.map(d=>[d.id,d.data()]));render();},err);
+  mcpNs();}
 boot();
 </script>
