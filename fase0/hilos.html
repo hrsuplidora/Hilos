@@ -583,9 +583,9 @@ function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);cons
   const med=lista.filter(x=>!e1.has(x.id)&&x.estadoImpl==="completada").sort(porFecha);const e2=new Set(med.map(x=>x.id));
   const seg=lista.filter(x=>!e1.has(x.id)&&!e2.has(x.id)).sort(porFecha);
   const td=(v,st)=>h("td",{style:MAIL.td+(st?";"+st:"")},v);
-  const tabla=arr=>h("table",{style:MAIL.tabla},h("thead",{},h("tr",{},["ID","Tarea","Responsable","Fecha","Plazo","Estado","Espera decisión de"].map(t=>h("th",{style:MAIL.th},t)))),
-    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td(x.titulo||""),td(puestoNombre(x.puesto)),
-      td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"]),td(decideTxt(x)||"—"));})));
+  const tabla=arr=>h("table",{style:MAIL.tabla},h("thead",{},h("tr",{},["ID","Tarea","Detalle","Responsable","Fecha","Plazo","Estado"].map(t=>h("th",{style:MAIL.th},t)))),
+    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td(x.titulo||""),td(x.detalle||"—","color:#464c63"),td(puestoNombre(x.puesto)),
+      td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"]));})));
   const nombre=(p.ocupante||"").trim().split(/\s+/)[0];const pn=p.nombre||puestoNombre(pid);
   const node=h("div",{},h("p",{style:MAIL.p},nombre?`Hola, ${nombre}:`:"Hola:"),
     lista.length?h("p",{style:MAIL.p},`Este es el listado de temas abiertos a cargo de ${pn} al ${fmtLargo(hoyD)}. Si algo no corresponde o cambió, favor responder este correo.`)
