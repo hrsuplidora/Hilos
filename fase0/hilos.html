@@ -597,7 +597,10 @@ function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);cons
 /* El resultado de la herramienta no se ha observado: se busca cualquier enlace de Outlook en la respuesta, sin depender de un nombre de campo. */
 function buscarEnlace(o,depth=0){if(depth>4||o==null)return null;if(typeof o==="string")return/^https:\/\//.test(o)?safeUrl(o):null;
   if(typeof o==="object")for(const v of Object.values(o)){const r=buscarEnlace(v,depth+1);if(r)return r;}return null;}
-function mcpMsg(e){const c=e?.code;return({
+function mcpMsg(e){const c=e?.code;
+  if(c==="tool_error"&&/Mail\.ReadWrite|Missing scope/i.test(String(e?.message||"")))
+    return"Microsoft 365 no tiene permiso para crear borradores en su cuenta: falta aprobar el permiso Mail.ReadWrite del conector en Microsoft Entra. No se creó ningún borrador.";
+  return({
   needs_reauth:"La conexión con Microsoft 365 venció. Vuelva a conectarla en claude.ai → Configuración → Conectores y pruebe de nuevo.",
   server_not_connected:"Microsoft 365 no está conectado en su cuenta de Claude. Conéctelo en claude.ai → Configuración → Conectores.",
   selection_required:"Hay más de una conexión de Microsoft 365. Elija cuál usar en el aviso de Claude y pruebe de nuevo.",
