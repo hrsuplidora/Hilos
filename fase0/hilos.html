@@ -253,6 +253,10 @@ tr:last-child td{border-bottom:0}
 @media (max-width:560px){.form{grid-template-columns:1fr}}
 .field{display:grid;gap:4px;min-width:0}
 .field label,.field .lbl{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
+.field.impl label{color:var(--bad)}
+/* Campo que no aplica: en dos columnas guarda su lugar para que las filas no se corran; en una columna desaparece. */
+.field.off{visibility:hidden}
+@media (max-width:560px){.field.off{display:none}}
 .field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:38px;width:100%;min-width:0}
 .field textarea{min-height:84px;resize:vertical}
 .hint{font-size:12px;color:var(--ink-3)}
@@ -808,7 +812,7 @@ function openEditor(id,preset,ctx={}){
     evalNota:h("input",{id:"e-evnota",type:"text",value:cur.evaluacion?.nota||""})};
   f.detalle.value=cur.detalle||"";f.confidencial.checked=!!cur.confidencial;
   const decWrap=field("Decisión pendiente de",f.decisionDe);
-  const syncDec=()=>{decWrap.hidden=f.estadoDecision.value!=="por_decidir";};f.estadoDecision.addEventListener("change",syncDec);
+  const syncDec=()=>{decWrap.classList.toggle("off",f.estadoDecision.value!=="por_decidir");};f.estadoDecision.addEventListener("change",syncDec);
   /* En las tareas de la Gerencia General, el área es la que se relaciona con el tema: define dónde aparece con "Ver mis tareas asociadas". */
   const areaFld=field("Área",f.area);const syncArea=()=>{areaFld.querySelector("label").textContent=f.puesto.value==="gg"?"Área relacionada":"Área";};
   f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area&&f.puesto.value!=="gg")f.area.value=p.area;if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;syncArea();});
@@ -839,8 +843,8 @@ function openEditor(id,preset,ctx={}){
       field("Título",f.titulo,"full"),field("Detalle",f.detalle,"full"),
       field("Puesto responsable",f.puesto),field("Tipo",f.tipo),
       areaFld,field("Proyecto",f.proyecto),
-      field("Fecha esperada de cumplimiento",f.fecha),field("Nivel de implementación",f.estadoImpl),
       field("Estado de decisión",f.estadoDecision),decWrap,
+      field("Fecha esperada de cumplimiento",f.fecha),field("Nivel de implementación",f.estadoImpl,"impl"),
       !kids.length?field("Pertenece a (hilo padre)",f.padre,"full"):null,
       resBox,evalBox,
       h("label",{class:"check full",for:"e-conf"},f.confidencial,"Confidencial (salarios, disciplinarios, salud)")),
