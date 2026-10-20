@@ -9,6 +9,8 @@
   --ink:#191d2e; --ink-2:#464c63; --ink-3:#737a93;
   --accent:#34409c; --accent-ink:#ffffff; --accent-soft:#e4e7f7;
   --ok:#1d7349; --ok-soft:#dff0e7; --warn:#9a5b00; --warn-soft:#f9ecd4; --bad:#ad2a1f; --bad-soft:#f9e1de; --mute-soft:#e9ebf0;
+  --st-sin-bg:#eceef3; --st-sin-ink:#4a5068; --st-pro-bg:#dbe8fd; --st-pro-ink:#1f4f8f; --st-rev-bg:#ebe2fb; --st-rev-ink:#5a3b98;
+  --st-com-bg:#d8f1e2; --st-com-ink:#1c6a44; --st-pau-bg:#faf0c4; --st-pau-ink:#735700; --st-des-bg:#f8dde2; --st-des-ink:#9a2c40;
   --f-display:"Schibsted Grotesk","IBM Plex Sans",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -19,12 +21,16 @@
   --ink:#e7e9f1; --ink-2:#b5bacd; --ink-3:#8a90a8;
   --accent:#9aa5ff; --accent-ink:#0f1220; --accent-soft:#262c55;
   --ok:#64cf98; --ok-soft:#163024; --warn:#efb45c; --warn-soft:#382a13; --bad:#ff8f84; --bad-soft:#3b1b19; --mute-soft:#252937;
+  --st-sin-bg:#2a2e3d; --st-sin-ink:#c3c8d8; --st-pro-bg:#1b2f4f; --st-pro-ink:#9cc3ff; --st-rev-bg:#2e2448; --st-rev-ink:#c8b2f6;
+  --st-com-bg:#163324; --st-com-ink:#7fd8a7; --st-pau-bg:#3a3214; --st-pau-ink:#ead27b; --st-des-bg:#3f1e26; --st-des-ink:#f3a2b1;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#11131b; --surface:#191c27; --surface-2:#212535; --line:#2e3346; --stitch:#3c4259;
   --ink:#e7e9f1; --ink-2:#b5bacd; --ink-3:#8a90a8;
   --accent:#9aa5ff; --accent-ink:#0f1220; --accent-soft:#262c55;
   --ok:#64cf98; --ok-soft:#163024; --warn:#efb45c; --warn-soft:#382a13; --bad:#ff8f84; --bad-soft:#3b1b19; --mute-soft:#252937;
+  --st-sin-bg:#2a2e3d; --st-sin-ink:#c3c8d8; --st-pro-bg:#1b2f4f; --st-pro-ink:#9cc3ff; --st-rev-bg:#2e2448; --st-rev-ink:#c8b2f6;
+  --st-com-bg:#163324; --st-com-ink:#7fd8a7; --st-pau-bg:#3a3214; --st-pau-ink:#ead27b; --st-des-bg:#3f1e26; --st-des-ink:#f3a2b1;
   color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg)}
@@ -86,12 +92,19 @@ a{color:var(--accent)}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--mute-soft);color:var(--ink-2)}
 .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.85}
-.p-sin_iniciar{background:var(--mute-soft);color:var(--ink-2)}
-.p-en_proceso{background:var(--accent-soft);color:var(--accent)}
-.p-en_revision{background:var(--warn-soft);color:var(--warn)}
-.p-completada{background:var(--ok-soft);color:var(--ok)}
-.p-en_pausa{background:var(--mute-soft);color:var(--ink-3)}
-.p-descartado{background:var(--mute-soft);color:var(--ink-3);text-decoration:line-through}
+/* Estado de la tarea: un pastel por estado, el mismo en filas, editor, borrador, leyenda y correo.
+   Gris = sin iniciar, azul = en proceso, lila = en revisión, verde = completada, amarillo = en pausa, rosa = descartado. */
+.st-sin_iniciar{--stb:var(--st-sin-bg);--sti:var(--st-sin-ink)}
+.st-en_proceso{--stb:var(--st-pro-bg);--sti:var(--st-pro-ink)}
+.st-en_revision{--stb:var(--st-rev-bg);--sti:var(--st-rev-ink)}
+.st-completada{--stb:var(--st-com-bg);--sti:var(--st-com-ink)}
+.st-en_pausa{--stb:var(--st-pau-bg);--sti:var(--st-pau-ink)}
+.st-descartado{--stb:var(--st-des-bg);--sti:var(--st-des-ink)}
+.pill.st{background:var(--stb);color:var(--sti)}
+.pill.st-descartado{text-decoration:line-through}
+select.st,select.in.st,select.in.st.dirty,.field select.st,.hrow select.in.st,.hrow select.in.st.dirty{background-color:var(--stb);color:var(--sti);font-weight:600}
+select.st option{background-color:var(--surface);color:var(--ink);font-weight:400}
+select.st option[class^="st-"]{background-color:var(--stb);color:var(--sti)}
 .p-decide{background:transparent;border:1px solid var(--warn);color:var(--warn)}
 .p-decide::before{display:none}
 .tag{font-size:12px;font-weight:600;color:var(--ink-2)}
@@ -109,6 +122,7 @@ a{color:var(--accent)}
 .in.due-done{background:var(--bg);color:var(--ink-2)}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink-3);align-items:center;padding-block:6px 0}
 .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid currentColor}
+.legend .sw.st{background:var(--stb);color:var(--sti)}
 .conf{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 
 /* Tarjetas del borrador */
@@ -196,10 +210,11 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
 }
 
 /* Proyectos */
-.ps-abierto{background:var(--ok-soft);color:var(--ok)}
-.ps-en_pausa{background:var(--warn-soft);color:var(--warn)}
-.ps-cerrado{background:var(--mute-soft);color:var(--ink-2)}
-.ps-cancelado{background:var(--mute-soft);color:var(--ink-3);text-decoration:line-through}
+/* Mismo código que las tareas: abierto = en proceso, cerrado = completada, cancelado = descartado. */
+.ps-abierto{background:var(--st-pro-bg);color:var(--st-pro-ink)}
+.ps-en_pausa{background:var(--st-pau-bg);color:var(--st-pau-ink)}
+.ps-cerrado{background:var(--st-com-bg);color:var(--st-com-ink)}
+.ps-cancelado{background:var(--st-des-bg);color:var(--st-des-ink);text-decoration:line-through}
 td.wrap-td{min-width:220px;max-width:46ch;color:var(--ink-2)}
 .merge{background:var(--warn-soft);border-radius:var(--r);padding:10px 12px;display:grid;gap:8px;font-size:14px}
 .merge[hidden]{display:none}
@@ -354,7 +369,10 @@ async function nextNum(){const ref=db.doc("config/contador");let n=1;
   return n;}
 
 /* ---------- Piezas visuales ---------- */
-function pillImpl(s){return h("span",{class:"pill p-"+(s||"sin_iniciar")},IMPL[s]||"Sin iniciar");}
+function pillImpl(s){const k=IMPL[s]?s:"sin_iniciar";return h("span",{class:"pill st st-"+k},IMPL[k]);}
+/* Pinta un selector de estado con el color del valor elegido; las opciones de la lista llevan también su color. */
+function pintarEstado(el){for(const o of el.options)if(!o.className)o.className="st-"+o.value;
+  for(const c of[...el.classList])if(c.startsWith("st-"))el.classList.remove(c);el.classList.add("st","st-"+(el.value||"sin_iniciar"));}
 function pillDecide(x){if(x.estadoDecision!=="por_decidir")return null;
   return h("span",{class:"pill p-decide",title:"Decisión pendiente"},"Decide: "+(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)));}
 /* Fecha contra vencimiento: vencida, vence en 7 días o menos, a tiempo o sin fecha. Completadas y descartadas no llevan color. */
@@ -364,7 +382,8 @@ function fmtF(d){if(!d)return"—";const[y,m,dd]=String(d).slice(0,10).split("-"
 function fechaSpan(x){return h("span",{class:"dpill "+dueClass(x.fechaCompromiso,x.estadoImpl)},fmtF(x.fechaCompromiso));}
 function paintDue(el,fecha,estado){el.classList.remove("due-late","due-soon","due-ok","due-none","due-done");el.classList.add("due",dueClass(fecha,estado));}
 function legend(){const it=(c,l)=>h("span",{},h("span",{class:"sw "+c}),l);
-  return h("div",{class:"legend"},h("span",{},"Color de la fecha:"),it("due-late","Vencida"),it("due-soon","Vence en 7 días o menos"),it("due-ok","A tiempo"),it("due-none","Sin fecha"));}
+  return h("div",{},h("div",{class:"legend"},h("span",{},"Color de la fecha:"),it("due-late","Vencida"),it("due-soon","Vence en 7 días o menos"),it("due-ok","A tiempo"),it("due-none","Sin fecha")),
+    h("div",{class:"legend"},h("span",{},"Color del estado:"),Object.entries(IMPL).map(([k,l])=>it("st st-"+k,l))));}
 function hiloRow(x,opts={}){
   const kids=hijos(x.id);const done=kids.filter(k=>k.estadoImpl==="completada").length;
   const padre=x.padre&&S.hilos.get(x.padre);
@@ -428,7 +447,7 @@ function hrowEl(x,o){
   const act=h("div",{class:"h-act",hidden:true},h("span",{class:"hint"},"Cambios sin guardar"),cancel,save);
   const norm=(k,c)=>k==="titulo"||k==="proyecto"?c.value.trim():c.value;
   const mark=()=>{let any=false;for(const[k,c]of Object.entries(ctl)){const d=norm(k,c)!==orig[k];c.classList.toggle("dirty",d);any=any||d;}
-    paintDue(ctl.fechaCompromiso,ctl.fechaCompromiso.value,ctl.estadoImpl.value);row.classList.toggle("dirty",any);act.hidden=!any;};
+    paintDue(ctl.fechaCompromiso,ctl.fechaCompromiso.value,ctl.estadoImpl.value);pintarEstado(ctl.estadoImpl);row.classList.toggle("dirty",any);act.hidden=!any;};
   for(const[k,c]of Object.entries(ctl))c.addEventListener(c.tagName==="SELECT"||c.type==="date"?"change":"input",()=>{const ed=S.hedits.get(id)||{};ed[k]=c.value;S.hedits.set(id,ed);mark();});
   const reset=()=>{S.hedits.delete(id);for(const[k,c]of Object.entries(ctl))c.value=orig[k];mark();};
   const doSave=async()=>{const t=ctl.titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");ctl.titulo.focus();return;}
@@ -574,6 +593,8 @@ const MAIL={tabla:"border-collapse:collapse;font-family:Calibri,Arial,sans-serif
   td:"border:1px solid #c9ced9;padding:4px 8px;text-align:left;vertical-align:top",
   p:"font-family:Calibri,Arial,sans-serif;font-size:14px;color:#191d2e;margin:0 0 10px",
   h3:"font-family:Calibri,Arial,sans-serif;font-size:14px;color:#191d2e;margin:16px 0 6px",
+  estado:{sin_iniciar:"background:#eceef3;color:#4a5068",en_proceso:"background:#dbe8fd;color:#1f4f8f",en_revision:"background:#ebe2fb;color:#5a3b98",
+    completada:"background:#d8f1e2;color:#1c6a44",en_pausa:"background:#faf0c4;color:#735700",descartado:"background:#f8dde2;color:#9a2c40"},
   plazo:{"Vencida":"background:#f9e1de;color:#ad2a1f;font-weight:bold","Vence pronto":"background:#f9ecd4;color:#9a5b00","A tiempo":"background:#dff0e7;color:#1d7349","Sin fecha":"background:#e9ebf0;color:#464c63"}};
 function plazoTxt(x){return x.estadoImpl==="completada"?"—":{"due-late":"Vencida","due-soon":"Vence pronto","due-ok":"A tiempo","due-none":"Sin fecha"}[dueClass(x.fechaCompromiso,x.estadoImpl)]||"—";}
 function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);const hoyD=hoy();
@@ -585,7 +606,7 @@ function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);cons
   const td=(v,st)=>h("td",{style:MAIL.td+(st?";"+st:"")},v);
   const tabla=arr=>h("table",{style:MAIL.tabla},h("thead",{},h("tr",{},["ID","Tarea","Detalle","Responsable","Fecha","Plazo","Estado"].map(t=>h("th",{style:MAIL.th},t)))),
     h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td(x.titulo||""),td(x.detalle||"—","color:#464c63"),td(puestoNombre(x.puesto)),
-      td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"]));})));
+      td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"],(MAIL.estado[x.estadoImpl||"sin_iniciar"]||"")+";font-weight:bold"));})));
   const nombre=(p.ocupante||"").trim().split(/\s+/)[0];const pn=p.nombre||puestoNombre(pid);
   const node=h("div",{},h("p",{style:MAIL.p},nombre?`Hola, ${nombre}:`:"Hola:"),
     lista.length?h("p",{style:MAIL.p},`Este es el listado de temas abiertos a cargo de ${pn} al ${fmtLargo(hoyD)}. Si algo no corresponde o cambió, favor responder este correo.`)
@@ -664,7 +685,7 @@ function draftRow(id,d){
   for(const c of[resp,fecha,est,dec,proy])c.classList.add("in");
   const mark=()=>{titulo.classList.toggle("dirty",titulo.value!==(p.titulo||""));resp.classList.toggle("dirty",resp.value!==(p.puesto||""));
     fecha.classList.toggle("dirty",fecha.value!==(p.fechaCompromiso||""));est.classList.toggle("dirty",est.value!==(p.estadoImpl||"sin_iniciar"));
-    dec.classList.toggle("dirty",dec.value!==decValue(p));proy.classList.toggle("dirty",proy.value!==(p.proyecto||""));fecha.classList.toggle("empty",!fecha.value);};
+    dec.classList.toggle("dirty",dec.value!==decValue(p));proy.classList.toggle("dirty",proy.value!==(p.proyecto||""));fecha.classList.toggle("empty",!fecha.value);pintarEstado(est);};
   titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;mark();});
   fecha.addEventListener("change",()=>{e.fechaCompromiso=fecha.value;mark();});est.addEventListener("change",()=>{e.estadoImpl=est.value;mark();});
   dec.addEventListener("change",()=>{e.dec=dec.value;mark();});proy.addEventListener("change",()=>{e.proyecto=proy.value;mark();});mark();
@@ -690,7 +711,7 @@ function updRow(id,d){
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Actualización sugerida"),h("p",{class:"t-ro"},x?.titulo||"(hilo no encontrado)"),
       ctxBlock(id,d.resumen||"",d.evidencia,desc?h("p",{class:"chg"},desc):null)),
     ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),ro("Proyecto",x?.proyecto||"—"),
-    ro("Estado",IMPL[cambios.estadoImpl||x?.estadoImpl]||"—"),ro("Espera decisión de",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
+    h("div",{class:"cell"},h("span",{class:"cl"},"Estado"),h("span",{class:"ro"},pillImpl(cambios.estadoImpl||x?.estadoImpl))),ro("Espera decisión de",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
     h("div",{class:"c-act"},save,del));}
 async function saveDraft(id,d,vals){
   const hid=nuevoId("h");const now=new Date().toISOString();const p={...(d.propuesta||{}),...vals};const num=await nextNum();
@@ -752,7 +773,8 @@ function renderHilos(m){
     const ks=[...groups.keys()].sort((a,b)=>{if(order){const ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);}
       if(a.startsWith("Sin "))return 1;if(b.startsWith("Sin "))return -1;return a.localeCompare(b,"es");});
     for(const k of ks){const g=groups.get(k).sort(cmpHilos);
-      out.append(h("div",{class:"group-h"},k,h("span",{class:"n"},String(g.length))));
+      const kEst=S.f.agrupar==="estado"?Object.keys(IMPL).find(c=>IMPL[c]===k):null;
+      out.append(h("div",{class:"group-h"},kEst?pillImpl(kEst):k,h("span",{class:"n"},String(g.length))));
       const rows=[];
       for(const x of g){rows.push(HR(x,{showParent:!!x.padre}));
         for(const c of arr.filter(y=>y.padre===x.id).sort(cmpHilos))rows.push(HR(c,{sub:true}));}
@@ -818,7 +840,7 @@ function openEditor(id,preset,ctx={}){
     h("p",{class:"hint"},"La persona que hizo el trabajo. El hilo es del puesto, pero la evaluación queda a nombre de la persona. Se propone quien ocupa hoy el puesto; cámbielo si lo ejecutó otra persona."),
     h("p",{class:"hint",id:"e-sugerencia"}));
   const resBox=h("div",{class:"form full"},field("Resultado",f.resultado),field("Sustento del resultado",f.resultadoNota));
-  const syncImpl=()=>{const done=f.estadoImpl.value==="completada";evalBox.hidden=!done;resBox.hidden=!done;
+  const syncImpl=()=>{pintarEstado(f.estadoImpl);const done=f.estadoImpl.value==="completada";evalBox.hidden=!done;resBox.hidden=!done;
     const s=evalBox.querySelector("#e-sugerencia");const fc=f.fecha.value;
     s.textContent=done&&fc?(hoy()<=fc?"Según la fecha comprometida, la entrega es a tiempo.":`La fecha comprometida era ${fmt(fc)}; la entrega es tardía.`):"";};
   f.estadoImpl.addEventListener("change",syncImpl);f.fecha.addEventListener("change",syncImpl);
@@ -1004,7 +1026,7 @@ const AYUDA=[
  ["La publicación del lunes","Tres secciones y cada tarea aparece una sola vez: Espera su decisión, Alertas (todas las demás tareas abiertas) y Resultados por medir (completadas sin resultado). Los temas nuevos que detecta el correo están en el Borrador; el aviso de arriba dice cuántos hay."],
  ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, responsable, tipo, fecha, proyecto, quién decide y estado. Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
  ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
- ["Color de la fecha","Rojo: vencida. Ámbar: vence en 7 días o menos. Verde: a tiempo. Gris: sin fecha. Las tareas completadas o descartadas no llevan color."],
+ ["Colores","Fecha: rojo si está vencida, ámbar si vence en 7 días o menos, verde si va a tiempo y gris si no tiene fecha; las tareas completadas o descartadas no llevan color. Estado (pastel): gris Sin iniciar, azul En proceso, lila En revisión, verde Completada, amarillo En pausa y rosa Descartado. Los proyectos usan el mismo código: Abierto azul, En pausa amarillo, Cerrado verde, Cancelado rosa."],
  ["Mis tareas asociadas","Al filtrar por Comercial, Operaciones, RRHH o Contabilidad, marque “Ver mis tareas asociadas” para sumar sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El Área relacionada se cambia al abrir el hilo con el #ID."],
  ["Proyectos","En la pestaña Proyectos se administra la lista: nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). Al asignar un proyecto a una tarea solo se ofrecen los abiertos; la tarea conserva su proyecto aunque luego se cierre. Si cambia el nombre de un proyecto, sus tareas se actualizan; si le pone el nombre de otro existente, se ofrece unirlos."],
  ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de sus tareas abiertas (sin las confidenciales). Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue; el destinatario y el asunto tienen su propio botón Copiar. Use el asunto tal cual, para que la lectura nocturna no vuelva a cargar el listado. HILOS no se conecta con Outlook ni envía correos."],
