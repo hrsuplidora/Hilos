@@ -207,13 +207,9 @@ td.wrap-td{min-width:220px;max-width:46ch;color:var(--ink-2)}
 /* Vista previa del correo al puesto */
 .mailmeta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:14px}
 .mailmeta dt{color:var(--ink-3)}
-.mailmeta dd{margin:0;overflow-wrap:anywhere}
-.mailprev{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--bg);font-size:13.5px;overflow-x:auto}
-.mailprev p{margin:0 0 10px}
-.mailprev h3{font-size:14px;margin:14px 0 6px}
-.mailprev table{border-collapse:collapse;width:100%;font-size:12.5px}
-.mailprev th,.mailprev td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
-.mailprev th{font-size:11px;letter-spacing:.04em}
+.mailmeta dd{margin:0;overflow-wrap:anywhere;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.mailprev th{text-transform:none;letter-spacing:0;font-size:13px;color:#191d2e;white-space:normal}
+.mailprev{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:#ffffff;color:#191d2e;font-size:13.5px;overflow-x:auto}
 
 /* Resumen por puesto */
 .grid-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
@@ -570,12 +566,15 @@ function renderLunes(m){
   m.append(qsec);}
 
 /* ---------- Correo al puesto ---------- */
-/* Arma el listado de tareas abiertas del puesto (sin confidenciales) y deja un borrador en el Outlook de la Gerencia General
-   con el conector Microsoft 365. La página solo puede crear borradores: nunca envía. El asunto empieza con "Seguimiento HILOS",
-   que la lectura nocturna excluye para no volver a cargar el listado como acta. */
-const M365="Microsoft 365";
-let mcpP=null;
-function mcpNs(){if(!mcpP)mcpP=window.claude&&typeof window.claude.use==="function"?window.claude.use("mcp").catch(()=>null):Promise.resolve(null);return mcpP;}
+/* Arma el listado de tareas abiertas del puesto (sin confidenciales) para copiarlo y pegarlo en un correo nuevo de Outlook.
+   La página no se conecta con Outlook. El asunto empieza con "Seguimiento HILOS", que la lectura nocturna excluye para no
+   volver a cargar el listado como acta. Los estilos van en línea porque son los que sobreviven al pegar en Outlook. */
+const MAIL={tabla:"border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:13px;color:#191d2e",
+  th:"border:1px solid #c9ced9;padding:4px 8px;text-align:left;vertical-align:top;background:#eef0f5;font-weight:bold",
+  td:"border:1px solid #c9ced9;padding:4px 8px;text-align:left;vertical-align:top",
+  p:"font-family:Calibri,Arial,sans-serif;font-size:14px;color:#191d2e;margin:0 0 10px",
+  h3:"font-family:Calibri,Arial,sans-serif;font-size:14px;color:#191d2e;margin:16px 0 6px",
+  plazo:{"Vencida":"background:#f9e1de;color:#ad2a1f;font-weight:bold","Vence pronto":"background:#f9ecd4;color:#9a5b00","A tiempo":"background:#dff0e7;color:#1d7349","Sin fecha":"background:#e9ebf0;color:#464c63"}};
 function plazoTxt(x){return x.estadoImpl==="completada"?"—":{"due-late":"Vencida","due-soon":"Vence pronto","due-ok":"A tiempo","due-none":"Sin fecha"}[dueClass(x.fechaCompromiso,x.estadoImpl)]||"—";}
 function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);const hoyD=hoy();
   const abiertos=hilosArr().filter(x=>inR(x,r)&&!cerrado(x));const lista=abiertos.filter(x=>!x.confidencial);
@@ -583,53 +582,44 @@ function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);cons
   const esp=lista.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(porFecha);const e1=new Set(esp.map(x=>x.id));
   const med=lista.filter(x=>!e1.has(x.id)&&x.estadoImpl==="completada").sort(porFecha);const e2=new Set(med.map(x=>x.id));
   const seg=lista.filter(x=>!e1.has(x.id)&&!e2.has(x.id)).sort(porFecha);
-  const tabla=arr=>h("table",{},h("thead",{},h("tr",{},["ID","Tarea","Responsable","Fecha","Plazo","Estado","Espera decisión de"].map(t=>h("th",{},t)))),
-    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},h("td",{},numTxt(x)),h("td",{},x.titulo||""),h("td",{},puestoNombre(x.puesto)),
-      h("td",{},x.fechaCompromiso?fmtF(x.fechaCompromiso):"—"),h("td",{},pl==="Vencida"?h("strong",{},pl):pl),h("td",{},IMPL[x.estadoImpl||"sin_iniciar"]),h("td",{},decideTxt(x)||"—"));})));
-  const nombre=(p.ocupante||"").trim().split(/\s+/)[0];
-  const node=h("div",{},h("p",{},nombre?`Hola, ${nombre}:`:"Hola:"),
-    lista.length?h("p",{},`Este es el listado de temas abiertos a cargo de ${p.nombre||puestoNombre(pid)} al ${fmtLargo(hoyD)}. Si algo no corresponde o cambió, favor responder este correo.`)
-      :h("p",{},`Al ${fmtLargo(hoyD)} no hay temas abiertos a cargo de ${p.nombre||puestoNombre(pid)}.`),
-    [["Esperan mi decisión",esp],["En seguimiento",seg],["Completadas, falta registrar el resultado",med]].map(([t,arr])=>arr.length?[h("h3",{},`${t} (${arr.length})`),tabla(arr)]:[]));
+  const td=(v,st)=>h("td",{style:MAIL.td+(st?";"+st:"")},v);
+  const tabla=arr=>h("table",{style:MAIL.tabla},h("thead",{},h("tr",{},["ID","Tarea","Responsable","Fecha","Plazo","Estado","Espera decisión de"].map(t=>h("th",{style:MAIL.th},t)))),
+    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td(x.titulo||""),td(puestoNombre(x.puesto)),
+      td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"]),td(decideTxt(x)||"—"));})));
+  const nombre=(p.ocupante||"").trim().split(/\s+/)[0];const pn=p.nombre||puestoNombre(pid);
+  const node=h("div",{},h("p",{style:MAIL.p},nombre?`Hola, ${nombre}:`:"Hola:"),
+    lista.length?h("p",{style:MAIL.p},`Este es el listado de temas abiertos a cargo de ${pn} al ${fmtLargo(hoyD)}. Si algo no corresponde o cambió, favor responder este correo.`)
+      :h("p",{style:MAIL.p},`Al ${fmtLargo(hoyD)} no hay temas abiertos a cargo de ${pn}.`),
+    [["Esperan mi decisión",esp],["En seguimiento",seg],["Completadas, falta registrar el resultado",med]].map(([t,arr])=>arr.length?[h("h3",{style:MAIL.h3},`${t} (${arr.length})`),tabla(arr)]:[]));
   const[y,mm,dd]=hoyD.split("-");
-  return{nombre,to:(p.correos||[]).slice(0,1),subject:`Seguimiento HILOS · ${p.nombre||puestoNombre(pid)} · ${+dd} ${MESES[+mm-1]} ${y}`,
-    node,html:node.innerHTML,n:lista.length,conf:abiertos.length-lista.length};}
-/* El resultado de la herramienta no se ha observado: se busca cualquier enlace de Outlook en la respuesta, sin depender de un nombre de campo. */
-function buscarEnlace(o,depth=0){if(depth>4||o==null)return null;if(typeof o==="string")return/^https:\/\//.test(o)?safeUrl(o):null;
-  if(typeof o==="object")for(const v of Object.values(o)){const r=buscarEnlace(v,depth+1);if(r)return r;}return null;}
-function mcpMsg(e){const c=e?.code;
-  if(c==="tool_error"&&/Mail\.ReadWrite|Missing scope/i.test(String(e?.message||"")))
-    return"Microsoft 365 no tiene permiso para crear borradores en su cuenta: falta aprobar el permiso Mail.ReadWrite del conector en Microsoft Entra. No se creó ningún borrador.";
-  return({
-  needs_reauth:"La conexión con Microsoft 365 venció. Vuelva a conectarla en claude.ai → Configuración → Conectores y pruebe de nuevo.",
-  server_not_connected:"Microsoft 365 no está conectado en su cuenta de Claude. Conéctelo en claude.ai → Configuración → Conectores.",
-  selection_required:"Hay más de una conexión de Microsoft 365. Elija cuál usar en el aviso de Claude y pruebe de nuevo.",
-  not_in_manifest:"Esta página no tiene permiso para crear borradores. Actívelo en el menú Permisos de la página y pruebe de nuevo.",
-  consent_required:"No se dio permiso para crear el borrador. Pulse de nuevo para que Claude lo pida.",
-  approval_required:"Hace falta aprobar el permiso. Pulse de nuevo y acepte el aviso de Claude.",
-  blocked_by_policy:"La política de la organización no permite crear borradores desde esta página.",
-  not_granted:"Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai.",
-  capability_disabled:"Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai.",
-  capability_removed:"Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai.",
-  tool_error:"Outlook no aceptó el borrador: "+(e?.message||"sin detalle")+"."}[c])
-  ||"No hubo respuesta clara de Microsoft 365. Revise su carpeta Borradores antes de volver a intentarlo, para no duplicarlo.";}
-function openCorreo(pid){const c=correoPuesto(pid);
+  return{nombre,to:(p.correos||[]).slice(0,1),subject:`Seguimiento HILOS · ${pn} · ${+dd} ${MESES[+mm-1]} ${y}`,node,n:lista.length,conf:abiertos.length-lista.length};}
+/* Copiar: primero el portapapeles moderno (HTML con formato y texto simple); si el visor no lo permite, la selección con
+   execCommand; si tampoco, deja el contenido seleccionado para copiarlo con el teclado. */
+function seleccionar(node){const s=window.getSelection();const r=document.createRange();r.selectNodeContents(node);s.removeAllRanges();s.addRange(r);}
+async function copiarNodo(node){
+  try{if(navigator.clipboard&&window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([node.innerHTML],{type:"text/html"}),"text/plain":new Blob([node.innerText],{type:"text/plain"})})]);return"ok";}}catch(e){}
+  try{seleccionar(node);const ok=document.execCommand("copy");window.getSelection().removeAllRanges();if(ok)return"ok";}catch(e){}
+  seleccionar(node);return"manual";}
+async function copiarTexto(txt){
+  try{if(navigator.clipboard){await navigator.clipboard.writeText(txt);return true;}}catch(e){}
+  const t=h("textarea",{style:"position:fixed;opacity:0;top:0;left:0"});t.value=txt;document.body.append(t);t.select();
+  let ok=false;try{ok=document.execCommand("copy");}catch(e){}t.remove();return ok;}
+function openCorreo(pid){const c=correoPuesto(pid);const tecla=/Mac|iPhone|iPad/.test(navigator.platform||"")?"⌘C":"Ctrl+C";
   const status=h("p",{class:"hint",role:"status"});
-  const btn=h("button",{type:"button",class:"btn primary",disabled:!c.to.length},"Crear borrador en Outlook");
+  const chico=(txt,lbl)=>h("button",{type:"button",class:"btn ghost sm",onclick:async()=>{status.textContent=await copiarTexto(txt)?`${lbl} copiado.`:`No se pudo copiar: seleccione el texto y use ${tecla}.`;}},"Copiar");
+  const btn=h("button",{type:"button",class:"btn primary"},"Copiar información");
+  const prev=h("div",{class:"mailprev"},c.node);
   const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"c-h"},
     h("div",{class:"sheet-h"},h("h2",{id:"c-h"},"Correo para "+(c.nombre||puestoNombre(pid))),h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer},"Cerrar")),
-    h("dl",{class:"mailmeta"},h("dt",{},"Para"),h("dd",{},c.to.join(", ")||"El puesto no tiene correo registrado (pestaña Puestos)."),h("dt",{},"Asunto"),h("dd",{},c.subject)),
-    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+(c.conf?`. No incluye ${c.conf} confidencial${c.conf===1?"":"es"}.`:".")+" Queda como borrador en su carpeta Borradores de Outlook: revíselo y envíelo desde ahí."),
-    h("div",{class:"mailprev"},c.node),status,
-    h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),btn));
-  btn.addEventListener("click",async()=>{btn.disabled=true;status.textContent="Creando el borrador…";
-    const mcp=await mcpNs();
-    if(!mcp){status.textContent="Esta vista no puede usar Microsoft 365. Abra HILOS en claude.ai, en la computadora.";btn.disabled=false;return;}
-    try{const r=await mcp.callTool(M365,"outlook_create_draft",{to:c.to,subject:c.subject,body:c.html,bodyType:"html"},{cache:false});
-      const link=buscarEnlace(r?.payload??r?.structuredContent??null);
-      status.replaceChildren("Borrador creado en su carpeta Borradores de Outlook. ",link?h("a",{href:link,target:"_blank",rel:"noopener noreferrer"},"Abrir en Outlook"):null);
-      btn.textContent="Borrador creado";}
-    catch(e){status.textContent=mcpMsg(e);btn.disabled=false;}});
+    h("dl",{class:"mailmeta"},
+      h("dt",{},"Para"),h("dd",{},c.to.length?[c.to.join(", ")," ",chico(c.to.join("; "),"Destinatario")]:"El puesto no tiene correo registrado (pestaña Puestos)."),
+      h("dt",{},"Asunto"),h("dd",{},c.subject," ",chico(c.subject,"Asunto"))),
+    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+(c.conf?`. No incluye ${c.conf} confidencial${c.conf===1?"":"es"}.`:".")+
+      " Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue. Use el asunto tal cual: empieza con “Seguimiento HILOS” para que la lectura nocturna no lo vuelva a cargar."),
+    prev,status,
+    h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cerrar"),btn));
+  btn.addEventListener("click",async()=>{const r=await copiarNodo(c.node);
+    status.textContent=r==="ok"?"Información copiada. En Outlook, pegue en el cuerpo del correo con Ctrl+V (⌘V en Mac).":`El visor no permitió copiar directamente: el listado quedó seleccionado; presione ${tecla}.`;});
   const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
   document.getElementById("layer").replaceChildren(scrim);}
 
@@ -1017,7 +1007,7 @@ const AYUDA=[
  ["Color de la fecha","Rojo: vencida. Ámbar: vence en 7 días o menos. Verde: a tiempo. Gris: sin fecha. Las tareas completadas o descartadas no llevan color."],
  ["Mis tareas asociadas","Al filtrar por Comercial, Operaciones, RRHH o Contabilidad, marque “Ver mis tareas asociadas” para sumar sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El Área relacionada se cambia al abrir el hilo con el #ID."],
  ["Proyectos","En la pestaña Proyectos se administra la lista: nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). Al asignar un proyecto a una tarea solo se ofrecen los abiertos; la tarea conserva su proyecto aunque luego se cierre. Si cambia el nombre de un proyecto, sus tareas se actualizan; si le pone el nombre de otro existente, se ofrece unirlos."],
- ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de sus tareas abiertas (sin las confidenciales) y, al confirmar, queda un borrador en su carpeta Borradores de Outlook para revisarlo y enviarlo. HILOS no envía correos. La primera vez, Claude le pedirá permiso para que la página use Microsoft 365."],
+ ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de sus tareas abiertas (sin las confidenciales). Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue; el destinatario y el asunto tienen su propio botón Copiar. Use el asunto tal cual, para que la lectura nocturna no vuelva a cargar el listado. HILOS no se conecta con Outlook ni envía correos."],
  ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. Ajuste en la fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento."],
  ["Acta del 1:1","Al terminar el 1:1, envíe al otro participante un correo con los temas y acuerdos, en lista libre. Cualquier asunto sirve: HILOS reconoce el acta por su contenido. Lo claro se carga directo como hilo esa misma noche; lo dudoso queda en el Borrador."],
  ["Correo de un externo","Reenvíeselo a usted mismo con la palabra HILO al inicio del asunto (por ejemplo, “HILO RV: Cotización…”): se crea el hilo directo esa noche. Sin la palabra HILO, queda en el Borrador para que lo confirme."],
@@ -1043,7 +1033,6 @@ async function boot(){
   db.collection("borrador").where("estado","==","pendiente").onSnapshot(s=>{S.borrador=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.b=true;render();},err);
   db.collection("publicaciones").orderBy("fecha","desc").limit(1).onSnapshot(s=>{S.pub=s.docs[0]?.data()||null;render();},err);
   db.doc("estado/ingesta").onSnapshot(s=>{S.ingesta=s.exists?s.data():null;renderSync();},err);
-  db.collection("proyectos").onSnapshot(s=>{S.proyectos=new Map(s.docs.map(d=>[d.id,d.data()]));render();},err);
-  mcpNs();}
+  db.collection("proyectos").onSnapshot(s=>{S.proyectos=new Map(s.docs.map(d=>[d.id,d.data()]));render();},err);}
 boot();
 </script>

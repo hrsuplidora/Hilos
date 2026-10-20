@@ -19,7 +19,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 ## Reglas que aplican siempre
 
-1. **Solo lectura del buzón.** Las rutinas no envían, mueven, marcan ni borran ningún correo. La única escritura en Outlook la hace la página, cuando la Gerencia General pulsa "Preparar correo": crea un borrador que ella revisa y envía.
+1. **Solo lectura del buzón.** No se envía, mueve, marca ni borra ningún correo. La página tampoco se conecta con Outlook: el listado de "Preparar correo" se copia y la Gerencia General lo pega y envía a mano.
 2. **Solo conversaciones internas.** Un correo entra si el remitente y **todos** los destinatarios (Para y CC) son @hrsuplidora.com. Un correo externo reenviado internamente sí entra.
 3. **Exclusiones.** Quedan fuera:
    - los remitentes de `config/general.excluirRemitentes`;

@@ -455,7 +455,7 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 
 **[D] 20 de octubre de 2026:**
 
-- **Correo a cada reporte (opción A).** En Publicación, "Preparar correo" arma el listado de tareas abiertas del puesto, sin las confidenciales, y deja un borrador en el Outlook de la Gerencia General para revisarlo y enviarlo. La página solo tiene permiso para crear borradores con el conector de Microsoft 365, nunca para enviar. El asunto empieza con "Seguimiento HILOS" y la lectura nocturna lo excluye. En la Fase 1 este envío pasa al buzón `hilos@`.
+- **Correo a cada reporte (copiar y pegar).** En Publicación, "Preparar correo" arma el listado de tareas abiertas del puesto, sin las confidenciales; "Copiar información" lo copia con formato para pegarlo en un correo nuevo de Outlook. La primera idea era crear el borrador con el conector de Microsoft 365, pero exigía aprobar en Entra el permiso Mail.ReadWrite y la Gerencia General prefirió no ampliar el acceso: la página no se conecta con Outlook. El asunto empieza con "Seguimiento HILOS" y la lectura nocturna lo excluye. En la Fase 1 el envío puede salir del buzón `hilos@`.
 - **Lista de proyectos.** Nueva pestaña Proyectos con nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). En las tareas, el proyecto se elige de la lista y solo se ofrecen los abiertos. Cambiar el nombre de un proyecto actualiza sus tareas, y dos proyectos se pueden unir. Las rutinas solo asignan proyectos abiertos de la lista y nunca los crean.
 
 Pendientes para la Fase 1:
