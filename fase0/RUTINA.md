@@ -37,6 +37,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
    - crear el hilo con ese `num`.
 
    Los borradores no llevan número; lo reciben cuando se convierten en hilo.
+9. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (Comercial, Operaciones, RRHH o Contabilidad). Se usa `Gerencia` solo si el tema es transversal. Con ese dato la página muestra la tarea al marcar "Ver mis tareas asociadas" en el filtro del área.
 
 ## Esquemas en la base de datos
 
@@ -109,6 +110,6 @@ Otros documentos:
 ## Procedimiento C · Aviso de las 6:45
 
 1. Leer `publicaciones` (la más reciente), `estado/ingesta`, `hilos` y `borrador` pendiente.
-2. Si existe la publicación de hoy, el mensaje final es una sola línea de menos de 200 caracteres, por ejemplo: "HILOS: publicación lista. 3 decisiones esperan por usted, 2 vencidos, 5 temas por confirmar. https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww". Las decisiones cuentan los hilos y los borradores pendientes con decisión de la Gerencia General.
+2. Si existe la publicación de hoy, el mensaje final es una sola línea de menos de 200 caracteres, por ejemplo: "HILOS: publicación lista. 3 decisiones esperan por usted, 2 vencidos, 5 temas por confirmar. https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww". Las decisiones cuentan solo los hilos abiertos con decisión pendiente de la Gerencia General; los borradores pendientes se cuentan aparte, como temas por confirmar.
 3. Si no existe, o si `estado/ingesta.error` tiene contenido, el mensaje dice qué falló.
 4. No escribir nada en la base de datos.

@@ -151,16 +151,13 @@ Todo dentro de la aplicación HILOS (§7), más dos atajos:
 ### 4.5 Publicación del lunes 6:45 a.m. **[D]**
 
 - Una publicación por cada puesto que reporta a la Gerencia General, más una vista consolidada. Se envía por correo a las 6:45 a.m. hora de Costa Rica y queda en la aplicación.
-- Secciones:
-  1. Requiere decisión de la Gerencia General, con días de espera.
-  2. Requiere decisión del puesto.
-  3. Novedades de la semana, con evidencia.
-  4. En ejecución, con nivel de implementación, fecha, avance de subtareas y semáforo.
-  5. Alertas: vencidos, más de 14 días sin movimiento, sin fecha o sin responsable, acuerdos contradictorios.
-  6. Resultados por medir.
-  7. Pendientes en el borrador.
-  8. Cerrados en la semana.
-  9. Preguntas sugeridas.
+- Secciones **[D]** (ajustadas el 20 de octubre de 2026, después de los 1:1). Cada tarea aparece una sola vez:
+  1. Espera su decisión: lo que no avanza hasta que la Gerencia General decida, con días de espera.
+  2. Alertas: todas las demás tareas abiertas. El color de la fecha indica si está vencida, vence en 7 días o menos, va a tiempo o no tiene fecha. También se marca lo que lleva más de 14 días sin movimiento.
+  3. Resultados por medir: completadas sin resultado registrado.
+- Arriba quedan el resumen de la semana y un aviso con los temas pendientes en el borrador. Al final, las preguntas sugeridas para el 1:1.
+- Las tablas se ordenan por cualquier columna (#ID, tarea, responsable, tipo, fecha, proyecto, quién decide y estado) y se editan en la misma fila, igual que el borrador. **[D]**
+- Al filtrar por un puesto que reporta a la Gerencia General, "Ver mis tareas asociadas" suma las tareas propias de la Gerencia General de esa área. Para eso, en las tareas de la Gerencia General el campo Área indica el área con la que se relaciona el tema. **[D]**
 - En la Fase 2, cada puesto recibe también su propia publicación, para que ambos lleguen al 1:1 con la misma lista.
 
 ### 4.6 Vistas
@@ -455,6 +452,8 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 ## 13. Estado y pendientes
 
 **[D]** La Fase 0 arrancó el 12 de octubre de 2026. El detalle operativo está en `fase0/RUTINA.md`.
+
+Por decidir (Gerencia General): cómo enviar por correo, cuando lo considere oportuno, el listado de tareas a cada puesto que le reporta. Las opciones se plantearon el 20 de octubre de 2026.
 
 Pendientes para la Fase 1:
 

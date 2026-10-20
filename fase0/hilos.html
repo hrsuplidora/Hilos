@@ -32,11 +32,11 @@ body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
 
 /* Encabezado */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
-.top-in{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:grid;gap:10px}
+.top-in{max-width:1440px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:grid;gap:10px}
 .brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .mark{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.14em}
 .mark span{color:var(--accent)}
@@ -95,9 +95,20 @@ a{color:var(--accent)}
 .p-decide{background:transparent;border:1px solid var(--warn);color:var(--warn)}
 .p-decide::before{display:none}
 .tag{font-size:12px;font-weight:600;color:var(--ink-2)}
-.date-bad{color:var(--bad);font-weight:600}
-.date-warn{color:var(--warn);font-weight:600}
-.date-ok{color:var(--ok)}
+/* Fecha: solo la fecha; el color dice cómo va contra el vencimiento */
+.dpill{display:inline-block;border-radius:6px;padding:1px 8px;font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.due-late{background:var(--bad-soft);color:var(--bad)}
+.due-soon{background:var(--warn-soft);color:var(--warn)}
+.due-ok{background:var(--ok-soft);color:var(--ok)}
+.due-none{background:var(--mute-soft);color:var(--ink-3)}
+.due-done{color:var(--ink-2)}
+.in.due-late{background:var(--bad-soft);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.in.due-soon{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.in.due-ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.in.due-none{background:var(--mute-soft);color:var(--ink-3)}
+.in.due-done{background:var(--bg);color:var(--ink-2)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink-3);align-items:center;padding-block:6px 0}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid currentColor}
 .conf{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 
 /* Tarjetas del borrador */
@@ -121,7 +132,8 @@ a{color:var(--accent)}
 .cl{font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
 .in{width:100%;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px;font-size:14px}
 .in:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px var(--accent-soft)}
-.in.dirty{border-color:var(--warn);background:var(--warn-soft)}
+.in.dirty{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.in.dirty:not(.due){background:var(--accent-soft)}
 .in.empty{color:var(--ink-3)}
 textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
 .t-ro{margin:0;font-weight:600}
@@ -142,28 +154,45 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
   .drow .c-task>.cl{display:none}
 }
 
-/* Tabla de hilos */
-.htable{--hcols:minmax(0,1fr) 158px 88px 126px 148px 160px 118px;display:grid;gap:6px}
+/* Tabla de hilos: cada fila se edita en el mismo renglón; el #ID abre el hilo completo. En pantallas angostas la fila se vuelve tarjeta. */
+.htable{--hcols:58px minmax(0,1fr) 168px 100px 128px 140px 160px 120px;display:grid;gap:6px}
 .hhead{display:none}
-.hrow{appearance:none;font:inherit;color:inherit;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px;align-items:center;cursor:pointer}
-.hrow:hover{border-color:var(--ink-3)}
-.hrow .c-task{grid-column:1/-1}
-.hc{display:grid;gap:2px;min-width:0;font-size:13.5px;justify-items:start}
-.ht{font-weight:600;overflow-wrap:anywhere;line-height:1.35}
-.hnum{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--ink-3);margin-right:6px;font-variant-numeric:tabular-nums}
+.hrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px;align-items:start}
+.hrow.dirty{border-color:var(--accent)}
+.hrow .c-id,.hrow .c-task,.hrow .h-act{grid-column:1/-1}
+.hc{display:grid;gap:4px;min-width:0;font-size:13.5px}
+.hid{appearance:none;background:none;border:0;padding:0;font-family:var(--f-mono);font-weight:500;font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;font-variant-numeric:tabular-nums;justify-self:start}
+.hid .narrow{font-family:var(--f-body)}
+.hrow textarea.t-in{min-height:40px;field-sizing:content;resize:none}
 .hsub{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:var(--ink-3);align-items:center}
 .hwhy{font-size:12.5px;color:var(--ink-2)}
 .muted{color:var(--ink-3)}
-.hrow.sub{margin-left:20px;width:calc(100% - 20px)}
-.hrow.sub .ht::before{content:"↳ ";color:var(--ink-3);font-weight:400}
-.hrow .p-decide{white-space:normal;text-align:left}
-@media (min-width:900px){
-  .hhead{display:grid;grid-template-columns:var(--hcols);gap:12px;padding:0 13px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em}
-  .hrow{grid-template-columns:var(--hcols)}
-  .hrow.sub{grid-template-columns:minmax(0,1fr) 158px 88px 126px 148px 160px 118px}
-  .hrow .c-task{grid-column:auto}
-  .hrow .cl{display:none}
+.hrow.sub{margin-left:20px;box-shadow:inset 3px 0 0 var(--stitch)}
+.h-act{display:flex;gap:6px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.h-act[hidden]{display:none}
+.h-act .hint{margin-right:auto}
+.sh{appearance:none;background:none;border:0;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;text-align:left;display:inline-flex;gap:4px;align-items:center;min-height:24px}
+.sh:hover{color:var(--ink)}
+.sh[data-dir]{color:var(--ink)}
+.sh[data-dir="asc"]::after{content:"▲";font-size:8px}
+.sh[data-dir="desc"]::after{content:"▼";font-size:8px}
+.sec-d{margin:-4px 0 10px;font-size:13px;color:var(--ink-3);max-width:80ch}
+.bnote{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13.5px;color:var(--ink-2);background:var(--surface);border:1px dashed var(--stitch);border-radius:var(--r);padding:8px 12px;margin-top:10px}
+@media (min-width:1080px){
+  .hhead{display:grid;grid-template-columns:var(--hcols);gap:10px;padding:0 13px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em}
+  .hrow{grid-template-columns:var(--hcols);gap:8px 10px}
+  .hrow .c-id,.hrow .c-task{grid-column:auto}
+  .hrow .c-id{padding-top:8px}
+  .hrow .cl,.hid .narrow,.toolbar.only-narrow{display:none}
+  /* En la computadora la fila se lee como tabla: los controles muestran su borde al pasar el cursor o al editar. */
+  .hrow .in{font-size:13.5px;padding-inline:6px}
+  .hrow .in:not(.due){border-color:transparent;background-color:transparent}
+  .hrow select.in{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:18px;background-repeat:no-repeat;background-position:right 5px center;background-size:10px}
+  .hrow:hover .in:not(.due),.hrow .in:not(.due):focus{border-color:var(--line)}
+  .hrow:hover select.in,.hrow select.in:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a90a8' stroke-width='1.5'/%3E%3C/svg%3E")}
+  .hrow .in.dirty{border-color:var(--accent)}
+  .hrow .in.dirty:not(.due){background-color:var(--accent-soft)}
 }
 
 /* Resumen por puesto */
@@ -253,9 +282,11 @@ const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"]
 const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),pub:null,ingesta:null,
   tab:"lunes",rama:"consolidado",loaded:{p:false,h:false,b:false},
   f:{q:"",puesto:"todos",agrupar:"area",cerrados:false},
-  per:"90",fb:"todos"};
+  per:"90",fb:"todos",sort:{k:"fecha",dir:1},mias:false,hedits:new Map()};
 let db = null;
 try{const t=localStorage.getItem("hilos.tab");if(t&&TABS.some(x=>x[0]===t))S.tab=t;}catch(e){}
+try{const o=JSON.parse(localStorage.getItem("hilos.sort")||"null");if(o&&typeof o.k==="string"&&(o.dir===1||o.dir===-1))S.sort=o;}catch(e){}
+try{S.mias=localStorage.getItem("hilos.mias")==="1";}catch(e){}
 
 /* ---------- Utilidades ---------- */
 function h(tag,props,...kids){const el=document.createElement(tag);
@@ -278,10 +309,11 @@ function fmtHora(iso){try{return new Intl.DateTimeFormat("es-CR",{timeZone:TZ,da
 function nuevoId(p){return p+"-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);}
 function safeUrl(u){try{const x=new URL(u);if(x.protocol!=="https:")return null;
   return /(^|\.)(office365\.com|office\.com|outlook\.com|microsoft\.com|sharepoint\.com|slack\.com)$/i.test(x.hostname)?x.href:null;}catch(e){return null;}}
-function toast(msg,undo){document.querySelectorAll(".toast").forEach(x=>x.remove());
+function toast(msg,undo,act){document.querySelectorAll(".toast").forEach(x=>x.remove());
   const t=h("div",{class:"toast",role:"status"},msg);
+  if(act){const b=h("button",{type:"button",class:"undo"},act.label);b.addEventListener("click",()=>{t.remove();act.fn();});t.append(b);}
   if(undo){const b=h("button",{type:"button",class:"undo"},"Deshacer");b.addEventListener("click",async()=>{t.remove();try{await undo();toast("Cambio deshecho");}catch(e){toast("No se pudo deshacer");}});t.append(b);}
-  document.body.append(t);setTimeout(()=>t.remove(),undo?7000:3200);}
+  document.body.append(t);setTimeout(()=>t.remove(),undo||act?8000:3200);}
 function puestoNombre(id){if(!id)return"Sin responsable";if(id==="tercero")return"Un tercero";return S.puestos.get(id)?.nombre||id;}
 function reportesGG(){return[...S.puestos.entries()].filter(([,p])=>p.reportaGG).sort((a,b)=>(a[1].orden??99)-(b[1].orden??99));}
 function rama(pid){if(!pid||pid==="consolidado"||pid==="todos")return null;if(pid==="gg")return new Set(["gg"]);const out=new Set([pid]);let more=true;
@@ -304,12 +336,14 @@ async function nextNum(){const ref=db.doc("config/contador");let n=1;
 function pillImpl(s){return h("span",{class:"pill p-"+(s||"sin_iniciar")},IMPL[s]||"Sin iniciar");}
 function pillDecide(x){if(x.estadoDecision!=="por_decidir")return null;
   return h("span",{class:"pill p-decide",title:"Decisión pendiente"},"Decide: "+(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)));}
-function fechaSpan(x){if(!x.fechaCompromiso)return h("span",{class:"mono"},"sin fecha");
-  if(terminado(x))return h("span",{class:"mono"},fmt(x.fechaCompromiso));
-  const d=dias(hoy(),x.fechaCompromiso);
-  const cls=d<0?"date-bad":d<=7?"date-warn":"date-ok";
-  const txt=d<0?`vencido ${fmt(x.fechaCompromiso)}`:d===0?"vence hoy":`${fmt(x.fechaCompromiso)}`;
-  return h("span",{class:"mono "+cls},txt);}
+/* Fecha contra vencimiento: vencida, vence en 7 días o menos, a tiempo o sin fecha. Completadas y descartadas no llevan color. */
+function dueClass(fecha,estado){if(estado==="completada"||estado==="descartado")return"due-done";if(!fecha)return"due-none";
+  const d=dias(hoy(),fecha);return d<0?"due-late":d<=7?"due-soon":"due-ok";}
+function fmtF(d){if(!d)return"—";const[y,m,dd]=String(d).slice(0,10).split("-");return `${+dd} ${MESES[+m-1]}`+(y!==hoy().slice(0,4)?" "+y:"");}
+function fechaSpan(x){return h("span",{class:"dpill "+dueClass(x.fechaCompromiso,x.estadoImpl)},fmtF(x.fechaCompromiso));}
+function paintDue(el,fecha,estado){el.classList.remove("due-late","due-soon","due-ok","due-none","due-done");el.classList.add("due",dueClass(fecha,estado));}
+function legend(){const it=(c,l)=>h("span",{},h("span",{class:"sw "+c}),l);
+  return h("div",{class:"legend"},h("span",{},"Color de la fecha:"),it("due-late","Vencida"),it("due-soon","Vence en 7 días o menos"),it("due-ok","A tiempo"),it("due-none","Sin fecha"));}
 function hiloRow(x,opts={}){
   const kids=hijos(x.id);const done=kids.filter(k=>k.estadoImpl==="completada").length;
   const padre=x.padre&&S.hilos.get(x.padre);
@@ -330,30 +364,89 @@ function hiloRow(x,opts={}){
 /* Tabla de hilos (filas y columnas). HR() describe una fila; sec() y las vistas la agrupan en tabla. */
 function HR(x,opts={}){return{__h:true,x,opts};}
 function decideTxt(x){if(x.estadoDecision!=="por_decidir")return null;return x.decisionDe==="gg"?"Gerencia General":x.decisionDe?puestoNombre(x.decisionDe):"Por definir quién";}
+function decLabel(x){return x.estadoDecision==="por_decidir"?"Por decidir ("+decideTxt(x)+")":DEC[x.estadoDecision||"no_requiere"];}
+/* Orden: uno solo para Publicación e Hilos, recordado en este dispositivo. Los vacíos van siempre al final; el desempate es la fecha y luego el #ID. */
+const SORTS=[["num","ID"],["titulo","Tarea"],["puesto","Responsable"],["tipo","Tipo"],["fecha","Fecha"],["proyecto","Proyecto"],["decide","Espera decisión de"],["estado","Estado"]];
+const IMPL_ORD=["sin_iniciar","en_proceso","en_revision","en_pausa","completada","descartado"];
+function sortVal(x,k){switch(k){case"num":return x.num||null;case"titulo":return x.titulo||null;case"puesto":return x.puesto?puestoNombre(x.puesto):null;
+  case"tipo":return TIPO[x.tipo||"tarea"];case"fecha":return x.fechaCompromiso||null;case"proyecto":return x.proyecto||null;
+  case"decide":return decideTxt(x);case"estado":return IMPL_ORD.indexOf(x.estadoImpl||"sin_iniciar");default:return null;}}
+function cmpHilos(a,b){const{k,dir}=S.sort;const va=sortVal(a,k),vb=sortVal(b,k);
+  if(va!=null&&vb==null)return -1;if(va==null&&vb!=null)return 1;
+  if(va!=null&&vb!=null){const r=typeof va==="number"&&typeof vb==="number"?va-vb:String(va).localeCompare(String(vb),"es",{numeric:true,sensitivity:"base"});if(r)return r*dir;}
+  return(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999")||(a.num||9e9)-(b.num||9e9);}
+function setSort(k,dir){S.sort={k,dir:dir??(S.sort.k===k?-S.sort.dir:1)};try{localStorage.setItem("hilos.sort",JSON.stringify(S.sort));}catch(e){}render();}
+function sortBar(){const s=sel("f-sort",SORTS.map(([k,l])=>[k,"Ordenar por: "+l]),S.sort.k);s.addEventListener("change",()=>setSort(s.value,1));
+  return h("div",{class:"toolbar only-narrow"},s,h("button",{type:"button",class:"btn sm",onclick:()=>setSort(S.sort.k)},S.sort.dir>0?"↑ Ascendente":"↓ Descendente"));}
+function proyDL(){return h("datalist",{id:"dl-proy"},[...new Set(hilosArr().map(x=>x.proyecto).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")).map(p=>h("option",{value:p})));}
 function hiloTable(descs){
   const t=h("div",{class:"htable"});
-  t.append(h("div",{class:"hhead","aria-hidden":"true"},["Tarea","Responsable","Tipo","Fecha","Proyecto","Espera decisión de","Estado"].map(c=>h("span",{},c))));
+  t.append(h("div",{class:"hhead"},SORTS.map(([k,l])=>h("button",{type:"button",class:"sh","data-dir":S.sort.k===k?(S.sort.dir>0?"asc":"desc"):null,
+    title:`Ordenar por ${l}`,onclick:()=>setSort(k)},l))));
   for(const d of descs)t.append(hrowEl(d.x,d.opts||{}));
   return t;}
+/* Fila editable en el mismo renglón. Los campos cambiados se marcan en azul y se guardan juntos (Guardar o Enter) o se revierten (Cancelar o Esc).
+   Las ediciones sin guardar quedan en S.hedits y sobreviven a las actualizaciones en vivo. */
 function hrowEl(x,o){
-  const kids=hijos(x.id);const done=kids.filter(k=>k.estadoImpl==="completada").length;const padre=x.padre&&S.hilos.get(x.padre);
-  const dec=decideTxt(x);
-  const c=(lbl,...v)=>h("span",{class:"hc"},h("span",{class:"cl"},lbl),...v);
-  return h("button",{type:"button",class:"hrow"+(o.sub?" sub":""),onclick:()=>openEditor(x.id)},
-    h("span",{class:"hc c-task"},
-      h("span",{class:"ht"},x.num?h("span",{class:"hnum"},numTxt(x)):null,x.titulo||"(sin título)"),
+  const id=x.id;const e=S.hedits.get(id)||{};
+  const kids=hijos(id);const done=kids.filter(k=>k.estadoImpl==="completada").length;const padre=x.padre&&S.hilos.get(x.padre);
+  const orig={titulo:x.titulo||"",puesto:x.puesto||"",tipo:x.tipo||"tarea",fechaCompromiso:x.fechaCompromiso||"",proyecto:x.proyecto||"",dec:decValue(x),estadoImpl:x.estadoImpl||"sin_iniciar"};
+  const ctl={titulo:h("textarea",{id:"ht-"+id,rows:"1","aria-label":"Tarea "+numTxt(x),class:"t-in"}),
+    puesto:sel("hr-"+id,puestoOpts([["","Sin responsable"]]),""),tipo:sel("hy-"+id,Object.entries(TIPO),"tarea"),
+    fechaCompromiso:h("input",{type:"date",id:"hf-"+id}),proyecto:h("input",{type:"text",id:"hp-"+id,list:"dl-proy",placeholder:"—",maxlength:"80"}),
+    dec:sel("hd-"+id,decOpts(),"no_requiere"),estadoImpl:sel("he-"+id,Object.entries(IMPL),"sin_iniciar")};
+  for(const[k,c]of Object.entries(ctl)){c.classList.add("in");c.value=k in e?e[k]:orig[k];}
+  const row=h("div",{class:"hrow"+(o.sub?" sub":"")});
+  const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const cancel=h("button",{type:"button",class:"btn ghost sm"},"Cancelar");
+  const act=h("div",{class:"h-act",hidden:true},h("span",{class:"hint"},"Cambios sin guardar"),cancel,save);
+  const norm=(k,c)=>k==="titulo"||k==="proyecto"?c.value.trim():c.value;
+  const mark=()=>{let any=false;for(const[k,c]of Object.entries(ctl)){const d=norm(k,c)!==orig[k];c.classList.toggle("dirty",d);any=any||d;}
+    paintDue(ctl.fechaCompromiso,ctl.fechaCompromiso.value,ctl.estadoImpl.value);row.classList.toggle("dirty",any);act.hidden=!any;};
+  for(const[k,c]of Object.entries(ctl))c.addEventListener(c.tagName==="SELECT"||c.type==="date"?"change":"input",()=>{const ed=S.hedits.get(id)||{};ed[k]=c.value;S.hedits.set(id,ed);mark();});
+  const reset=()=>{S.hedits.delete(id);for(const[k,c]of Object.entries(ctl))c.value=orig[k];mark();};
+  const doSave=async()=>{const t=ctl.titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");ctl.titulo.focus();return;}
+    save.disabled=cancel.disabled=true;
+    const ok=await saveInline(id,{titulo:t,puesto:ctl.puesto.value||null,tipo:ctl.tipo.value,fechaCompromiso:ctl.fechaCompromiso.value||null,
+      proyecto:ctl.proyecto.value.trim()||null,estadoImpl:ctl.estadoImpl.value,...decParse(ctl.dec.value)});
+    save.disabled=cancel.disabled=false;if(ok)trasGuardar();};
+  save.addEventListener("click",doSave);cancel.addEventListener("click",reset);
+  row.addEventListener("keydown",ev=>{if(!ev.target.classList.contains("in"))return;
+    if(ev.key==="Enter"&&!ev.shiftKey&&ev.target.tagName!=="SELECT"){if(ev.target.tagName==="TEXTAREA"||!act.hidden)ev.preventDefault();if(!act.hidden)doSave();}
+    else if(ev.key==="Escape"&&!act.hidden){ev.stopPropagation();reset();}});
+  const c=(lbl,ctrl)=>h("label",{class:"hc",for:ctrl.id},h("span",{class:"cl"},lbl),ctrl);
+  row.append(
+    h("div",{class:"hc c-id"},h("button",{type:"button",class:"hid",title:"Abrir el hilo completo",onclick:()=>openEditor(id)},numTxt(x)||"Abrir",h("span",{class:"narrow"}," · Ver hilo completo"))),
+    h("div",{class:"hc c-task"},h("span",{class:"cl"},"Tarea"),ctl.titulo,
       (o.showParent&&padre)||kids.length||x.confidencial||o.extra?h("span",{class:"hsub"},
-        o.showParent&&padre?h("span",{},"↳ "+(padre.num?numTxt(padre)+" · ":"")+padre.titulo):null,
+        o.showParent&&padre?h("span",{},"↳ Subtarea de "+(padre.num?numTxt(padre)+" · ":"")+padre.titulo):null,
         kids.length?h("span",{class:"mono"},`${done}/${kids.length} subtareas`):null,
-        x.confidencial?h("span",{class:"pill"},"Confidencial"):null,
-        o.extra||null):null,
+        x.confidencial?h("span",{class:"pill"},"Confidencial"):null,o.extra||null):null,
       o.why?h("span",{class:"hwhy"},o.why):null),
-    c("Responsable",h("span",{class:"tag"},puestoNombre(x.puesto))),
-    c("Tipo",TIPO[x.tipo]||"Tarea"),
-    c("Fecha",fechaSpan(x)),
-    c("Proyecto",x.proyecto?h("span",{},x.proyecto):h("span",{class:"muted"},"—")),
-    c("Espera decisión de",dec?h("span",{class:"pill p-decide"},dec):h("span",{class:"muted"},"—")),
-    c("Estado",pillImpl(x.estadoImpl)));}
+    c("Responsable",ctl.puesto),c("Tipo",ctl.tipo),c("Fecha",ctl.fechaCompromiso),c("Proyecto",ctl.proyecto),
+    c("Espera decisión de",ctl.dec),c("Estado",ctl.estadoImpl),act);
+  mark();return row;}
+/* Guardado desde la fila: mismas reglas que el editor completo (historial, fecha original, reprogramaciones, cierre). */
+async function saveInline(id,val){const cur=S.hilos.get(id);if(!cur){toast("El hilo ya no existe");return false;}
+  const now=new Date().toISOString();const cambios=[];
+  if((cur.estadoImpl||"sin_iniciar")!==val.estadoImpl)cambios.push(`Implementación: ${IMPL[cur.estadoImpl]||"Sin iniciar"} → ${IMPL[val.estadoImpl]}`);
+  if(decValue(cur)!==decValue(val))cambios.push(`Decisión: ${decLabel(cur)} → ${decLabel(val)}`);
+  if((cur.puesto||null)!==val.puesto)cambios.push(`Responsable: ${puestoNombre(cur.puesto)} → ${puestoNombre(val.puesto)}`);
+  if((cur.fechaCompromiso||null)!==val.fechaCompromiso)cambios.push(`Fecha: ${fmt(cur.fechaCompromiso)} → ${fmt(val.fechaCompromiso)}`);
+  if((cur.titulo||"")!==val.titulo||(cur.proyecto||null)!==val.proyecto||(cur.tipo||"tarea")!==val.tipo)cambios.push("Detalle editado");
+  if(!cambios.length){S.hedits.delete(id);return true;}
+  const patch={...val,actualizado:now,ultimaActividad:hoy(),historial:[...(cur.historial||[]),{fecha:now,texto:cambios.join(" · ")}]};
+  if((cur.puesto||null)!==val.puesto&&val.puesto&&val.puesto!=="gg"){const a=S.puestos.get(val.puesto)?.area;if(a)patch.area=a;}
+  if(!cur.fechaOriginal&&val.fechaCompromiso)patch.fechaOriginal=val.fechaCompromiso;
+  if(cur.fechaCompromiso&&val.fechaCompromiso!==cur.fechaCompromiso)patch.reprogramaciones=(cur.reprogramaciones||0)+1;
+  if(terminado(val)&&!cur.fechaCierre)patch.fechaCierre=now;if(!terminado(val)&&cur.fechaCierre)patch.fechaCierre=null;
+  if(val.estadoImpl!=="completada"&&cur.evaluacion)patch.evaluacion=null;
+  const prev={};for(const k of Object.keys(patch))prev[k]=k in cur?cur[k]:null;
+  try{await db.doc("hilos/"+id).update(patch);S.hedits.delete(id);
+    const undo=()=>db.doc("hilos/"+id).update(prev);
+    if(val.estadoImpl==="completada"&&cur.estadoImpl!=="completada")toast("Completada. Falta registrar el resultado y la evaluación.",undo,{label:"Evaluar",fn:()=>openEditor(id)});
+    else toast("Cambios guardados",undo);
+    return true;}
+  catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));return false;}}
 function quote(ev){const url=safeUrl(ev.enlace);
   return h("div",{class:"quote"},ev.cita?"“"+ev.cita+"”":"(sin cita)",
     h("span",{class:"src"},`${fmt(ev.fecha)} · ${ev.de||""}${ev.asunto?" · "+ev.asunto:""} `,
@@ -367,67 +460,77 @@ function renderTabs(){const nav=document.getElementById("tabs");nav.replaceChild
       lbl,n!=null?h("span",{class:"count"+(n?"":" zero")},String(n)):null));}}
 function renderSync(){const el=document.getElementById("sync");
   el.textContent=S.ingesta?.ultimaCorrida?"Correo leído al "+fmtHora(S.ingesta.ultimaCorrida):"Aún sin lectura de correo";}
-function render(){renderTabs();renderSync();const m=document.getElementById("main");m.replaceChildren();
+/* Mientras se edita una fila (o se está pulsando algo), las actualizaciones en vivo esperan: así no se pierde el foco ni el clic. */
+let ptrDown=false;
+function editandoFila(){const a=document.activeElement;return !!(a&&a.closest&&a.closest("#main .hrow, #main .drow"));}
+function flushRender(){if(S.pendiente&&!ptrDown&&!editandoFila())render();}
+document.addEventListener("pointerdown",()=>{ptrDown=true;},true);
+document.addEventListener("pointerup",()=>{ptrDown=false;setTimeout(flushRender,60);},true);
+document.addEventListener("pointercancel",()=>{ptrDown=false;setTimeout(flushRender,60);},true);
+document.addEventListener("focusout",()=>setTimeout(flushRender,60));
+function trasGuardar(){const a=document.activeElement;if(a&&a.closest&&a.closest("#main"))a.blur();S.pendiente=true;flushRender();}
+function render(){if(editandoFila()||ptrDown){S.pendiente=true;return;}S.pendiente=false;
+  renderTabs();renderSync();const m=document.getElementById("main");m.replaceChildren();
   if(!S.loaded.p||!S.loaded.h||!S.loaded.b){m.append(h("p",{class:"empty",style:"padding-top:24px"},"Cargando HILOS…"));return;}
   ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
 
 /* ---------- Publicación del lunes ---------- */
-function sec(title,items,emptyTxt,count){
+function sec(title,items,emptyTxt,count,desc){
   const out=[];let run=[];for(const it of items){if(it&&it.__h){run.push(it);continue;}if(run.length){out.push(hiloTable(run));run=[];}out.push(it);}
   if(run.length)out.push(hiloTable(run));
   const n=count??items.length;items=out;
-  const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(n))));
+  const s=h("section",{class:"sec"},h("h2",{},title,h("span",{class:"n"},String(n))),desc?h("p",{class:"sec-d"},desc):null);
   s.append(items.length?h("div",{class:"list"},items):h("p",{class:"empty"},emptyTxt));return s;}
+/* Tareas de la Gerencia General asociadas a un puesto que le reporta: su Área relacionada es la del puesto,
+   o es madre o subtarea de un hilo de esa rama. */
+function asociadasGG(pid){const p=S.puestos.get(pid);const r=rama(pid);if(!p||!r||pid==="gg")return[];const all=hilosArr();
+  const madres=new Set(all.filter(k=>k.padre&&r.has(k.puesto)).map(k=>k.padre));
+  return all.filter(x=>x.puesto==="gg"&&(x.area===p.area||madres.has(x.id)||(x.padre&&r.has(S.hilos.get(x.padre)?.puesto))));}
+function visibles(pid,mias){const arr=hilosArr().filter(x=>inR(x,rama(pid)));
+  if(mias){const ids=new Set(arr.map(x=>x.id));for(const x of asociadasGG(pid))if(!ids.has(x.id))arr.push(x);}return arr;}
+function miasBox(pid,id){if(!S.puestos.get(pid)?.reportaGG)return null;const n=asociadasGG(pid).filter(x=>!cerrado(x)).length;
+  const cb=h("input",{type:"checkbox",id});cb.checked=S.mias;
+  cb.addEventListener("change",()=>{S.mias=cb.checked;try{localStorage.setItem("hilos.mias",S.mias?"1":"0");}catch(e){}render();});
+  return h("label",{class:"check",for:id},cb,`Ver mis tareas asociadas (${n})`);}
+function irBorrador(){S.tab="borrador";try{localStorage.setItem("hilos.tab","borrador");}catch(e){}render();window.scrollTo(0,0);}
+/* Publicación: tres secciones y cada tarea aparece una sola vez (Espera su decisión → Resultados por medir → Alertas con el resto). */
 function renderLunes(m){
-  const set=rama(S.rama);const fechaPub=S.pub?.fecha||hoy();const desde=addDays(fechaPub,-7);const hoyD=hoy();
-  const nombre=S.rama==="consolidado"?"Consolidado":puestoNombre(S.rama);
+  const fechaPub=S.pub?.fecha||hoy();const desde=addDays(fechaPub,-7);const hoyD=hoy();
   m.append(h("div",{class:"page-h"},h("h1",{},"Seguimiento del lunes"),
     h("div",{class:"sub"},`${fmtLargo(fechaPub)} · semana del ${fmt(desde)} al ${fmt(fechaPub)}`+(S.pub?.generada?` · generada ${fmtHora(S.pub.generada)}`:" · aún sin publicación generada"))));
   const chips=h("div",{class:"chips",role:"group","aria-label":"Puesto"});
   for(const[id,lbl]of[["consolidado","Consolidado"],...reportesGG().map(([id,p])=>[id,p.nombre]),["gg","Gerencia General (mis tareas)"]])
     chips.append(h("button",{type:"button",class:"chip","aria-pressed":S.rama===id?"true":"false",onclick:()=>{S.rama=id;render();}},lbl));
   m.append(chips);
-  const todos=hilosArr();const vis=todos.filter(x=>inR(x,set));const abiertos=vis.filter(x=>!cerrado(x));
+  const mias=miasBox(S.rama,"f-mias-p");if(mias)m.append(h("div",{class:"toolbar"},mias));
+  const set=rama(S.rama);const todos=hilosArr();
+  const abiertos=visibles(S.rama,!!mias&&S.mias).filter(x=>!cerrado(x));
   const resumen=S.rama==="consolidado"?S.pub?.resumenGeneral:S.pub?.porPuesto?.[S.rama]?.resumen;
   if(resumen)m.append(h("section",{class:"sec"},h("div",{class:"lede"},h("p",{},resumen))));
   if(S.rama==="consolidado"){
     const grid=h("div",{class:"grid-sum"});
     for(const[id,p]of[...reportesGG(),["gg",{nombre:"Gerencia General (mis tareas)"}]]){const r=rama(id);const ab=todos.filter(x=>inR(x,r)&&!cerrado(x));
       const venc=ab.filter(x=>x.fechaCompromiso&&!terminado(x)&&x.fechaCompromiso<hoyD).length;
-      const dGG=ab.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").length+[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto)&&esDecGG(d)).length;
+      const dGG=ab.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").length;
       const bor=[...S.borrador.values()].filter(d=>r.has(d.propuesta?.puesto||d.puesto)).length;
       grid.append(h("button",{type:"button",class:"sum",onclick:()=>{S.rama=id;render();}},h("span",{class:"name"},p.nombre),
         h("dl",{},h("dt",{},"Hilos abiertos"),h("dd",{},String(ab.length)),h("dt",{},"Esperan su decisión"),h("dd",{class:dGG?"hot":""},String(dGG)),
           h("dt",{},"Vencidos"),h("dd",{class:venc?"hot":""},String(venc)),h("dt",{},"Por confirmar en borrador"),h("dd",{},String(bor)))));}
     m.append(h("section",{class:"sec"},h("h2",{},"Por puesto"),grid));}
-  const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort((a,b)=>ultimaAct(a).localeCompare(ultimaAct(b)));
-  const drafts=[...S.borrador.entries()].filter(([,d])=>!set||set.has(d.propuesta?.puesto||d.puesto));
-  const draftGG=drafts.filter(([,d])=>esDecGG(d));
-  m.append(sec("Espera su decisión",[...espGG.map(x=>HR(x,{extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
-    draftGG.length?draftTable(draftGG):null].filter(Boolean),"Nada espera su decisión.",espGG.length+draftGG.length));
-  const alertas=[];const alerted=new Set();
-  for(const x of abiertos){if(terminado(x))continue;const why=[];
-    if(x.fechaCompromiso&&x.fechaCompromiso<hoyD)why.push(`Vencido hace ${dias(x.fechaCompromiso,hoyD)} días`);
-    const quieto=dias(ultimaAct(x),hoyD);if(quieto>14)why.push(`${quieto} días sin movimiento`);
-    if(!x.fechaCompromiso&&["tarea","proyecto"].includes(x.tipo||"tarea")&&x.estadoDecision!=="por_decidir")why.push("Sin fecha de cumplimiento");
-    if(!x.puesto)why.push("Sin puesto responsable");
-    if(why.length){alerted.add(x.id);alertas.push(HR(x,{showParent:true,why:why.join(" · ")}));}}
-  m.append(sec("Alertas",alertas,"Sin alertas."));
-  const espOtros=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe!=="gg");
-  m.append(sec("Espera decisión de otros",espOtros.map(x=>HR(x)),"Nada pendiente de decisión de otros."));
-  const cerradosSem=vis.filter(x=>terminado(x)&&(fechaDe(x.fechaCierre)||ultimaAct(x))>=desde);
-  const nov=vis.filter(x=>!terminado(x)&&(ultimaAct(x)>=desde||fechaDe(x.creado)>=desde)).sort((a,b)=>ultimaAct(b).localeCompare(ultimaAct(a)));
-  m.append(sec("Novedades de la semana",nov.map(x=>HR(x,{showParent:true,why:(x.historial||[]).slice(-1)[0]?.texto||null})),"Sin movimientos registrados esta semana."));
-  const ejec=abiertos.filter(x=>!alerted.has(x.id)&&["sin_iniciar","en_proceso","en_revision","en_pausa"].includes(x.estadoImpl||"sin_iniciar")&&x.estadoDecision!=="por_decidir")
-    .sort((a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999"));
-  m.append(sec("En ejecución (al día)",ejec.map(x=>HR(x,{showParent:true})),"No hay otros hilos en ejecución."));
-  const porMedir=vis.filter(x=>x.estadoImpl==="completada"&&(!x.resultado||x.resultado==="sin_medir"));
-  m.append(sec("Resultados por medir",porMedir.map(x=>HR(x)),"Nada pendiente de medir."));
-  const resto=drafts.filter(([,d])=>!esDecGG(d));const LIM=S.rama==="consolidado"?8:40;
-  const bsec=sec("Detectado y por confirmar",resto.length?[draftTable(resto.slice(0,LIM))]:[],"No hay temas nuevos por confirmar.",resto.length);
-  if(resto.length>LIM)bsec.append(h("p",{style:"margin-top:10px"},h("button",{type:"button",class:"btn sm",onclick:()=>{S.tab="borrador";render();window.scrollTo(0,0);}},`Ver los ${resto.length} en el Borrador`)));
-  m.append(bsec);
-  m.append(sec("Cerrados en la semana",cerradosSem.map(x=>HR(x)),"Nada se cerró esta semana."));
+  const drafts=[...S.borrador.values()].filter(d=>!set||set.has(d.propuesta?.puesto||d.puesto));
+  if(drafts.length){const nGG=drafts.filter(esDecGG).length;
+    m.append(h("p",{class:"bnote"},h("span",{},(drafts.length===1?"1 tema detectado espera":`${drafts.length} temas detectados esperan`)+" confirmación en el Borrador"+(nGG?` (${nGG} con decisión suya)`:"")+"."),
+      h("button",{type:"button",class:"btn sm",onclick:irBorrador},"Ir al Borrador")));}
+  m.append(legend(),sortBar(),proyDL());
+  const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(cmpHilos);const enEsp=new Set(espGG.map(x=>x.id));
+  const porMedir=abiertos.filter(x=>!enEsp.has(x.id)&&x.estadoImpl==="completada").sort(cmpHilos);const enMed=new Set(porMedir.map(x=>x.id));
+  const resto=abiertos.filter(x=>!enEsp.has(x.id)&&!enMed.has(x.id)).sort(cmpHilos);
+  m.append(sec("Espera su decisión",espGG.map(x=>HR(x,{showParent:true,extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
+    "Nada espera su decisión.",null,"No avanzan hasta que usted decida. Cuando decida, cambie “Espera decisión de” en la fila."));
+  m.append(sec("Alertas",resto.map(x=>{const q=dias(ultimaAct(x),hoyD);return HR(x,{showParent:true,why:q>14?`${q} días sin movimiento`:null});}),
+    "No hay otras tareas abiertas.",null,"Todas las demás tareas abiertas. El color de la fecha señala las vencidas y las que vencen pronto."));
+  m.append(sec("Resultados por medir",porMedir.map(x=>HR(x,{showParent:true})),
+    "Nada pendiente de medir.",null,"Completadas sin resultado. Pulse el #ID para anotar el resultado y evaluar el cumplimiento."));
   const qs=S.rama==="consolidado"?(S.pub?.preguntasGenerales||[]):(S.pub?.porPuesto?.[S.rama]?.preguntas||[]);
   const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
   qsec.append(qs.length?h("ol",{class:"qs"},qs.map(q=>h("li",{},q))):h("p",{class:"empty"},"Se generan con cada publicación del lunes."));
@@ -482,8 +585,8 @@ function draftRow(id,d){
   const ctx=[p.detalle,p.notas].filter(Boolean).join(" · ");
   const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const del=h("button",{type:"button",class:"btn ghost sm"},"Descartar");
   save.addEventListener("click",async()=>{const t=titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");titulo.focus();return;}
-    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,puesto:resp.value||null,fechaCompromiso:fecha.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;});
-  del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id);save.disabled=del.disabled=false;});
+    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,puesto:resp.value||null,fechaCompromiso:fecha.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;trasGuardar();});
+  del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id);save.disabled=del.disabled=false;trasGuardar();});
   return h("div",{class:"drow"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Tarea"),titulo,chips,ctxBlock(id,ctx,d.evidencia)),
     cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Estado",est),cell("Espera decisión de",dec),
@@ -492,8 +595,8 @@ function updRow(id,d){
   const x=S.hilos.get(d.hilo);const cambios=d.cambios||{};
   const desc=Object.entries(cambios).map(([k,val])=>k==="estadoImpl"?`Estado → ${IMPL[val]||val}`:k==="fechaCompromiso"?`Fecha → ${fmt(val)}`:k==="estadoDecision"?`Decisión → ${DEC[val]||val}`:k==="puesto"?`Responsable → ${puestoNombre(val)}`:k==="resultado"?`Resultado → ${RES[val]||val}`:null).filter(Boolean).join(" · ");
   const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const del=h("button",{type:"button",class:"btn ghost sm"},"Descartar");
-  save.addEventListener("click",async()=>{save.disabled=del.disabled=true;await applyUpdate(id,d);save.disabled=del.disabled=false;});
-  del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id,"rechazado");save.disabled=del.disabled=false;});
+  save.addEventListener("click",async()=>{save.disabled=del.disabled=true;await applyUpdate(id,d);save.disabled=del.disabled=false;trasGuardar();});
+  del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id,"rechazado");save.disabled=del.disabled=false;trasGuardar();});
   const ro=(lbl,txt)=>h("div",{class:"cell"},h("span",{class:"cl"},lbl),h("span",{class:"ro"},txt));
   return h("div",{class:"drow upd"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Actualización sugerida"),h("p",{class:"t-ro"},x?.titulo||"(hilo no encontrado)"),
@@ -514,7 +617,7 @@ async function discardDraft(id,estado="descartado"){const now=new Date().toISOSt
   catch(e){toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}}
 function renderBorrador(m){
   m.append(h("div",{class:"page-h"},h("h1",{},"Borrador de tareas a agregar"),
-    h("div",{class:"sub"},"Ajuste en la misma fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento. Los campos cambiados se marcan en ámbar.")));
+    h("div",{class:"sub"},"Ajuste en la misma fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento. Los campos cambiados se marcan en azul.")));
   const ds=[...S.borrador.entries()];
   if(!ds.length){m.append(h("p",{class:"empty"},"No hay nada por confirmar. La próxima lectura del correo dejará aquí los temas nuevos."));return;}
   const pidOf=d=>topPuesto(d.tipo==="actualizacion"?S.hilos.get(d.hilo)?.puesto:d.propuesta?.puesto);
@@ -539,19 +642,20 @@ async function applyUpdate(id,d){const x=S.hilos.get(d.hilo);if(!x){toast("El hi
 
 /* ---------- Hilos ---------- */
 function renderHilos(m){
-  m.append(h("div",{class:"page-h"},h("h1",{},"Hilos"),h("div",{class:"sub"},"Todos los temas en seguimiento, agrupados por área, proyecto, estado o puesto.")));
+  m.append(h("div",{class:"page-h"},h("h1",{},"Hilos"),h("div",{class:"sub"},"Todos los temas en seguimiento, agrupados por área, proyecto, estado o puesto. Edite en la misma fila; pulse el #ID para abrir el hilo completo.")));
   const q=h("input",{type:"search",id:"f-q",placeholder:"Buscar por título o #ID",value:S.f.q,"aria-label":"Buscar"});
   q.addEventListener("input",()=>{S.f.q=q.value;drawList();});
   const sp=h("select",{id:"f-puesto","aria-label":"Puesto"},h("option",{value:"todos"},"Todos los puestos"),
     [...S.puestos.entries()].sort((a,b)=>(a[1].orden??99)-(b[1].orden??99)).map(([id,p])=>h("option",{value:id},p.nombre)));
-  sp.value=S.f.puesto;sp.addEventListener("change",()=>{S.f.puesto=sp.value;drawList();});
+  sp.value=S.f.puesto;sp.addEventListener("change",()=>{S.f.puesto=sp.value;render();});
   const sg=h("select",{id:"f-agrupar","aria-label":"Agrupar por"},[["area","Agrupar por área"],["proyecto","Agrupar por proyecto"],["estado","Agrupar por estado"],["puesto","Agrupar por puesto"]].map(([v,l])=>h("option",{value:v},l)));
   sg.value=S.f.agrupar;sg.addEventListener("change",()=>{S.f.agrupar=sg.value;drawList();});
   const cb=h("input",{type:"checkbox",id:"f-cerrados"});cb.checked=S.f.cerrados;cb.addEventListener("change",()=>{S.f.cerrados=cb.checked;drawList();});
-  m.append(h("div",{class:"toolbar"},q,sp,sg,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")));
+  const mias=miasBox(S.f.puesto,"f-mias-h");
+  m.append(h("div",{class:"toolbar"},q,sp,sg,mias,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")),legend(),sortBar(),proyDL());
   const out=h("div",{id:"hilos-out"});m.append(out);
-  function drawList(){out.replaceChildren();const set=rama(S.f.puesto);const qq=S.f.q.trim().toLowerCase();
-    let arr=hilosArr().filter(x=>inR(x,set)&&(S.f.cerrados||!cerrado(x))&&(!qq||(numTxt(x)+" "+(x.num||"")+" "+x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
+  function drawList(){out.replaceChildren();const qq=S.f.q.trim().toLowerCase();
+    let arr=visibles(S.f.puesto,!!mias&&S.mias).filter(x=>(S.f.cerrados||!cerrado(x))&&(!qq||(numTxt(x)+" "+(x.num||"")+" "+x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
     if(!arr.length){out.append(h("p",{class:"empty"},S.hilos.size?"Ningún hilo coincide con el filtro.":"Todavía no hay hilos. Conviértalos desde el Borrador o cree uno con “+ Hilo”."));return;}
     const ids=new Set(arr.map(x=>x.id));
     const key=x=>S.f.agrupar==="area"?(x.area||S.puestos.get(x.puesto)?.area||"Sin área"):S.f.agrupar==="proyecto"?(x.proyecto||"Sin proyecto"):S.f.agrupar==="estado"?(IMPL[x.estadoImpl]||"Sin iniciar"):puestoNombre(x.puesto);
@@ -559,11 +663,11 @@ function renderHilos(m){
     const groups=new Map();for(const x of arr){if(x.padre&&ids.has(x.padre))continue;const k=key(x);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x);}
     const ks=[...groups.keys()].sort((a,b)=>{if(order){const ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);}
       if(a.startsWith("Sin "))return 1;if(b.startsWith("Sin "))return -1;return a.localeCompare(b,"es");});
-    for(const k of ks){const g=groups.get(k).sort((a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999"));
+    for(const k of ks){const g=groups.get(k).sort(cmpHilos);
       out.append(h("div",{class:"group-h"},k,h("span",{class:"n"},String(g.length))));
       const rows=[];
       for(const x of g){rows.push(HR(x,{showParent:!!x.padre}));
-        for(const c of arr.filter(y=>y.padre===x.id))rows.push(HR(c,{sub:true}));}
+        for(const c of arr.filter(y=>y.padre===x.id).sort(cmpHilos))rows.push(HR(c,{sub:true}));}
       out.append(hiloTable(rows));}}
   drawList();}
 
@@ -616,7 +720,9 @@ function openEditor(id,preset,ctx={}){
   const dl=h("datalist",{id:"dl-proyectos"},proys.map(p=>h("option",{value:p})));
   const decWrap=field("Decisión pendiente de",f.decisionDe);
   const syncDec=()=>{decWrap.hidden=f.estadoDecision.value!=="por_decidir";};f.estadoDecision.addEventListener("change",syncDec);
-  f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area)f.area.value=p.area;if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;});
+  /* En las tareas de la Gerencia General, el área es la que se relaciona con el tema: define dónde aparece con "Ver mis tareas asociadas". */
+  const areaFld=field("Área",f.area);const syncArea=()=>{areaFld.querySelector("label").textContent=f.puesto.value==="gg"?"Área relacionada":"Área";};
+  f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area&&f.puesto.value!=="gg")f.area.value=p.area;if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;syncArea();});
   const entrega=radios("e-entrega",ENTREGA,cur.evaluacion?.entrega);const ejecucion=radios("e-ejec",EJEC,cur.evaluacion?.ejecucion);
   const evalBox=h("div",{class:"box full"},h("h3",{},"Evaluación de cumplimiento"),
     h("div",{class:"field"},h("span",{class:"lbl"},"Entrega"),entrega),
@@ -643,7 +749,7 @@ function openEditor(id,preset,ctx={}){
     h("div",{class:"form"},
       field("Título",f.titulo,"full"),field("Detalle",f.detalle,"full"),
       field("Puesto responsable",f.puesto),field("Tipo",f.tipo),
-      field("Área",f.area),field("Proyecto",f.proyecto),
+      areaFld,field("Proyecto",f.proyecto),
       field("Fecha esperada de cumplimiento",f.fecha),field("Nivel de implementación",f.estadoImpl),
       field("Estado de decisión",f.estadoDecision),decWrap,
       !kids.length?field("Pertenece a (hilo padre)",f.padre,"full"):null,
@@ -655,7 +761,7 @@ function openEditor(id,preset,ctx={}){
     histo.length?h("div",{class:"box"},h("h3",{},"Historial"),h("ul",{class:"hist"},histo.map(e=>h("li",{},h("span",{class:"when"},fmtHora(e.fecha)),e.texto)))):null,
     h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),
       h("button",{type:"button",class:"btn primary",id:"e-save",onclick:()=>save(false)},isNew?"Guardar hilo":"Guardar cambios")));
-  syncDec();syncImpl();
+  syncDec();syncImpl();syncArea();
   const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
   L.replaceChildren(scrim);setTimeout(()=>f.titulo.focus(),30);
   async function save(stay){
@@ -746,12 +852,17 @@ function openPuesto(id){const cur=id?{...S.puestos.get(id)}:{nombre:"",area:"Ger
 
 /* ---------- Ayuda ---------- */
 const AYUDA=[
- ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. En cada tema: Convertir en hilo (tal cual), Editar y convertir (cambiar detalle, fecha, puesto responsable, área, proyecto) o Descartar. Lo que descarta enseña al sistema qué no es un tema."],
+ ["La publicación del lunes","Tres secciones y cada tarea aparece una sola vez: Espera su decisión, Alertas (todas las demás tareas abiertas) y Resultados por medir (completadas sin resultado). Los temas nuevos que detecta el correo están en el Borrador; el aviso de arriba dice cuántos hay."],
+ ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, responsable, tipo, fecha, proyecto, quién decide y estado. Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
+ ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
+ ["Color de la fecha","Rojo: vencida. Ámbar: vence en 7 días o menos. Verde: a tiempo. Gris: sin fecha. Las tareas completadas o descartadas no llevan color."],
+ ["Mis tareas asociadas","Al filtrar por Comercial, Operaciones, RRHH o Contabilidad, marque “Ver mis tareas asociadas” para sumar sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El Área relacionada se cambia al abrir el hilo con el #ID."],
+ ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. Ajuste en la fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento."],
  ["Acta del 1:1","Al terminar el 1:1, envíe al otro participante un correo con los temas y acuerdos, en lista libre. Cualquier asunto sirve: HILOS reconoce el acta por su contenido. Lo claro se carga directo como hilo esa misma noche; lo dudoso queda en el Borrador."],
  ["Correo de un externo","Reenvíeselo a usted mismo con la palabra HILO al inicio del asunto (por ejemplo, “HILO RV: Cotización…”): se crea el hilo directo esa noche. Sin la palabra HILO, queda en el Borrador para que lo confirme."],
- ["Crear un hilo a mano","Botón “+ Hilo”, arriba a la derecha. Para dividir un hilo en subtareas, ábralo y use “+ Subtarea”."],
+ ["Crear un hilo a mano","Botón “+ Hilo”, arriba a la derecha. Para dividir un hilo en subtareas, ábralo con el #ID y use “+ Subtarea”."],
  ["Cuándo se actualiza","El correo interno se lee de lunes a viernes a las 6:50 p. m. La publicación del lunes queda lista antes de las 6:45 a. m., y a esa hora llega el aviso al celular."],
- ["Evaluar el cumplimiento","Al marcar un hilo como Completada aparecen Entrega (A tiempo, Tarde – Justificado, Tarde – Injustificado) y Ejecución (Mejor de lo esperado, Lo esperado, Menos de lo esperado). El resumen por persona está en Desempeño."]];
+ ["Evaluar el cumplimiento","Al marcar un hilo como Completada aparecen Entrega (A tiempo, Tarde – Justificado, Tarde – Injustificado) y Ejecución (Mejor de lo esperado, Lo esperado, Menos de lo esperado). Si lo completa desde la fila, el aviso ofrece “Evaluar”. El resumen por persona está en Desempeño."]];
 function renderAyuda(m){
   m.append(h("div",{class:"page-h"},h("h1",{},"Cómo se usa HILOS"),h("div",{class:"sub"},"Fase 0: lee solo el correo interno (@hrsuplidora.com) del buzón de la Gerencia General.")));
   const l=h("div",{class:"list"});for(const[t,d]of AYUDA)l.append(h("div",{class:"card"},h("h3",{},t),h("p",{class:"detail"},d)));m.append(l);}
