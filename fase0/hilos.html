@@ -603,25 +603,44 @@ const MAIL={tabla:"border-collapse:collapse;font-family:Calibri,Arial,sans-serif
     completada:"background:#d8f1e2;color:#1c6a44",en_pausa:"background:#faf0c4;color:#735700",descartado:"background:#f8dde2;color:#9a2c40"},
   plazo:{"Vencida":"background:#f9e1de;color:#ad2a1f;font-weight:bold","Vence pronto":"background:#f9ecd4;color:#9a5b00","A tiempo":"background:#dff0e7;color:#1d7349","Sin fecha":"background:#e9ebf0;color:#464c63"}};
 function plazoTxt(x){return x.estadoImpl==="completada"?"—":{"due-late":"Vencida","due-soon":"Vence pronto","due-ok":"A tiempo","due-none":"Sin fecha"}[dueClass(x.fechaCompromiso,x.estadoImpl)]||"—";}
-function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);const hoyD=hoy();
-  /* Mismas tareas que la tabla del puesto (incluidas las de la Gerencia General asociadas al área). Las confidenciales solo van
-     si el destinatario es su responsable. */
-  const abiertos=visibles(pid).filter(x=>!cerrado(x));const lista=abiertos.filter(x=>!x.confidencial||x.puesto===pid);
+function correoPuesto(pid){const p=S.puestos.get(pid)||{};const hoyD=hoy();
+  /* Mismas tareas que la tabla del puesto (incluidas las de la Gerencia General asociadas al área) y la misma estructura que
+     Publicación: las subtareas abiertas van debajo de su tarea madre aunque sean de otro puesto. Las confidenciales solo van si
+     el destinatario es su responsable; una subtarea suelta cuya madre es confidencial de otro puesto no revela el título de la madre. */
+  const visible=x=>!x.confidencial||x.puesto===pid;
+  const abiertos=visibles(pid).filter(x=>!cerrado(x));const lista=abiertos.filter(visible);
+  const todosAb=hilosArr().filter(x=>!cerrado(x));const visIds=new Set(lista.map(x=>x.id));
   const porFecha=(a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999")||(a.num||9e9)-(b.num||9e9);
   const esp=lista.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(porFecha);const e1=new Set(esp.map(x=>x.id));
-  const med=lista.filter(x=>!e1.has(x.id)&&x.estadoImpl==="completada").sort(porFecha);const e2=new Set(med.map(x=>x.id));
-  const seg=lista.filter(x=>!e1.has(x.id)&&!e2.has(x.id)).sort(porFecha);
+  const top=lista.filter(x=>!e1.has(x.id)&&!(x.padre&&visIds.has(x.padre)));
+  const med=top.filter(x=>x.estadoImpl==="completada").sort(porFecha);
+  const seg=top.filter(x=>x.estadoImpl!=="completada").sort(porFecha);
+  const fuera=new Set(abiertos.filter(x=>!visible(x)).map(x=>x.id));
+  const hijosDe=x=>{const hs=todosAb.filter(y=>y.padre===x.id&&!e1.has(y.id));for(const y of hs)if(!visible(y))fuera.add(y.id);return hs.filter(visible).sort(porFecha);};
+  const filas=arr=>arr.flatMap(x=>[[x,false],...hijosDe(x).map(y=>[y,true])]);
   const td=(v,st)=>h("td",{style:MAIL.td+(st?";"+st:"")},v);
+  const refPadre=x=>{const m=x.padre&&S.hilos.get(x.padre);if(!m)return null;
+    const txt=visible(m)?`↳ Subtarea de ${numTxt(m)} · ${m.titulo||""}`:"↳ Subtarea de un hilo confidencial";
+    return[h("br"),h("i",{style:"font-size:12px;color:#737a93"},txt)];};
+  let nSub=0;
   const tabla=arr=>h("table",{style:MAIL.tabla},h("thead",{},h("tr",{},["ID","Tarea","Detalle","Responsable","Fecha","Plazo","Estado"].map(t=>h("th",{style:MAIL.th},t)))),
-    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td([x.titulo||"",x.confidencial?[h("br"),h("strong",{style:"color:#9a2c40"},"Confidencial")]:null]),td(x.detalle||"—","color:#464c63"),td(puestoNombre(x.puesto)),
-      td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"],(MAIL.estado[x.estadoImpl||"sin_iniciar"]||"")+";font-weight:bold"));})));
+    h("tbody",{},filas(arr).map(([x,sub])=>{const pl=plazoTxt(x);if(sub)nSub++;
+      return h("tr",{style:sub?"background:#f6f7fb":null},td(numTxt(x),"white-space:nowrap"),
+        td([sub?"↳ ":null,x.titulo||"",x.confidencial?[h("br"),h("strong",{style:"color:#9a2c40"},"Confidencial")]:null,sub?null:refPadre(x)],sub?"padding-left:22px":null),
+        td(x.detalle||"—","color:#464c63"),td(puestoNombre(x.puesto)),
+        td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),
+        td(IMPL[x.estadoImpl||"sin_iniciar"],(MAIL.estado[x.estadoImpl||"sin_iniciar"]||"")+";font-weight:bold"));})));
+  const secciones=[["Esperan mi decisión",esp],["En seguimiento",seg],["Completadas, falta registrar el resultado",med]].map(([t,arr])=>{
+    if(!arr.length)return[];const tb=tabla(arr);return[h("h3",{style:MAIL.h3},`${t} (${tb.querySelectorAll("tbody tr").length})`),tb];});
   const nombre=(p.ocupante||"").trim().split(/\s+/)[0];const pn=p.nombre||puestoNombre(pid);
+  const n=esp.length+seg.length+med.length+nSub;
   const node=h("div",{},h("p",{style:MAIL.p},nombre?`Hola, ${nombre}:`:"Hola:"),
-    lista.length?h("p",{style:MAIL.p},`Este es el listado de temas abiertos de ${pn} al ${fmtLargo(hoyD)}.`+(lista.some(x=>x.puesto==="gg")?" Incluye también los temas a mi cargo relacionados con el área.":"")+" Si algo no corresponde o cambió, favor responder este correo.")
+    n?h("p",{style:MAIL.p},`Este es el listado de temas abiertos de ${pn} al ${fmtLargo(hoyD)}.`+(lista.some(x=>x.puesto==="gg")?" Incluye también los temas a mi cargo relacionados con el área.":"")
+        +(nSub?" Las subtareas van debajo de su tarea madre (↳), aunque estén a cargo de otro puesto.":"")+" Si algo no corresponde o cambió, favor responder este correo.")
       :h("p",{style:MAIL.p},`Al ${fmtLargo(hoyD)} no hay temas abiertos a cargo de ${pn}.`),
-    [["Esperan mi decisión",esp],["En seguimiento",seg],["Completadas, falta registrar el resultado",med]].map(([t,arr])=>arr.length?[h("h3",{style:MAIL.h3},`${t} (${arr.length})`),tabla(arr)]:[]));
+    secciones);
   const[y,mm,dd]=hoyD.split("-");
-  return{nombre,to:(p.correos||[]).slice(0,1),subject:`Seguimiento HILOS · ${pn} · ${+dd} ${MESES[+mm-1]} ${y}`,node,n:lista.length,conf:abiertos.length-lista.length};}
+  return{nombre,to:(p.correos||[]).slice(0,1),subject:`Seguimiento HILOS · ${pn} · ${+dd} ${MESES[+mm-1]} ${y}`,node,n,conf:fuera.size};}
 /* Copiar: primero el portapapeles moderno (HTML con formato y texto simple); si el visor no lo permite, la selección con
    execCommand; si tampoco, deja el contenido seleccionado para copiarlo con el teclado. */
 function seleccionar(node){const s=window.getSelection();const r=document.createRange();r.selectNodeContents(node);s.removeAllRanges();s.addRange(r);}
