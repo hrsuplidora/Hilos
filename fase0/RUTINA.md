@@ -37,7 +37,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
    - crear el hilo con ese `num`.
 
    Los borradores no llevan número; lo reciben cuando se convierten en hilo.
-9. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (Comercial, Operaciones, RRHH o Contabilidad). Se usa `Gerencia` solo si el tema es transversal. Con ese dato la página muestra la tarea al marcar "Ver mis tareas asociadas" en el filtro del área.
+9. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (Comercial, Operaciones, RRHH o Contabilidad). Se usa `Gerencia` solo si el tema es transversal. Con ese dato la página muestra la tarea en el filtro de ese puesto, junto a las del puesto.
 10. **Proyecto.** `proyecto` lleva el nombre exacto de un proyecto de la colección `proyectos` con `estado: "abierto"`. Si el tema parece pertenecer a un proyecto que no está en la lista, `proyecto` queda en null y se anota en `notas`: "Posible proyecto: <nombre>". Las rutinas nunca crean, renombran ni cierran proyectos; eso lo hace la Gerencia General en la página.
 11. **Listados enviados desde HILOS.** Los correos cuyo asunto empieza con "Seguimiento HILOS" son el listado de tareas que la Gerencia General envía a un puesto desde la página; quedan excluidos por `config/general.excluirAsuntos`. En las respuestas a esos correos (RE:, RV:) solo cuenta el texto nuevo de quien responde, nunca la tabla citada.
 

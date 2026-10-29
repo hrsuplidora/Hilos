@@ -157,7 +157,7 @@ Todo dentro de la aplicación HILOS (§7), más dos atajos:
   3. Resultados por medir: completadas sin resultado registrado.
 - Arriba quedan el resumen de la semana y un aviso con los temas pendientes en el borrador. Al final, las preguntas sugeridas para el 1:1.
 - Las tablas se ordenan por cualquier columna (#ID, tarea, responsable, tipo, fecha, proyecto, quién decide y estado) y se editan en la misma fila, igual que el borrador. **[D]**
-- Al filtrar por un puesto que reporta a la Gerencia General, "Ver mis tareas asociadas" suma las tareas propias de la Gerencia General de esa área. Para eso, en las tareas de la Gerencia General el campo Área indica el área con la que se relaciona el tema. **[D]**
+- Al filtrar por un puesto que reporta a la Gerencia General se ven siempre, además, las tareas propias de la Gerencia General de esa área (29 de octubre de 2026: se retiró la casilla para activarlo). En las tareas de la Gerencia General el campo Área indica el área con la que se relaciona el tema. **[D]**
 - En la Fase 2, cada puesto recibe también su propia publicación, para que ambos lleguen al 1:1 con la misma lista.
 
 ### 4.6 Vistas
@@ -455,7 +455,7 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 
 **[D] 20 de octubre de 2026:**
 
-- **Correo a cada reporte (copiar y pegar).** En Publicación, "Preparar correo" arma el listado de tareas abiertas del puesto, sin las confidenciales; "Copiar información" lo copia con formato para pegarlo en un correo nuevo de Outlook. La primera idea era crear el borrador con el conector de Microsoft 365, pero exigía aprobar en Entra el permiso Mail.ReadWrite y la Gerencia General prefirió no ampliar el acceso: la página no se conecta con Outlook. El asunto empieza con "Seguimiento HILOS" y la lectura nocturna lo excluye. En la Fase 1 el envío puede salir del buzón `hilos@`.
+- **Correo a cada reporte (copiar y pegar).** En Publicación, "Preparar correo" arma el listado de tareas abiertas del puesto, con las de la Gerencia General asociadas al área; las confidenciales solo van si el destinatario es su responsable, marcadas como tales (29 de octubre de 2026); "Copiar información" lo copia con formato para pegarlo en un correo nuevo de Outlook. La primera idea era crear el borrador con el conector de Microsoft 365, pero exigía aprobar en Entra el permiso Mail.ReadWrite y la Gerencia General prefirió no ampliar el acceso: la página no se conecta con Outlook. El asunto empieza con "Seguimiento HILOS" y la lectura nocturna lo excluye. En la Fase 1 el envío puede salir del buzón `hilos@`.
 - **Lista de proyectos.** Nueva pestaña Proyectos con nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). En las tareas, el proyecto se elige de la lista y solo se ofrecen los abiertos. Cambiar el nombre de un proyecto actualiza sus tareas, y dos proyectos se pueden unir. Las rutinas solo asignan proyectos abiertos de la lista y nunca los crean.
 
 Pendientes para la Fase 1:

@@ -318,11 +318,10 @@ const PEST = {abierto:"Abierto",en_pausa:"En pausa",cerrado:"Cerrado",cancelado:
 const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),proyectos:new Map(),pub:null,ingesta:null,
   tab:"lunes",rama:"consolidado",loaded:{p:false,h:false,b:false},
   f:{q:"",puesto:"todos",agrupar:"area",cerrados:false},
-  per:"90",fb:"todos",sort:{k:"fecha",dir:1},mias:false,hedits:new Map()};
+  per:"90",fb:"todos",sort:{k:"fecha",dir:1},hedits:new Map()};
 let db = null;
 try{const t=localStorage.getItem("hilos.tab");if(t&&TABS.some(x=>x[0]===t))S.tab=t;}catch(e){}
 try{const o=JSON.parse(localStorage.getItem("hilos.sort")||"null");if(o&&["num","titulo","area","puesto","fecha","proyecto","decide","estado"].includes(o.k)&&(o.dir===1||o.dir===-1))S.sort=o;}catch(e){}
-try{S.mias=localStorage.getItem("hilos.mias")==="1";}catch(e){}
 
 /* ---------- Utilidades ---------- */
 function h(tag,props,...kids){const el=document.createElement(tag);
@@ -536,12 +535,9 @@ function sec(title,items,emptyTxt,count,desc){
 function asociadasGG(pid){const p=S.puestos.get(pid);const r=rama(pid);if(!p||!r||pid==="gg")return[];const all=hilosArr();
   const madres=new Set(all.filter(k=>k.padre&&r.has(k.puesto)).map(k=>k.padre));
   return all.filter(x=>x.puesto==="gg"&&(x.area===p.area||madres.has(x.id)||(x.padre&&r.has(S.hilos.get(x.padre)?.puesto))));}
-function visibles(pid,mias){const arr=hilosArr().filter(x=>inR(x,rama(pid)));
-  if(mias){const ids=new Set(arr.map(x=>x.id));for(const x of asociadasGG(pid))if(!ids.has(x.id))arr.push(x);}return arr;}
-function miasBox(pid,id){if(!S.puestos.get(pid)?.reportaGG)return null;const n=asociadasGG(pid).filter(x=>!cerrado(x)).length;
-  const cb=h("input",{type:"checkbox",id});cb.checked=S.mias;
-  cb.addEventListener("change",()=>{S.mias=cb.checked;try{localStorage.setItem("hilos.mias",S.mias?"1":"0");}catch(e){}render();});
-  return h("label",{class:"check",for:id},cb,`Ver mis tareas asociadas (${n})`);}
+/* Al filtrar por un puesto que reporta a la Gerencia General se ven siempre, además, las tareas de la Gerencia General asociadas a esa área. */
+function visibles(pid){const arr=hilosArr().filter(x=>inR(x,rama(pid)));
+  if(S.puestos.get(pid)?.reportaGG){const ids=new Set(arr.map(x=>x.id));for(const x of asociadasGG(pid))if(!ids.has(x.id))arr.push(x);}return arr;}
 function irBorrador(){S.tab="borrador";try{localStorage.setItem("hilos.tab","borrador");}catch(e){}render();window.scrollTo(0,0);}
 /* Publicación: tres secciones y cada tarea aparece una sola vez (Espera su decisión → Resultados por medir → Alertas con el resto). */
 function renderLunes(m){
@@ -552,11 +548,10 @@ function renderLunes(m){
   for(const[id,lbl]of[["consolidado","Consolidado"],...reportesGG().map(([id,p])=>[id,p.nombre]),["gg","Gerencia General (mis tareas)"]])
     chips.append(h("button",{type:"button",class:"chip","aria-pressed":S.rama===id?"true":"false",onclick:()=>{S.rama=id;render();}},lbl));
   m.append(chips);
-  const mias=miasBox(S.rama,"f-mias-p");
-  if(mias){const oc=(S.puestos.get(S.rama)?.ocupante||"").trim().split(/\s+/)[0];
-    m.append(h("div",{class:"toolbar"},mias,h("button",{type:"button",class:"btn sm",style:"margin-left:auto",onclick:()=>openCorreo(S.rama)},"Preparar correo para "+(oc||puestoNombre(S.rama)))));}
+  if(S.puestos.get(S.rama)?.reportaGG){const oc=(S.puestos.get(S.rama)?.ocupante||"").trim().split(/\s+/)[0];
+    m.append(h("div",{class:"toolbar"},h("button",{type:"button",class:"btn sm",style:"margin-left:auto",onclick:()=>openCorreo(S.rama)},"Preparar correo para "+(oc||puestoNombre(S.rama)))));}
   const set=rama(S.rama);const todos=hilosArr();
-  const abiertos=visibles(S.rama,!!mias&&S.mias).filter(x=>!cerrado(x));
+  const abiertos=visibles(S.rama).filter(x=>!cerrado(x));
   const resumen=S.rama==="consolidado"?S.pub?.resumenGeneral:S.pub?.porPuesto?.[S.rama]?.resumen;
   if(resumen)m.append(h("section",{class:"sec"},h("div",{class:"lede"},h("p",{},resumen))));
   if(S.rama==="consolidado"){
@@ -602,18 +597,20 @@ const MAIL={tabla:"border-collapse:collapse;font-family:Calibri,Arial,sans-serif
   plazo:{"Vencida":"background:#f9e1de;color:#ad2a1f;font-weight:bold","Vence pronto":"background:#f9ecd4;color:#9a5b00","A tiempo":"background:#dff0e7;color:#1d7349","Sin fecha":"background:#e9ebf0;color:#464c63"}};
 function plazoTxt(x){return x.estadoImpl==="completada"?"—":{"due-late":"Vencida","due-soon":"Vence pronto","due-ok":"A tiempo","due-none":"Sin fecha"}[dueClass(x.fechaCompromiso,x.estadoImpl)]||"—";}
 function correoPuesto(pid){const p=S.puestos.get(pid)||{};const r=rama(pid);const hoyD=hoy();
-  const abiertos=hilosArr().filter(x=>inR(x,r)&&!cerrado(x));const lista=abiertos.filter(x=>!x.confidencial);
+  /* Mismas tareas que la tabla del puesto (incluidas las de la Gerencia General asociadas al área). Las confidenciales solo van
+     si el destinatario es su responsable. */
+  const abiertos=visibles(pid).filter(x=>!cerrado(x));const lista=abiertos.filter(x=>!x.confidencial||x.puesto===pid);
   const porFecha=(a,b)=>(a.fechaCompromiso||"9999").localeCompare(b.fechaCompromiso||"9999")||(a.num||9e9)-(b.num||9e9);
   const esp=lista.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(porFecha);const e1=new Set(esp.map(x=>x.id));
   const med=lista.filter(x=>!e1.has(x.id)&&x.estadoImpl==="completada").sort(porFecha);const e2=new Set(med.map(x=>x.id));
   const seg=lista.filter(x=>!e1.has(x.id)&&!e2.has(x.id)).sort(porFecha);
   const td=(v,st)=>h("td",{style:MAIL.td+(st?";"+st:"")},v);
   const tabla=arr=>h("table",{style:MAIL.tabla},h("thead",{},h("tr",{},["ID","Tarea","Detalle","Responsable","Fecha","Plazo","Estado"].map(t=>h("th",{style:MAIL.th},t)))),
-    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td(x.titulo||""),td(x.detalle||"—","color:#464c63"),td(puestoNombre(x.puesto)),
+    h("tbody",{},arr.map(x=>{const pl=plazoTxt(x);return h("tr",{},td(numTxt(x),"white-space:nowrap"),td([x.titulo||"",x.confidencial?[h("br"),h("strong",{style:"color:#9a2c40"},"Confidencial")]:null]),td(x.detalle||"—","color:#464c63"),td(puestoNombre(x.puesto)),
       td(x.fechaCompromiso?fmtF(x.fechaCompromiso):"—","white-space:nowrap"),td(pl,(MAIL.plazo[pl]||"")+";white-space:nowrap"),td(IMPL[x.estadoImpl||"sin_iniciar"],(MAIL.estado[x.estadoImpl||"sin_iniciar"]||"")+";font-weight:bold"));})));
   const nombre=(p.ocupante||"").trim().split(/\s+/)[0];const pn=p.nombre||puestoNombre(pid);
   const node=h("div",{},h("p",{style:MAIL.p},nombre?`Hola, ${nombre}:`:"Hola:"),
-    lista.length?h("p",{style:MAIL.p},`Este es el listado de temas abiertos a cargo de ${pn} al ${fmtLargo(hoyD)}. Si algo no corresponde o cambió, favor responder este correo.`)
+    lista.length?h("p",{style:MAIL.p},`Este es el listado de temas abiertos de ${pn} al ${fmtLargo(hoyD)}.`+(lista.some(x=>x.puesto==="gg")?" Incluye también los temas a mi cargo relacionados con el área.":"")+" Si algo no corresponde o cambió, favor responder este correo.")
       :h("p",{style:MAIL.p},`Al ${fmtLargo(hoyD)} no hay temas abiertos a cargo de ${pn}.`),
     [["Esperan mi decisión",esp],["En seguimiento",seg],["Completadas, falta registrar el resultado",med]].map(([t,arr])=>arr.length?[h("h3",{style:MAIL.h3},`${t} (${arr.length})`),tabla(arr)]:[]));
   const[y,mm,dd]=hoyD.split("-");
@@ -629,10 +626,8 @@ async function copiarTexto(txt){
   try{if(navigator.clipboard){await navigator.clipboard.writeText(txt);return true;}}catch(e){}
   const t=h("textarea",{style:"position:fixed;opacity:0;top:0;left:0"});t.value=txt;document.body.append(t);t.select();
   let ok=false;try{ok=document.execCommand("copy");}catch(e){}t.remove();return ok;}
-/* Lo que la tabla muestra y el correo no: tareas confidenciales y, con "Ver mis tareas asociadas" marcado, las de la Gerencia General. */
-function fuera(conf,pid){const r=rama(pid);const asoc=S.mias?asociadasGG(pid).filter(x=>!cerrado(x)&&!inR(x,r)).length:0;
-  const p=[conf?`${conf} confidencial${conf===1?"":"es"}`:null,asoc?`${asoc} tarea${asoc===1?"":"s"} suya${asoc===1?"":"s"} asociada${asoc===1?"":"s"} (de la Gerencia General)`:null].filter(Boolean);
-  return p.length?`. No incluye ${p.join(" ni ")}.`:".";}
+/* Lo que la tabla muestra y el correo no: las confidenciales cuyo responsable es otro puesto. */
+function fuera(conf){return conf?`. No incluye ${conf} confidencial${conf===1?"":"es"} a cargo de otro puesto.`:".";}
 function openCorreo(pid){const c=correoPuesto(pid);const tecla=/Mac|iPhone|iPad/.test(navigator.platform||"")?"⌘C":"Ctrl+C";
   const status=h("p",{class:"hint",role:"status"});
   const chico=(txt,lbl)=>h("button",{type:"button",class:"btn ghost sm",onclick:async()=>{status.textContent=await copiarTexto(txt)?`${lbl} copiado.`:`No se pudo copiar: seleccione el texto y use ${tecla}.`;}},"Copiar");
@@ -643,7 +638,7 @@ function openCorreo(pid){const c=correoPuesto(pid);const tecla=/Mac|iPhone|iPad/
     h("dl",{class:"mailmeta"},
       h("dt",{},"Para"),h("dd",{},c.to.length?[c.to.join(", ")," ",chico(c.to.join("; "),"Destinatario")]:"El puesto no tiene correo registrado (pestaña Puestos)."),
       h("dt",{},"Asunto"),h("dd",{},c.subject," ",chico(c.subject,"Asunto"))),
-    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+fuera(c.conf,pid)+
+    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+fuera(c.conf)+
       " Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue. Use el asunto tal cual: empieza con “Seguimiento HILOS” para que la lectura nocturna no lo vuelva a cargar."),
     prev,status,
     h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cerrar"),btn));
@@ -770,11 +765,10 @@ function renderHilos(m){
   const sg=h("select",{id:"f-agrupar","aria-label":"Agrupar por"},[["area","Agrupar por área"],["proyecto","Agrupar por proyecto"],["estado","Agrupar por estado"],["puesto","Agrupar por puesto"]].map(([v,l])=>h("option",{value:v},l)));
   sg.value=S.f.agrupar;sg.addEventListener("change",()=>{S.f.agrupar=sg.value;drawList();});
   const cb=h("input",{type:"checkbox",id:"f-cerrados"});cb.checked=S.f.cerrados;cb.addEventListener("change",()=>{S.f.cerrados=cb.checked;drawList();});
-  const mias=miasBox(S.f.puesto,"f-mias-h");
-  m.append(h("div",{class:"toolbar"},q,sp,sg,mias,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")),legend(),sortBar());
+  m.append(h("div",{class:"toolbar"},q,sp,sg,h("label",{class:"check",for:"f-cerrados"},cb,"Incluir cerrados")),legend(),sortBar());
   const out=h("div",{id:"hilos-out"});m.append(out);
   function drawList(){out.replaceChildren();const qq=S.f.q.trim().toLowerCase();
-    let arr=visibles(S.f.puesto,!!mias&&S.mias).filter(x=>(S.f.cerrados||!cerrado(x))&&(!qq||(numTxt(x)+" "+(x.num||"")+" "+x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
+    let arr=visibles(S.f.puesto).filter(x=>(S.f.cerrados||!cerrado(x))&&(!qq||(numTxt(x)+" "+(x.num||"")+" "+x.titulo+" "+(x.detalle||"")+" "+(x.proyecto||"")).toLowerCase().includes(qq)));
     if(!arr.length){out.append(h("p",{class:"empty"},S.hilos.size?"Ningún hilo coincide con el filtro.":"Todavía no hay hilos. Conviértalos desde el Borrador o cree uno con “+ Hilo”."));return;}
     const ids=new Set(arr.map(x=>x.id));
     const key=x=>S.f.agrupar==="area"?(x.area||S.puestos.get(x.puesto)?.area||"Sin área"):S.f.agrupar==="proyecto"?(x.proyecto||"Sin proyecto"):S.f.agrupar==="estado"?(IMPL[x.estadoImpl]||"Sin iniciar"):puestoNombre(x.puesto);
@@ -838,7 +832,7 @@ function openEditor(id,preset,ctx={}){
   f.detalle.value=cur.detalle||"";f.confidencial.checked=!!cur.confidencial;
   const decWrap=field("Decisión pendiente de",f.decisionDe);
   const syncDec=()=>{decWrap.classList.toggle("off",f.estadoDecision.value!=="por_decidir");};f.estadoDecision.addEventListener("change",syncDec);
-  /* En las tareas de la Gerencia General, el área es la que se relaciona con el tema: define dónde aparece con "Ver mis tareas asociadas". */
+  /* En las tareas de la Gerencia General, el área es la que se relaciona con el tema: define en qué filtro de puesto aparece. */
   const areaFld=field("Área",f.area);const syncArea=()=>{areaFld.querySelector("label").textContent=f.puesto.value==="gg"?"Área relacionada":"Área";};
   f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area&&f.puesto.value!=="gg")f.area.value=p.area;if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;syncArea();});
   const entrega=radios("e-entrega",ENTREGA,cur.evaluacion?.entrega);const ejecucion=radios("e-ejec",EJEC,cur.evaluacion?.ejecucion);
@@ -1037,9 +1031,9 @@ const AYUDA=[
  ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, área, responsable, fecha, proyecto, quién decide y estado (en el Borrador, igual antes de guardar). Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
  ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
  ["Colores","Fecha: rojo si está vencida, ámbar si vence en 7 días o menos, verde si va a tiempo y gris si no tiene fecha; las tareas completadas o descartadas no llevan color. Estado (pastel): gris Sin iniciar, azul En proceso, lila En revisión, verde Completada, amarillo En pausa y rosa Descartado. Los proyectos usan el mismo código: Abierto azul, En pausa amarillo, Cerrado verde, Cancelado rosa."],
- ["Mis tareas asociadas","Al filtrar por Comercial, Operaciones, RRHH o Contabilidad, marque “Ver mis tareas asociadas” para sumar sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El Área relacionada se cambia al abrir el hilo con el #ID."],
+ ["Mis tareas asociadas","Al filtrar por un puesto que le reporta (Publicación o Hilos), siempre aparecen también sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El área se cambia en la columna Área."],
  ["Proyectos","En la pestaña Proyectos se administra la lista: nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). Al asignar un proyecto a una tarea solo se ofrecen los abiertos; la tarea conserva su proyecto aunque luego se cierre. Si cambia el nombre de un proyecto, sus tareas se actualizan; si le pone el nombre de otro existente, se ofrece unirlos."],
- ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de sus tareas abiertas (sin las confidenciales). Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue; el destinatario y el asunto tienen su propio botón Copiar. Use el asunto tal cual, para que la lectura nocturna no vuelva a cargar el listado. HILOS no se conecta con Outlook ni envía correos."],
+ ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de las tareas abiertas del puesto, con sus tareas asociadas; las confidenciales solo van si el destinatario es el responsable, marcadas como tales. Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue; el destinatario y el asunto tienen su propio botón Copiar. Use el asunto tal cual, para que la lectura nocturna no vuelva a cargar el listado. HILOS no se conecta con Outlook ni envía correos."],
  ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. Ajuste en la fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento."],
  ["Acta del 1:1","Al terminar el 1:1, envíe al otro participante un correo con los temas y acuerdos, en lista libre. Cualquier asunto sirve: HILOS reconoce el acta por su contenido. Lo claro se carga directo como hilo esa misma noche; lo dudoso queda en el Borrador."],
  ["Correo de un externo","Reenvíeselo a usted mismo con la palabra HILO al inicio del asunto (por ejemplo, “HILO RV: Cotización…”): se crea el hilo directo esa noche. Sin la palabra HILO, queda en el Borrador para que lo confirme."],
