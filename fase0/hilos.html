@@ -136,7 +136,7 @@ select.st option[class^="st-"]{background-color:var(--stb);color:var(--sti)}
 .discard-form select,.discard-form input{min-width:0;flex:1 1 160px}
 
 /* Tabla de revisión del borrador */
-.dtable{--dcols:minmax(0,1fr) 160px 140px 160px 128px 160px 104px;display:grid;gap:8px}
+.dtable{--dcols:minmax(0,1fr) 112px 150px 132px 150px 122px 150px 96px;display:grid;gap:8px}
 .dhead{display:none}
 .drow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;gap:10px 12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
 .drow.upd{border-style:dashed}
@@ -159,7 +159,7 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
 .ctx.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .more{appearance:none;background:none;border:0;padding:0;color:var(--accent);font-size:12.5px;cursor:pointer;justify-self:start}
 .toast .undo{appearance:none;margin-left:12px;background:none;border:0;color:var(--accent-soft);font-weight:700;text-decoration:underline;cursor:pointer;font-size:14px}
-@media (min-width:900px){
+@media (min-width:1080px){
   .dhead{display:grid;grid-template-columns:var(--dcols);gap:12px;padding:0 13px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em}
   .drow{grid-template-columns:var(--dcols)}
   .drow .c-task{grid-column:auto}
@@ -169,7 +169,7 @@ textarea.t-in{font-weight:600;resize:vertical;line-height:1.35;min-height:54px}
 }
 
 /* Tabla de hilos: cada fila se edita en el mismo renglón; el #ID abre el hilo completo. En pantallas angostas la fila se vuelve tarjeta. */
-.htable{--hcols:58px minmax(0,1fr) 168px 100px 128px 140px 160px 120px;display:grid;gap:6px}
+.htable{--hcols:58px minmax(0,1fr) 124px 168px 128px 140px 160px 120px;display:grid;gap:6px}
 .hhead{display:none}
 .hrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px;align-items:start}
@@ -321,7 +321,7 @@ const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),proyectos:new Ma
   per:"90",fb:"todos",sort:{k:"fecha",dir:1},mias:false,hedits:new Map()};
 let db = null;
 try{const t=localStorage.getItem("hilos.tab");if(t&&TABS.some(x=>x[0]===t))S.tab=t;}catch(e){}
-try{const o=JSON.parse(localStorage.getItem("hilos.sort")||"null");if(o&&typeof o.k==="string"&&(o.dir===1||o.dir===-1))S.sort=o;}catch(e){}
+try{const o=JSON.parse(localStorage.getItem("hilos.sort")||"null");if(o&&["num","titulo","area","puesto","fecha","proyecto","decide","estado"].includes(o.k)&&(o.dir===1||o.dir===-1))S.sort=o;}catch(e){}
 try{S.mias=localStorage.getItem("hilos.mias")==="1";}catch(e){}
 
 /* ---------- Utilidades ---------- */
@@ -393,7 +393,6 @@ function hiloRow(x,opts={}){
     h("span",{class:"meta"},
       opts.showParent&&padre?h("span",{class:"parent-ref"},"↳ "+padre.titulo):null,
       h("span",{class:"tag"},puestoNombre(x.puesto)),
-      h("span",{},TIPO[x.tipo]||"Tarea"),
       fechaSpan(x),
       kids.length?h("span",{class:"mono"},`${done}/${kids.length} subtareas`):null,
       x.proyecto?h("span",{},"◇ "+x.proyecto):null,
@@ -406,10 +405,10 @@ function HR(x,opts={}){return{__h:true,x,opts};}
 function decideTxt(x){if(x.estadoDecision!=="por_decidir")return null;return x.decisionDe==="gg"?"Gerencia General":x.decisionDe?puestoNombre(x.decisionDe):"Por definir quién";}
 function decLabel(x){return x.estadoDecision==="por_decidir"?"Por decidir ("+decideTxt(x)+")":DEC[x.estadoDecision||"no_requiere"];}
 /* Orden: uno solo para Publicación e Hilos, recordado en este dispositivo. Los vacíos van siempre al final; el desempate es la fecha y luego el #ID. */
-const SORTS=[["num","ID"],["titulo","Tarea"],["puesto","Responsable"],["tipo","Tipo"],["fecha","Fecha"],["proyecto","Proyecto"],["decide","Espera decisión de"],["estado","Estado"]];
+const SORTS=[["num","ID"],["titulo","Tarea"],["area","Área"],["puesto","Responsable"],["fecha","Fecha"],["proyecto","Proyecto"],["decide","Espera decisión de"],["estado","Estado"]];
 const IMPL_ORD=["sin_iniciar","en_proceso","en_revision","en_pausa","completada","descartado"];
 function sortVal(x,k){switch(k){case"num":return x.num||null;case"titulo":return x.titulo||null;case"puesto":return x.puesto?puestoNombre(x.puesto):null;
-  case"tipo":return TIPO[x.tipo||"tarea"];case"fecha":return x.fechaCompromiso||null;case"proyecto":return x.proyecto||null;
+  case"area":return areaDe(x)||null;case"fecha":return x.fechaCompromiso||null;case"proyecto":return x.proyecto||null;
   case"decide":return decideTxt(x);case"estado":return IMPL_ORD.indexOf(x.estadoImpl||"sin_iniciar");default:return null;}}
 function cmpHilos(a,b){const{k,dir}=S.sort;const va=sortVal(a,k),vb=sortVal(b,k);
   if(va!=null&&vb==null)return -1;if(va==null&&vb!=null)return 1;
@@ -425,6 +424,9 @@ function proyectoSel(id,actual){const s=h("select",{id},h("option",{value:""},"S
   for(const n of abiertos)s.append(h("option",{value:n},n));
   if(actual&&!abiertos.includes(actual)){const p=ps.find(q=>q.nombre===actual);s.append(h("option",{value:actual},`${actual} (${p?PEST[p.estado].toLowerCase():"no está en la lista"})`));}
   s.value=actual||"";return s;}
+/* Área: lista fija. Si la tarea no tiene área, se ofrece "Sin área". */
+function areaSel(id,actual){return sel(id,[...(actual&&AREAS.includes(actual)?[]:[["","Sin área"]]),...AREAS.map(a=>[a,a])],actual||"");}
+function areaDe(x){return x.area||S.puestos.get(x.puesto)?.area||"";}
 function hiloTable(descs){
   const t=h("div",{class:"htable"});
   t.append(h("div",{class:"hhead"},SORTS.map(([k,l])=>h("button",{type:"button",class:"sh","data-dir":S.sort.k===k?(S.sort.dir>0?"asc":"desc"):null,
@@ -436,9 +438,9 @@ function hiloTable(descs){
 function hrowEl(x,o){
   const id=x.id;const e=S.hedits.get(id)||{};
   const kids=hijos(id);const done=kids.filter(k=>k.estadoImpl==="completada").length;const padre=x.padre&&S.hilos.get(x.padre);
-  const orig={titulo:x.titulo||"",puesto:x.puesto||"",tipo:x.tipo||"tarea",fechaCompromiso:x.fechaCompromiso||"",proyecto:x.proyecto||"",dec:decValue(x),estadoImpl:x.estadoImpl||"sin_iniciar"};
+  const orig={titulo:x.titulo||"",area:areaDe(x),puesto:x.puesto||"",fechaCompromiso:x.fechaCompromiso||"",proyecto:x.proyecto||"",dec:decValue(x),estadoImpl:x.estadoImpl||"sin_iniciar"};
   const ctl={titulo:h("textarea",{id:"ht-"+id,rows:"1","aria-label":"Tarea "+numTxt(x),class:"t-in"}),
-    puesto:sel("hr-"+id,puestoOpts([["","Sin responsable"]]),""),tipo:sel("hy-"+id,Object.entries(TIPO),"tarea"),
+    area:areaSel("ha-"+id,orig.area),puesto:sel("hr-"+id,puestoOpts([["","Sin responsable"]]),""),
     fechaCompromiso:h("input",{type:"date",id:"hf-"+id}),proyecto:proyectoSel("hp-"+id,orig.proyecto),
     dec:sel("hd-"+id,decOpts(),"no_requiere"),estadoImpl:sel("he-"+id,Object.entries(IMPL),"sin_iniciar")};
   for(const[k,c]of Object.entries(ctl)){c.classList.add("in");c.value=k in e?e[k]:orig[k];}
@@ -449,10 +451,12 @@ function hrowEl(x,o){
   const mark=()=>{let any=false;for(const[k,c]of Object.entries(ctl)){const d=norm(k,c)!==orig[k];c.classList.toggle("dirty",d);any=any||d;}
     paintDue(ctl.fechaCompromiso,ctl.fechaCompromiso.value,ctl.estadoImpl.value);pintarEstado(ctl.estadoImpl);row.classList.toggle("dirty",any);act.hidden=!any;};
   for(const[k,c]of Object.entries(ctl))c.addEventListener(c.tagName==="SELECT"||c.type==="date"?"change":"input",()=>{const ed=S.hedits.get(id)||{};ed[k]=c.value;S.hedits.set(id,ed);mark();});
+  /* Al cambiar el responsable, el área pasa a la del nuevo puesto (salvo la Gerencia General, cuya área es la relacionada); se puede ajustar después. */
+  ctl.puesto.addEventListener("change",()=>{const a=S.puestos.get(ctl.puesto.value)?.area;if(a&&ctl.puesto.value!=="gg"&&AREAS.includes(a)){ctl.area.value=a;const ed=S.hedits.get(id)||{};ed.area=a;S.hedits.set(id,ed);mark();}});
   const reset=()=>{S.hedits.delete(id);for(const[k,c]of Object.entries(ctl))c.value=orig[k];mark();};
   const doSave=async()=>{const t=ctl.titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");ctl.titulo.focus();return;}
     save.disabled=cancel.disabled=true;
-    const ok=await saveInline(id,{titulo:t,puesto:ctl.puesto.value||null,tipo:ctl.tipo.value,fechaCompromiso:ctl.fechaCompromiso.value||null,
+    const ok=await saveInline(id,{titulo:t,area:ctl.area.value||null,puesto:ctl.puesto.value||null,fechaCompromiso:ctl.fechaCompromiso.value||null,
       proyecto:ctl.proyecto.value||null,estadoImpl:ctl.estadoImpl.value,...decParse(ctl.dec.value)});
     save.disabled=cancel.disabled=false;if(ok)trasGuardar();};
   save.addEventListener("click",doSave);cancel.addEventListener("click",reset);
@@ -468,7 +472,7 @@ function hrowEl(x,o){
         kids.length?h("span",{class:"mono"},`${done}/${kids.length} subtareas`):null,
         x.confidencial?h("span",{class:"pill"},"Confidencial"):null,o.extra||null):null,
       o.why?h("span",{class:"hwhy"},o.why):null),
-    c("Responsable",ctl.puesto),c("Tipo",ctl.tipo),c("Fecha",ctl.fechaCompromiso),c("Proyecto",ctl.proyecto),
+    c("Área",ctl.area),c("Responsable",ctl.puesto),c("Fecha",ctl.fechaCompromiso),c("Proyecto",ctl.proyecto),
     c("Espera decisión de",ctl.dec),c("Estado",ctl.estadoImpl),act);
   mark();return row;}
 /* Guardado desde la fila: mismas reglas que el editor completo (historial, fecha original, reprogramaciones, cierre). */
@@ -478,10 +482,10 @@ async function saveInline(id,val){const cur=S.hilos.get(id);if(!cur){toast("El h
   if(decValue(cur)!==decValue(val))cambios.push(`Decisión: ${decLabel(cur)} → ${decLabel(val)}`);
   if((cur.puesto||null)!==val.puesto)cambios.push(`Responsable: ${puestoNombre(cur.puesto)} → ${puestoNombre(val.puesto)}`);
   if((cur.fechaCompromiso||null)!==val.fechaCompromiso)cambios.push(`Fecha: ${fmt(cur.fechaCompromiso)} → ${fmt(val.fechaCompromiso)}`);
-  if((cur.titulo||"")!==val.titulo||(cur.proyecto||null)!==val.proyecto||(cur.tipo||"tarea")!==val.tipo)cambios.push("Detalle editado");
+  if((areaDe(cur)||null)!==val.area)cambios.push(`Área: ${areaDe(cur)||"—"} → ${val.area||"—"}`);
+  if((cur.titulo||"")!==val.titulo||(cur.proyecto||null)!==val.proyecto)cambios.push("Detalle editado");
   if(!cambios.length){S.hedits.delete(id);return true;}
   const patch={...val,actualizado:now,ultimaActividad:hoy(),historial:[...(cur.historial||[]),{fecha:now,texto:cambios.join(" · ")}]};
-  if((cur.puesto||null)!==val.puesto&&val.puesto&&val.puesto!=="gg"){const a=S.puestos.get(val.puesto)?.area;if(a)patch.area=a;}
   if(!cur.fechaOriginal&&val.fechaCompromiso)patch.fechaOriginal=val.fechaCompromiso;
   if(cur.fechaCompromiso&&val.fechaCompromiso!==cur.fechaCompromiso)patch.reprogramaciones=(cur.reprogramaciones||0)+1;
   if(terminado(val)&&!cur.fechaCierre)patch.fechaCierre=now;if(!terminado(val)&&cur.fechaCierre)patch.fechaCierre=null;
@@ -659,7 +663,7 @@ S.edits=new Map();
 function editOf(id){if(!S.edits.has(id))S.edits.set(id,{});return S.edits.get(id);}
 function draftTable(entries){
   const t=h("div",{class:"dtable"});
-  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Proyecto"),h("span",{},"Estado"),h("span",{},"Espera decisión de"),h("span",{})));
+  t.append(h("div",{class:"dhead","aria-hidden":"true"},h("span",{},"Tarea"),h("span",{},"Área"),h("span",{},"Responsable"),h("span",{},"Fecha esperada"),h("span",{},"Proyecto"),h("span",{},"Estado"),h("span",{},"Espera decisión de"),h("span",{})));
   for(const[id,d]of entries)t.append(d.tipo==="actualizacion"?updRow(id,d):draftRow(id,d));
   return t;}
 function cell(lbl,ctrl,cls){return h("label",{class:"cell"+(cls?" "+cls:""),for:ctrl.id},h("span",{class:"cl"},lbl),ctrl);}
@@ -678,27 +682,29 @@ function draftRow(id,d){
   const p=d.propuesta||{};const e=editOf(id);const v=(k,def)=>k in e?e[k]:def;
   const titulo=h("textarea",{class:"in t-in",id:"bt-"+id,rows:"2","aria-label":"Tarea"});titulo.value=v("titulo",p.titulo||"");
   const resp=sel("br-"+id,puestoOpts([["","Sin responsable"]]),v("puesto",p.puesto||""));
+  const area0=p.area||S.puestos.get(p.puesto)?.area||"";const area=areaSel("ba-"+id,area0);area.value=v("area",area0);
   const fecha=h("input",{type:"date",id:"bf-"+id,"aria-label":"Fecha esperada"});fecha.value=v("fechaCompromiso",p.fechaCompromiso||"");
   const est=sel("be-"+id,Object.entries(IMPL).filter(([k])=>k!=="descartado"),v("estadoImpl",p.estadoImpl||"sin_iniciar"));
   const dec=sel("bd-"+id,decOpts(),v("dec",decValue(p)));
   const proy=proyectoSel("bp-"+id,p.proyecto||"");proy.value=v("proyecto",p.proyecto||"");
-  for(const c of[resp,fecha,est,dec,proy])c.classList.add("in");
+  for(const c of[area,resp,fecha,est,dec,proy])c.classList.add("in");
   const mark=()=>{titulo.classList.toggle("dirty",titulo.value!==(p.titulo||""));resp.classList.toggle("dirty",resp.value!==(p.puesto||""));
     fecha.classList.toggle("dirty",fecha.value!==(p.fechaCompromiso||""));est.classList.toggle("dirty",est.value!==(p.estadoImpl||"sin_iniciar"));
-    dec.classList.toggle("dirty",dec.value!==decValue(p));proy.classList.toggle("dirty",proy.value!==(p.proyecto||""));fecha.classList.toggle("empty",!fecha.value);pintarEstado(est);};
-  titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;mark();});
+    dec.classList.toggle("dirty",dec.value!==decValue(p));proy.classList.toggle("dirty",proy.value!==(p.proyecto||""));area.classList.toggle("dirty",area.value!==area0);fecha.classList.toggle("empty",!fecha.value);pintarEstado(est);};
+  titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;const a=S.puestos.get(resp.value)?.area;if(a&&resp.value!=="gg"&&AREAS.includes(a)){area.value=a;e.area=a;}mark();});
+  area.addEventListener("change",()=>{e.area=area.value;mark();});
   fecha.addEventListener("change",()=>{e.fechaCompromiso=fecha.value;mark();});est.addEventListener("change",()=>{e.estadoImpl=est.value;mark();});
   dec.addEventListener("change",()=>{e.dec=dec.value;mark();});proy.addEventListener("change",()=>{e.proyecto=proy.value;mark();});mark();
-  const chips=h("div",{class:"dchips"},h("span",{},TIPO[p.tipo]||"Tarea"),
+  const chips=h("div",{class:"dchips"},
     p.confidencial?h("span",{class:"pill"},"Confidencial"):null,d.confianza?h("span",{class:"conf"},"confianza "+d.confianza):null);
   const ctx=[p.detalle,p.notas].filter(Boolean).join(" · ");
   const save=h("button",{type:"button",class:"btn primary sm"},"Guardar");const del=h("button",{type:"button",class:"btn ghost sm"},"Descartar");
   save.addEventListener("click",async()=>{const t=titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");titulo.focus();return;}
-    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,puesto:resp.value||null,fechaCompromiso:fecha.value||null,proyecto:proy.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;trasGuardar();});
+    save.disabled=del.disabled=true;await saveDraft(id,d,{titulo:t,area:area.value||null,puesto:resp.value||null,fechaCompromiso:fecha.value||null,proyecto:proy.value||null,estadoImpl:est.value,...decParse(dec.value)});save.disabled=del.disabled=false;trasGuardar();});
   del.addEventListener("click",async()=>{save.disabled=del.disabled=true;await discardDraft(id);save.disabled=del.disabled=false;trasGuardar();});
   return h("div",{class:"drow"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Tarea"),titulo,chips,ctxBlock(id,ctx,d.evidencia)),
-    cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Proyecto",proy),cell("Estado",est),cell("Espera decisión de",dec),
+    cell("Área",area),cell("Responsable",resp),cell("Fecha esperada",fecha),cell("Proyecto",proy),cell("Estado",est),cell("Espera decisión de",dec),
     h("div",{class:"c-act"},save,del));}
 function updRow(id,d){
   const x=S.hilos.get(d.hilo);const cambios=d.cambios||{};
@@ -710,12 +716,12 @@ function updRow(id,d){
   return h("div",{class:"drow upd"},
     h("div",{class:"cell c-task"},h("span",{class:"cl"},"Actualización sugerida"),h("p",{class:"t-ro"},x?.titulo||"(hilo no encontrado)"),
       ctxBlock(id,d.resumen||"",d.evidencia,desc?h("p",{class:"chg"},desc):null)),
-    ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),ro("Proyecto",x?.proyecto||"—"),
+    ro("Área",x?areaDe(x)||"—":"—"),ro("Responsable",puestoNombre(cambios.puesto||x?.puesto)),ro("Fecha esperada",fmt(cambios.fechaCompromiso||x?.fechaCompromiso)),ro("Proyecto",x?.proyecto||"—"),
     h("div",{class:"cell"},h("span",{class:"cl"},"Estado"),h("span",{class:"ro"},pillImpl(cambios.estadoImpl||x?.estadoImpl))),ro("Espera decisión de",x?(x.estadoDecision==="por_decidir"?(x.decisionDe==="gg"?"GG":puestoNombre(x.decisionDe)):"—"):"—"),
     h("div",{class:"c-act"},save,del));}
 async function saveDraft(id,d,vals){
   const hid=nuevoId("h");const now=new Date().toISOString();const p={...(d.propuesta||{}),...vals};const num=await nextNum();
-  const data=normalizeHilo({...p,num,area:S.puestos.get(p.puesto)?.area||p.area,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
+  const data=normalizeHilo({...p,num,area:p.area||S.puestos.get(p.puesto)?.area||null,evidencia:d.evidencia||[],origen:d.origen||"correo",creado:now,actualizado:now,
     ultimaActividad:p.ultimaActividad||hoy(),historial:[{fecha:now,texto:"Creado desde el borrador"}],fechaCierre:terminado(p)?now:null});
   try{await db.doc("hilos/"+hid).set(data);await db.doc("borrador/"+id).update({estado:"convertido",hiloId:hid,resuelto:now});S.edits.delete(id);
     toast("Guardado como hilo",async()=>{await db.doc("hilos/"+hid).delete();await db.doc("borrador/"+id).update({estado:"pendiente",hiloId:null,resuelto:null});});}
@@ -856,8 +862,8 @@ function openEditor(id,preset,ctx={}){
     cur.padre&&S.hilos.get(cur.padre)?h("p",{class:"hint"},"Subtarea de: "+(numTxt(S.hilos.get(cur.padre))+" ").trimStart()+S.hilos.get(cur.padre).titulo):null,
     h("div",{class:"form"},
       field("Título",f.titulo,"full"),field("Detalle",f.detalle,"full"),
-      field("Puesto responsable",f.puesto),field("Tipo",f.tipo),
-      areaFld,field("Proyecto",f.proyecto),
+      field("Puesto responsable",f.puesto),areaFld,
+      field("Proyecto",f.proyecto,"full"),
       field("Estado de decisión",f.estadoDecision),decWrap,
       field("Fecha esperada de cumplimiento",f.fecha),field("Nivel de implementación",f.estadoImpl,"impl"),
       !kids.length?field("Pertenece a (hilo padre)",f.padre,"full"):null,
@@ -874,7 +880,7 @@ function openEditor(id,preset,ctx={}){
   async function save(stay){
     const titulo=f.titulo.value.trim();if(!titulo){toast("Escriba un título");f.titulo.focus();return false;}
     const now=new Date().toISOString();
-    const val={titulo,detalle:f.detalle.value.trim(),tipo:f.tipo.value,puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value||null,
+    const val={titulo,detalle:f.detalle.value.trim(),tipo:cur.tipo||"tarea",puesto:f.puesto.value||null,area:f.area.value,proyecto:f.proyecto.value||null,
       padre:f.padre?(f.padre.value||null):(cur.padre||null),estadoDecision:f.estadoDecision.value,decisionDe:f.estadoDecision.value==="por_decidir"?f.decisionDe.value:null,
       estadoImpl:f.estadoImpl.value,fechaCompromiso:f.fecha.value||null,resultado:f.resultado.value||null,resultadoNota:f.resultadoNota.value.trim()||null,
       confidencial:f.confidencial.checked};
@@ -1024,7 +1030,7 @@ function openPuesto(id){const cur=id?{...S.puestos.get(id)}:{nombre:"",area:"Ger
 /* ---------- Ayuda ---------- */
 const AYUDA=[
  ["La publicación del lunes","Tres secciones y cada tarea aparece una sola vez: Espera su decisión, Alertas (todas las demás tareas abiertas) y Resultados por medir (completadas sin resultado). Los temas nuevos que detecta el correo están en el Borrador; el aviso de arriba dice cuántos hay."],
- ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, responsable, tipo, fecha, proyecto, quién decide y estado. Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
+ ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, área, responsable, fecha, proyecto, quién decide y estado (en el Borrador, igual antes de guardar). Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
  ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
  ["Colores","Fecha: rojo si está vencida, ámbar si vence en 7 días o menos, verde si va a tiempo y gris si no tiene fecha; las tareas completadas o descartadas no llevan color. Estado (pastel): gris Sin iniciar, azul En proceso, lila En revisión, verde Completada, amarillo En pausa y rosa Descartado. Los proyectos usan el mismo código: Abierto azul, En pausa amarillo, Cerrado verde, Cancelado rosa."],
  ["Mis tareas asociadas","Al filtrar por Comercial, Operaciones, RRHH o Contabilidad, marque “Ver mis tareas asociadas” para sumar sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El Área relacionada se cambia al abrir el hilo con el #ID."],
