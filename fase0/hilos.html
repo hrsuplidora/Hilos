@@ -569,14 +569,21 @@ function renderLunes(m){
     m.append(h("p",{class:"bnote"},h("span",{},(drafts.length===1?"1 tema detectado espera":`${drafts.length} temas detectados esperan`)+" confirmación en el Borrador"+(nGG?` (${nGG} con decisión suya)`:"")+"."),
       h("button",{type:"button",class:"btn sm",onclick:irBorrador},"Ir al Borrador")));}
   m.append(legend(),sortBar());
-  const espGG=abiertos.filter(x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg").sort(cmpHilos);const enEsp=new Set(espGG.map(x=>x.id));
-  const porMedir=abiertos.filter(x=>!enEsp.has(x.id)&&x.estadoImpl==="completada").sort(cmpHilos);const enMed=new Set(porMedir.map(x=>x.id));
-  const resto=abiertos.filter(x=>!enEsp.has(x.id)&&!enMed.has(x.id)).sort(cmpHilos);
-  m.append(sec("Espera su decisión",espGG.map(x=>HR(x,{showParent:true,extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
+  /* Las subtareas abiertas van debajo de su hilo padre, sean o no del puesto filtrado, para ver todo lo que cuelga de cada tarea.
+     Cada tarea aparece una sola vez: una subtarea que espera la decisión de la Gerencia General queda en esa sección y no debajo del padre. */
+  const esGG=x=>x.estadoDecision==="por_decidir"&&x.decisionDe==="gg";
+  const visIds=new Set(abiertos.map(x=>x.id));const todosAb=todos.filter(x=>!cerrado(x));
+  const espGG=abiertos.filter(esGG).sort(cmpHilos);const enEsp=new Set(espGG.map(x=>x.id));
+  const top=abiertos.filter(x=>!enEsp.has(x.id)&&!(x.padre&&visIds.has(x.padre)));
+  const porMedir=top.filter(x=>x.estadoImpl==="completada").sort(cmpHilos);
+  const resto=top.filter(x=>x.estadoImpl!=="completada").sort(cmpHilos);
+  const quieto=x=>{const q=dias(ultimaAct(x),hoyD);return q>14&&!terminado(x)?`${q} días sin movimiento`:null;};
+  const conHijos=(arr,opts)=>arr.flatMap(x=>[HR(x,opts(x)),...todosAb.filter(y=>y.padre===x.id&&!enEsp.has(y.id)).sort(cmpHilos).map(y=>HR(y,{sub:true,why:quieto(y)}))]);
+  m.append(sec("Espera su decisión",conHijos(espGG,x=>({showParent:true,extra:h("span",{class:"mono"},`espera hace ${Math.max(0,dias(ultimaAct(x),hoyD))} d`)})),
     "Nada espera su decisión.",null,"No avanzan hasta que usted decida. Cuando decida, cambie “Espera decisión de” en la fila."));
-  m.append(sec("Alertas",resto.map(x=>{const q=dias(ultimaAct(x),hoyD);return HR(x,{showParent:true,why:q>14?`${q} días sin movimiento`:null});}),
-    "No hay otras tareas abiertas.",null,"Todas las demás tareas abiertas. El color de la fecha señala las vencidas y las que vencen pronto."));
-  m.append(sec("Resultados por medir",porMedir.map(x=>HR(x,{showParent:true})),
+  m.append(sec("Alertas",conHijos(resto,x=>({showParent:true,why:quieto(x)})),
+    "No hay otras tareas abiertas.",null,"Todas las demás tareas abiertas, con sus subtareas debajo. El color de la fecha señala las vencidas y las que vencen pronto."));
+  m.append(sec("Resultados por medir",conHijos(porMedir,()=>({showParent:true})),
     "Nada pendiente de medir.",null,"Completadas sin resultado. Pulse el #ID para anotar el resultado y evaluar el cumplimiento."));
   const qs=S.rama==="consolidado"?(S.pub?.preguntasGenerales||[]):(S.pub?.porPuesto?.[S.rama]?.preguntas||[]);
   const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
@@ -889,10 +896,15 @@ function openEditor(id,preset,ctx={}){
     if(!isNew){
       if(cur.estadoImpl!==val.estadoImpl)cambios.push(`Implementación: ${IMPL[cur.estadoImpl]||"—"} → ${IMPL[val.estadoImpl]}`);
       if(cur.estadoDecision!==val.estadoDecision)cambios.push(`Decisión: ${DEC[cur.estadoDecision]||"—"} → ${DEC[val.estadoDecision]}`);
+      if(cur.estadoDecision===val.estadoDecision&&val.estadoDecision==="por_decidir"&&(cur.decisionDe||null)!==(val.decisionDe||null))cambios.push(`Decide: ${decideTxt(cur)} → ${decideTxt(val)}`);
       if((cur.puesto||null)!==val.puesto)cambios.push(`Responsable: ${puestoNombre(cur.puesto)} → ${puestoNombre(val.puesto)}`);
       if((cur.fechaCompromiso||null)!==val.fechaCompromiso)cambios.push(`Fecha: ${fmt(cur.fechaCompromiso)} → ${fmt(val.fechaCompromiso)}`);
-      if((cur.resultado||null)!==val.resultado&&val.resultado)cambios.push(`Resultado: ${RES[val.resultado]}`);
-      if(val.evaluacion&&JSON.stringify([cur.evaluacion?.entrega,cur.evaluacion?.ejecucion])!==JSON.stringify([ent,eje]))cambios.push(`Evaluación: ${ENTREGA[ent]||"—"} · ${EJEC[eje]||"—"}`);
+      if((cur.padre||null)!==(val.padre||null))cambios.push(val.padre?`Vinculado como subtarea de ${numTxt(S.hilos.get(val.padre))||"otro hilo"}`:`Desvinculado de ${numTxt(S.hilos.get(cur.padre))||"su hilo padre"}: ahora es hilo principal`);
+      if(!!cur.confidencial!==val.confidencial)cambios.push(val.confidencial?"Marcado como confidencial":"Ya no es confidencial");
+      if((cur.resultado||null)!==val.resultado)cambios.push(val.resultado?`Resultado: ${RES[val.resultado]}`:"Resultado borrado");
+      if((cur.resultadoNota||null)!==val.resultadoNota)cambios.push("Sustento del resultado editado");
+      if(val.evaluacion&&JSON.stringify([cur.evaluacion?.entrega||null,cur.evaluacion?.ejecucion||null,cur.evaluacion?.ejecutor||null,cur.evaluacion?.nota||null])
+        !==JSON.stringify([ent,eje,val.evaluacion.ejecutor,val.evaluacion.nota]))cambios.push(`Evaluación: ${ENTREGA[ent]||"—"} · ${EJEC[eje]||"—"}`+(val.evaluacion.ejecutor?` · ${val.evaluacion.ejecutor}`:""));
       if(cur.titulo!==val.titulo||(cur.detalle||"")!==val.detalle||(cur.proyecto||null)!==val.proyecto||cur.tipo!==val.tipo||(cur.area||null)!==val.area)cambios.push("Detalle editado");}
     try{
       if(isNew){const hid=nuevoId("h");const num=await nextNum();
@@ -1027,7 +1039,7 @@ function openPuesto(id){const cur=id?{...S.puestos.get(id)}:{nombre:"",area:"Ger
 
 /* ---------- Ayuda ---------- */
 const AYUDA=[
- ["La publicación del lunes","Tres secciones y cada tarea aparece una sola vez: Espera su decisión, Alertas (todas las demás tareas abiertas) y Resultados por medir (completadas sin resultado). Los temas nuevos que detecta el correo están en el Borrador; el aviso de arriba dice cuántos hay."],
+ ["La publicación del lunes","Tres secciones y cada tarea aparece una sola vez: Espera su decisión, Alertas (todas las demás tareas abiertas) y Resultados por medir (completadas sin resultado). Las subtareas abiertas aparecen debajo de su hilo padre aunque sean de otro puesto. Los temas nuevos que detecta el correo están en el Borrador; el aviso de arriba dice cuántos hay."],
  ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, área, responsable, fecha, proyecto, quién decide y estado (en el Borrador, igual antes de guardar). Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
  ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
  ["Colores","Fecha: rojo si está vencida, ámbar si vence en 7 días o menos, verde si va a tiempo y gris si no tiene fecha; las tareas completadas o descartadas no llevan color. Estado (pastel): gris Sin iniciar, azul En proceso, lila En revisión, verde Completada, amarillo En pausa y rosa Descartado. Los proyectos usan el mismo código: Abierto azul, En pausa amarillo, Cerrado verde, Cancelado rosa."],

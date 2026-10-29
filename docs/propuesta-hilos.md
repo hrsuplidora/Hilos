@@ -156,6 +156,7 @@ Todo dentro de la aplicación HILOS (§7), más dos atajos:
   2. Alertas: todas las demás tareas abiertas. El color de la fecha indica si está vencida, vence en 7 días o menos, va a tiempo o no tiene fecha. También se marca lo que lleva más de 14 días sin movimiento.
   3. Resultados por medir: completadas sin resultado registrado.
 - Arriba quedan el resumen de la semana y un aviso con los temas pendientes en el borrador. Al final, las preguntas sugeridas para el 1:1.
+- Las subtareas abiertas aparecen debajo de su hilo padre, aunque sean de otro puesto, para ver todo lo que cuelga de cada tarea delegada (29 de octubre de 2026). **[D]**
 - Las tablas se ordenan por cualquier columna (#ID, tarea, responsable, tipo, fecha, proyecto, quién decide y estado) y se editan en la misma fila, igual que el borrador. **[D]**
 - Al filtrar por un puesto que reporta a la Gerencia General se ven siempre, además, las tareas propias de la Gerencia General de esa área (29 de octubre de 2026: se retiró la casilla para activarlo). En las tareas de la Gerencia General el campo Área indica el área con la que se relaciona el tema. **[D]**
 - En la Fase 2, cada puesto recibe también su propia publicación, para que ambos lleguen al 1:1 con la misma lista.
