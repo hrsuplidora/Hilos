@@ -629,6 +629,10 @@ async function copiarTexto(txt){
   try{if(navigator.clipboard){await navigator.clipboard.writeText(txt);return true;}}catch(e){}
   const t=h("textarea",{style:"position:fixed;opacity:0;top:0;left:0"});t.value=txt;document.body.append(t);t.select();
   let ok=false;try{ok=document.execCommand("copy");}catch(e){}t.remove();return ok;}
+/* Lo que la tabla muestra y el correo no: tareas confidenciales y, con "Ver mis tareas asociadas" marcado, las de la Gerencia General. */
+function fuera(conf,pid){const r=rama(pid);const asoc=S.mias?asociadasGG(pid).filter(x=>!cerrado(x)&&!inR(x,r)).length:0;
+  const p=[conf?`${conf} confidencial${conf===1?"":"es"}`:null,asoc?`${asoc} tarea${asoc===1?"":"s"} suya${asoc===1?"":"s"} asociada${asoc===1?"":"s"} (de la Gerencia General)`:null].filter(Boolean);
+  return p.length?`. No incluye ${p.join(" ni ")}.`:".";}
 function openCorreo(pid){const c=correoPuesto(pid);const tecla=/Mac|iPhone|iPad/.test(navigator.platform||"")?"⌘C":"Ctrl+C";
   const status=h("p",{class:"hint",role:"status"});
   const chico=(txt,lbl)=>h("button",{type:"button",class:"btn ghost sm",onclick:async()=>{status.textContent=await copiarTexto(txt)?`${lbl} copiado.`:`No se pudo copiar: seleccione el texto y use ${tecla}.`;}},"Copiar");
@@ -639,7 +643,7 @@ function openCorreo(pid){const c=correoPuesto(pid);const tecla=/Mac|iPhone|iPad/
     h("dl",{class:"mailmeta"},
       h("dt",{},"Para"),h("dd",{},c.to.length?[c.to.join(", ")," ",chico(c.to.join("; "),"Destinatario")]:"El puesto no tiene correo registrado (pestaña Puestos)."),
       h("dt",{},"Asunto"),h("dd",{},c.subject," ",chico(c.subject,"Asunto"))),
-    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+(c.conf?`. No incluye ${c.conf} confidencial${c.conf===1?"":"es"}.`:".")+
+    h("p",{class:"hint"},`${c.n} tarea${c.n===1?"":"s"}`+fuera(c.conf,pid)+
       " Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue. Use el asunto tal cual: empieza con “Seguimiento HILOS” para que la lectura nocturna no lo vuelva a cargar."),
     prev,status,
     h("div",{class:"sheet-f"},h("button",{type:"button",class:"btn",onclick:closeLayer},"Cerrar"),btn));
