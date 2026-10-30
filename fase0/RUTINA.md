@@ -37,7 +37,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
    - crear el hilo con ese `num`.
 
    Los borradores no llevan número; lo reciben cuando se convierten en hilo.
-9. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (Comercial, Operaciones, RRHH o Contabilidad). Se usa `Gerencia` solo si el tema es transversal. Con ese dato la página muestra la tarea en el filtro de ese puesto, junto a las del puesto.
+9. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (por ejemplo Comercial, Operaciones, RRHH, Contabilidad, Calidad o Salud Ocupacional). Se usa `Gerencia` solo si el tema es transversal. En cualquier hilo o borrador, `area` es el nombre exacto de un área con `estado: "activa"` de la colección `areas`; las rutinas nunca crean ni renombran áreas. Con ese dato la página muestra la tarea en el filtro de ese puesto, junto a las del puesto.
 10. **Proyecto.** `proyecto` lleva el nombre exacto de un proyecto de la colección `proyectos` con `estado: "abierto"`. Si el tema parece pertenecer a un proyecto que no está en la lista, `proyecto` queda en null y se anota en `notas`: "Posible proyecto: <nombre>". Las rutinas nunca crean, renombran ni cierran proyectos; eso lo hace la Gerencia General en la página.
 11. **Listados enviados desde HILOS.** Los correos cuyo asunto empieza con "Seguimiento HILOS" son el listado de tareas que la Gerencia General envía a un puesto desde la página; quedan excluidos por `config/general.excluirAsuntos`. En las respuestas a esos correos (RE:, RV:) solo cuenta el texto nuevo de quien responde, nunca la tabla citada.
 
@@ -47,7 +47,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 ```json
 {"estado":"pendiente","tipo":"nuevo|actualizacion","detectado":"ISO","confianza":"alta|media|baja","origen":"correo",
- "propuesta":{"titulo":"","detalle":"","tipo":"tarea|decision|proyecto|idea|indicador|riesgo","puesto":"<id>","area":"Gerencia|Comercial|Operaciones|RRHH|Contabilidad",
+ "propuesta":{"titulo":"","detalle":"","tipo":"tarea|decision|proyecto|idea|indicador|riesgo","puesto":"<id>","area":"<nombre de un área activa de areas>",
    "proyecto":null,"estadoDecision":"por_decidir|decidido|no_requiere","decisionDe":"<id>|tercero|null",
    "estadoImpl":"sin_iniciar|en_proceso|en_revision|completada|en_pausa|descartado","resultado":null,"fechaCompromiso":null,
    "ultimaActividad":"AAAA-MM-DD","confidencial":false,"notas":null},
@@ -64,6 +64,7 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 Otros documentos:
 
+- `areas/{ar-…}`: `{"nombre":"…","detalle":"…"|null,"responsable":"<id de puesto>"|null,"estado":"activa|inactiva","orden":1}`. Solo lectura para las rutinas.
 - `proyectos/{pr-…}`: `{"nombre":"…","detalle":"…"|null,"lider":"<id de puesto>"|null,"estado":"abierto|en_pausa|cerrado|cancelado"}`. Solo lectura para las rutinas.
 - `estado/ingesta`: `{"ultimaCorrida":"ISO","ultimoResumen":"…","error":null|"…","nota":"…"}`
 - `ingesta/{AAAA-MM}`: `{"procesados":["<internetMessageId>", ...]}`, los ids ya leídos ese mes.
@@ -74,7 +75,7 @@ Otros documentos:
 1. Cargar las herramientas con ToolSearch:
    - `select:ArtifactData`.
    - El conector de Microsoft 365. Según la sesión, su nombre es `mcp__Microsoft_365__…` o `mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__…`. Probar `select:mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__outlook_email_search,mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__read_resource`. Si no aparece, probar con el prefijo `mcp__Microsoft_365__`, o buscar las palabras "outlook email search".
-2. Leer `estado/ingesta`, `config/general`, las colecciones `puestos` y `proyectos`, los `hilos` abiertos (todo lo que no esté `descartado` ni `completada` con resultado), el `borrador` con `estado == "pendiente"` e `ingesta/{mes actual}` e `ingesta/{mes anterior}`.
+2. Leer `estado/ingesta`, `config/general`, las colecciones `puestos`, `proyectos` y `areas`, los `hilos` abiertos (todo lo que no esté `descartado` ni `completada` con resultado), el `borrador` con `estado == "pendiente"` e `ingesta/{mes actual}` e `ingesta/{mes anterior}`.
 3. Ventana de búsqueda: desde `ultimaCorrida` menos 2 horas (o los últimos 3 días, si no existe) hasta ahora.
 4. Buscar con `outlook_email_search` y paginar hasta agotar cada búsqueda:
    - **Recibidos:** `sender:"hrsuplidora.com"` con fechas, una vez por carpeta: `Inbox`, `Deleted Items`, `SGD` y `Archive`.

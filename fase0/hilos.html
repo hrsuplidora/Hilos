@@ -309,13 +309,15 @@ const RES = {sin_medir:"Sin medir",logrado:"Logrado",parcial:"Parcial",no_lograd
 const TIPO = {tarea:"Tarea",decision:"Decisión",proyecto:"Proyecto",idea:"Idea",indicador:"Indicador",riesgo:"Riesgo"};
 const ENTREGA = {a_tiempo:"A tiempo",tarde_justificado:"Tarde – Justificado",tarde_injustificado:"Tarde – Injustificado"};
 const EJEC = {mejor:"Mejor de lo esperado",esperado:"Lo esperado",menos:"Menos de lo esperado"};
-const AREAS = ["Gerencia","Comercial","Operaciones","RRHH","Contabilidad"];
+/* Áreas: se administran en la pestaña Áreas (colección areas). Mientras la colección carga o si está vacía, se usa la lista base. */
+const AREAS_BASE = ["Gerencia","Comercial","Operaciones","RRHH","Contabilidad"];
+const AEST = {activa:"Activa",inactiva:"Inactiva"};
 const MOTIVOS = ["No es un tema de seguimiento","Ya está resuelto","Duplicado","No me corresponde","Otro"];
-const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["proyectos","Proyectos"],["desempeno","Desempeño"],["puestos","Puestos"],["ayuda","Cómo se usa"]];
+const TABS = [["lunes","Publicación"],["borrador","Borrador"],["hilos","Hilos"],["proyectos","Proyectos"],["puestos","Puestos"],["areas","Áreas"],["desempeno","Desempeño"],["ayuda","Cómo se usa"]];
 const PEST = {abierto:"Abierto",en_pausa:"En pausa",cerrado:"Cerrado",cancelado:"Cancelado"};
 
 /* ---------- Estado ---------- */
-const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),proyectos:new Map(),pub:null,ingesta:null,
+const S = {puestos:new Map(),hilos:new Map(),borrador:new Map(),proyectos:new Map(),areas:new Map(),pub:null,ingesta:null,
   tab:"lunes",rama:"consolidado",loaded:{p:false,h:false,b:false},
   f:{q:"",puesto:"todos",agrupar:"area",cerrados:false},
   per:"90",fb:"todos",sort:{k:"fecha",dir:1},hedits:new Map()};
@@ -424,7 +426,15 @@ function proyectoSel(id,actual){const s=h("select",{id},h("option",{value:""},"S
   if(actual&&!abiertos.includes(actual)){const p=ps.find(q=>q.nombre===actual);s.append(h("option",{value:actual},`${actual} (${p?PEST[p.estado].toLowerCase():"no está en la lista"})`));}
   s.value=actual||"";return s;}
 /* Área: lista fija. Si la tarea no tiene área, se ofrece "Sin área". */
-function areaSel(id,actual){return sel(id,[...(actual&&AREAS.includes(actual)?[]:[["","Sin área"]]),...AREAS.map(a=>[a,a])],actual||"");}
+function areasOrd(){const a=[...S.areas.values()].filter(x=>x.nombre).sort((p,q)=>(p.orden??99)-(q.orden??99)||p.nombre.localeCompare(q.nombre,"es"));
+  return a.length?a:AREAS_BASE.map((nombre,i)=>({nombre,estado:"activa",orden:i}));}
+function areasTodas(){return areasOrd().map(a=>a.nombre);}
+function areasActivas(){return areasOrd().filter(a=>(a.estado||"activa")==="activa").map(a=>a.nombre);}
+/* Selector de área: solo las activas; el área actual siempre aparece, con aviso si está inactiva o fuera de la lista. */
+function areaSel(id,actual){const act=areasActivas();const s=sel(id,[...(actual?[]:[["","Sin área"]]),...act.map(a=>[a,a])],"");
+  if(actual&&!act.includes(actual))s.append(h("option",{value:actual},`${actual} (${areasTodas().includes(actual)?"inactiva":"no está en la lista"})`));
+  s.value=actual||"";return s;}
+function ponerArea(s,a){if(![...s.options].some(o=>o.value===a))s.append(h("option",{value:a},a));s.value=a;}
 function areaDe(x){return x.area||S.puestos.get(x.puesto)?.area||"";}
 function hiloTable(descs){
   const t=h("div",{class:"htable"});
@@ -451,7 +461,7 @@ function hrowEl(x,o){
     paintDue(ctl.fechaCompromiso,ctl.fechaCompromiso.value,ctl.estadoImpl.value);pintarEstado(ctl.estadoImpl);row.classList.toggle("dirty",any);act.hidden=!any;};
   for(const[k,c]of Object.entries(ctl))c.addEventListener(c.tagName==="SELECT"||c.type==="date"?"change":"input",()=>{const ed=S.hedits.get(id)||{};ed[k]=c.value;S.hedits.set(id,ed);mark();});
   /* Al cambiar el responsable, el área pasa a la del nuevo puesto (salvo la Gerencia General, cuya área es la relacionada); se puede ajustar después. */
-  ctl.puesto.addEventListener("change",()=>{const a=S.puestos.get(ctl.puesto.value)?.area;if(a&&ctl.puesto.value!=="gg"&&AREAS.includes(a)){ctl.area.value=a;const ed=S.hedits.get(id)||{};ed.area=a;S.hedits.set(id,ed);mark();}});
+  ctl.puesto.addEventListener("change",()=>{const a=S.puestos.get(ctl.puesto.value)?.area;if(a&&ctl.puesto.value!=="gg"){ponerArea(ctl.area,a);const ed=S.hedits.get(id)||{};ed.area=a;S.hedits.set(id,ed);mark();}});
   const reset=()=>{S.hedits.delete(id);for(const[k,c]of Object.entries(ctl))c.value=orig[k];mark();};
   const doSave=async()=>{const t=ctl.titulo.value.trim();if(!t){toast("Escriba la tarea antes de guardar");ctl.titulo.focus();return;}
     save.disabled=cancel.disabled=true;
@@ -521,7 +531,7 @@ function trasGuardar(){const a=document.activeElement;if(a&&a.closest&&a.closest
 function render(){if(editandoFila()||ptrDown){S.pendiente=true;return;}S.pendiente=false;
   renderTabs();renderSync();const m=document.getElementById("main");m.replaceChildren();
   if(!S.loaded.p||!S.loaded.h||!S.loaded.b){m.append(h("p",{class:"empty",style:"padding-top:24px"},"Cargando HILOS…"));return;}
-  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,proyectos:renderProyectos,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
+  ({lunes:renderLunes,borrador:renderBorrador,hilos:renderHilos,proyectos:renderProyectos,areas:renderAreas,desempeno:renderDesempeno,puestos:renderPuestos,ayuda:renderAyuda}[S.tab]||renderLunes)(m);}
 
 /* ---------- Publicación del lunes ---------- */
 function sec(title,items,emptyTxt,count,desc){
@@ -534,7 +544,8 @@ function sec(title,items,emptyTxt,count,desc){
    o es madre o subtarea de un hilo de esa rama. */
 function asociadasGG(pid){const p=S.puestos.get(pid);const r=rama(pid);if(!p||!r||pid==="gg")return[];const all=hilosArr();
   const madres=new Set(all.filter(k=>k.padre&&r.has(k.puesto)).map(k=>k.padre));
-  return all.filter(x=>x.puesto==="gg"&&(x.area===p.area||madres.has(x.id)||(x.padre&&r.has(S.hilos.get(x.padre)?.puesto))));}
+  const areas=new Set([p.area,...[...S.areas.values()].filter(a=>a.responsable&&r.has(a.responsable)).map(a=>a.nombre)].filter(Boolean));
+  return all.filter(x=>x.puesto==="gg"&&(areas.has(x.area)||madres.has(x.id)||(x.padre&&r.has(S.hilos.get(x.padre)?.puesto))));}
 /* Al filtrar por un puesto que reporta a la Gerencia General se ven siempre, además, las tareas de la Gerencia General asociadas a esa área. */
 function visibles(pid){const arr=hilosArr().filter(x=>inR(x,rama(pid)));
   if(S.puestos.get(pid)?.reportaGG){const ids=new Set(arr.map(x=>x.id));for(const x of asociadasGG(pid))if(!ids.has(x.id))arr.push(x);}return arr;}
@@ -719,7 +730,7 @@ function draftRow(id,d){
   const mark=()=>{titulo.classList.toggle("dirty",titulo.value!==(p.titulo||""));resp.classList.toggle("dirty",resp.value!==(p.puesto||""));
     fecha.classList.toggle("dirty",fecha.value!==(p.fechaCompromiso||""));est.classList.toggle("dirty",est.value!==(p.estadoImpl||"sin_iniciar"));
     dec.classList.toggle("dirty",dec.value!==decValue(p));proy.classList.toggle("dirty",proy.value!==(p.proyecto||""));area.classList.toggle("dirty",area.value!==area0);fecha.classList.toggle("empty",!fecha.value);pintarEstado(est);};
-  titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;const a=S.puestos.get(resp.value)?.area;if(a&&resp.value!=="gg"&&AREAS.includes(a)){area.value=a;e.area=a;}mark();});
+  titulo.addEventListener("input",()=>{e.titulo=titulo.value;mark();});resp.addEventListener("change",()=>{e.puesto=resp.value;const a=S.puestos.get(resp.value)?.area;if(a&&resp.value!=="gg"){ponerArea(area,a);e.area=a;}mark();});
   area.addEventListener("change",()=>{e.area=area.value;mark();});
   fecha.addEventListener("change",()=>{e.fechaCompromiso=fecha.value;mark();});est.addEventListener("change",()=>{e.estadoImpl=est.value;mark();});
   dec.addEventListener("change",()=>{e.dec=dec.value;mark();});proy.addEventListener("change",()=>{e.proyecto=proy.value;mark();});mark();
@@ -801,7 +812,7 @@ function renderHilos(m){
     if(!arr.length){out.append(h("p",{class:"empty"},S.hilos.size?"Ningún hilo coincide con el filtro.":"Todavía no hay hilos. Conviértalos desde el Borrador o cree uno con “+ Hilo”."));return;}
     const ids=new Set(arr.map(x=>x.id));
     const key=x=>S.f.agrupar==="area"?(x.area||S.puestos.get(x.puesto)?.area||"Sin área"):S.f.agrupar==="proyecto"?(x.proyecto||"Sin proyecto"):S.f.agrupar==="estado"?(IMPL[x.estadoImpl]||"Sin iniciar"):puestoNombre(x.puesto);
-    const order=S.f.agrupar==="area"?AREAS:S.f.agrupar==="estado"?Object.values(IMPL):null;
+    const order=S.f.agrupar==="area"?areasTodas():S.f.agrupar==="estado"?Object.values(IMPL):null;
     const groups=new Map();for(const x of arr){if(x.padre&&ids.has(x.padre))continue;const k=key(x);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x);}
     const ks=[...groups.keys()].sort((a,b)=>{if(order){const ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);}
       if(a.startsWith("Sin "))return 1;if(b.startsWith("Sin "))return -1;return a.localeCompare(b,"es");});
@@ -834,7 +845,7 @@ function padreSel(id,actual){
   const s=h("select",{id:"e-padre"});s.append(h("option",{value:""},"Ninguno (es un hilo principal)"));
   const cand=hilosArr().filter(x=>x.id!==id&&!x.padre&&(!cerrado(x)||x.id===actual));
   const byA=new Map();for(const x of cand){const a=x.area||S.puestos.get(x.puesto)?.area||"Sin área";if(!byA.has(a))byA.set(a,[]);byA.get(a).push(x);}
-  const areas=[...byA.keys()].sort((a,b)=>{const ia=AREAS.indexOf(a),ib=AREAS.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
+  const ordA=areasTodas();const areas=[...byA.keys()].sort((a,b)=>{const ia=ordA.indexOf(a),ib=ordA.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
   for(const a of areas){const g=h("optgroup",{label:a});
     for(const x of byA.get(a).sort((p,q)=>(p.num||9e9)-(q.num||9e9)))g.append(h("option",{value:x.id},(x.num?numTxt(x)+" · ":"")+x.titulo+(cerrado(x)?" (cerrado)":"")));
     s.append(g);}
@@ -846,7 +857,7 @@ function openEditor(id,preset,ctx={}){
     detalle:h("textarea",{id:"e-detalle"}),
     tipo:sel("e-tipo",Object.entries(TIPO),cur.tipo),
     puesto:sel("e-puesto",puestoOpts([["","Sin responsable"]]),cur.puesto||""),
-    area:sel("e-area",AREAS.map(a=>[a,a]),cur.area||S.puestos.get(cur.puesto)?.area||"Gerencia"),
+    area:areaSel("e-area",cur.area||S.puestos.get(cur.puesto)?.area||"Gerencia"),
     proyecto:proyectoSel("e-proyecto",cur.proyecto||""),
     padre:padreSel(id,cur.padre),
     estadoDecision:sel("e-dec",Object.entries(DEC),cur.estadoDecision),
@@ -863,7 +874,7 @@ function openEditor(id,preset,ctx={}){
   const syncDec=()=>{decWrap.classList.toggle("off",f.estadoDecision.value!=="por_decidir");};f.estadoDecision.addEventListener("change",syncDec);
   /* En las tareas de la Gerencia General, el área es la que se relaciona con el tema: define en qué filtro de puesto aparece. */
   const areaFld=field("Área",f.area);const syncArea=()=>{areaFld.querySelector("label").textContent=f.puesto.value==="gg"?"Área relacionada":"Área";};
-  f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area&&f.puesto.value!=="gg")f.area.value=p.area;if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;syncArea();});
+  f.puesto.addEventListener("change",()=>{const p=S.puestos.get(f.puesto.value);if(p?.area&&f.puesto.value!=="gg")ponerArea(f.area,p.area);if(p?.ocupante&&!f.ejecutor.value)f.ejecutor.value=p.ocupante;syncArea();});
   const entrega=radios("e-entrega",ENTREGA,cur.evaluacion?.entrega);const ejecucion=radios("e-ejec",EJEC,cur.evaluacion?.ejecucion);
   const evalBox=h("div",{class:"box full"},h("h3",{},"Evaluación de cumplimiento"),
     h("div",{class:"field"},h("span",{class:"lbl"},"Entrega"),entrega),
@@ -1009,6 +1020,76 @@ function openProyecto(id,preset={}){
   const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
   document.getElementById("layer").replaceChildren(scrim);setTimeout(()=>f.nombre.focus(),30);}
 
+/* ---------- Áreas ---------- */
+/* Las tareas y los puestos guardan el nombre del área; cambiar el nombre o unir dos áreas actualiza tareas, puestos y borrador.
+   El responsable del área es un puesto: con él, las tareas de la Gerencia General de esa área aparecen en el filtro de ese puesto. */
+function areaStats(nombre){const hs=hilosArr().filter(x=>areaDe(x)===nombre);
+  return{total:hs.length,abiertas:hs.filter(x=>!cerrado(x)).length,puestos:[...S.puestos.values()].filter(p=>p.area===nombre).length};}
+async function moverArea(de,a){
+  for(const x of hilosArr().filter(x=>x.area===de))await db.doc("hilos/"+x.id).update({area:a});
+  for(const[id,p]of S.puestos)if(p.area===de)await db.doc("puestos/"+id).update({area:a});
+  for(const[id,d]of S.borrador)if(d.propuesta?.area===de)await db.doc("borrador/"+id).update({propuesta:{...d.propuesta,area:a}});}
+function verHilosArea(n){S.f={...S.f,q:"",puesto:"todos",agrupar:"area",cerrados:false};S.tab="hilos";try{localStorage.setItem("hilos.tab","hilos");}catch(e){}render();
+  setTimeout(()=>{const g=[...document.querySelectorAll(".group-h")].find(x=>x.firstChild?.textContent===n);if(g)g.scrollIntoView({block:"start"});},50);}
+function renderAreas(m){
+  m.append(h("div",{class:"page-h"},h("h1",{},"Áreas"),
+    h("div",{class:"sub"},"Solo las áreas activas se pueden elegir en tareas y puestos. Si cambia el nombre de un área, sus tareas y puestos se actualizan solos.")));
+  m.append(h("div",{class:"toolbar"},h("button",{type:"button",class:"btn sm",onclick:()=>openArea(null)},"+ Área")));
+  const as=[...S.areas.entries()].sort((a,b)=>((a[1].estado||"activa")==="activa"?0:1)-((b[1].estado||"activa")==="activa"?0:1)||(a[1].orden??99)-(b[1].orden??99)||String(a[1].nombre).localeCompare(String(b[1].nombre),"es"));
+  const usadas=new Set([...hilosArr().map(areaDe),...[...S.puestos.values()].map(p=>p.area)].filter(Boolean));
+  const fuera=[...usadas].filter(n=>!as.some(([,a])=>a.nombre===n)).sort((a,b)=>a.localeCompare(b,"es"));
+  if(!as.length&&!fuera.length){m.append(h("p",{class:"empty"},"Aún no hay áreas. Cree la primera con “+ Área”."));return;}
+  const tareas=n=>{const st=areaStats(n);return st.total?h("button",{type:"button",class:"more",onclick:()=>verHilosArea(n)},`${st.abiertas} de ${st.total}`):"0";};
+  const rows=as.map(([id,a])=>h("tr",{},
+    h("td",{},h("strong",{},a.nombre)),h("td",{class:"wrap-td"},a.detalle||h("span",{class:"muted"},"—")),
+    h("td",{},a.responsable?puestoNombre(a.responsable):h("span",{class:"muted"},"Sin responsable")),
+    h("td",{},h("span",{class:"pill "+((a.estado||"activa")==="activa"?"ps-abierto":"ps-cerrado")},AEST[a.estado||"activa"])),
+    h("td",{class:"num"},String(areaStats(a.nombre).puestos)),h("td",{class:"num"},tareas(a.nombre)),
+    h("td",{},h("button",{type:"button",class:"btn ghost sm",onclick:()=>openArea(id)},"Editar"))));
+  for(const n of fuera)rows.push(h("tr",{},h("td",{},h("strong",{},n)),h("td",{class:"wrap-td muted"},"Usada en tareas o puestos, pero no está en la lista."),
+    h("td",{},"—"),h("td",{},"—"),h("td",{class:"num"},String(areaStats(n).puestos)),h("td",{class:"num"},tareas(n)),
+    h("td",{},h("button",{type:"button",class:"btn ghost sm",onclick:()=>openArea(null,{nombre:n})},"Agregar"))));
+  m.append(h("div",{class:"tbl-wrap"},h("table",{},h("thead",{},h("tr",{},["Área","Detalle","Responsable","Status","Puestos","Tareas abiertas",""].map((t,i)=>h("th",{class:i===4||i===5?"num":null},t)))),h("tbody",{},rows))));}
+function openArea(id,preset={}){
+  const cur=id?{...S.areas.get(id)}:{nombre:preset.nombre||"",detalle:"",responsable:null,estado:"activa",orden:(Math.max(0,...[...S.areas.values()].map(a=>a.orden||0))+1)};
+  const f={nombre:h("input",{id:"ar-nombre",type:"text",value:cur.nombre||"",maxlength:"60"}),detalle:h("textarea",{id:"ar-detalle"}),
+    responsable:sel("ar-resp",puestoOpts([["","Sin responsable"]]),cur.responsable||""),estado:sel("ar-estado",Object.entries(AEST),cur.estado||"activa"),
+    orden:h("input",{id:"ar-orden",type:"number",value:String(cur.orden??50)})};
+  f.detalle.value=cur.detalle||"";
+  const st=id?areaStats(cur.nombre):{total:0,abiertas:0,puestos:0};
+  const merge=h("div",{class:"merge",hidden:true});
+  const saveBtn=h("button",{type:"button",class:"btn primary"},"Guardar");
+  const del=id&&!st.total&&!st.puestos?h("button",{type:"button",class:"btn ghost danger",onclick:async()=>{
+    try{await db.doc("areas/"+id).delete();closeLayer();toast("Área eliminada",()=>db.doc("areas/"+id).set(S.areas.get(id)||cur));}
+    catch(e){toast("No se pudo eliminar: "+(e?.message||e?.code||"error"));}}},"Eliminar"):null;
+  const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-labelledby":"ar-h"},
+    h("div",{class:"sheet-h"},h("h2",{id:"ar-h"},id?"Editar área":"Nueva área"),h("button",{type:"button",class:"btn ghost sm",onclick:closeLayer},"Cerrar")),
+    h("div",{class:"form"},field("Área",f.nombre,"full"),field("Detalle",f.detalle,"full"),field("Responsable (puesto)",f.responsable),field("Status",f.estado),field("Orden en listas",f.orden),
+      h("p",{class:"hint full"},"Con un responsable, las tareas de la Gerencia General de esta área aparecen también en el filtro de ese puesto."),
+      id?h("p",{class:"hint full"},(st.total||st.puestos)?`La usan ${st.total} tarea${st.total===1?"":"s"} y ${st.puestos} puesto${st.puestos===1?"":"s"}. Si cambia el nombre, se actualizan todos.`:"No la usa ninguna tarea ni puesto."):null),
+    merge,
+    h("div",{class:"sheet-f"},del,h("button",{type:"button",class:"btn",onclick:closeLayer},"Cancelar"),saveBtn));
+  saveBtn.addEventListener("click",async()=>{
+    const nombre=f.nombre.value.trim().replace(/\s+/g," ");if(!nombre){toast("Escriba el nombre del área");f.nombre.focus();return;}
+    const now=new Date().toISOString();
+    const data={nombre,detalle:f.detalle.value.trim()||null,responsable:f.responsable.value||null,estado:f.estado.value,orden:Number(f.orden.value)||50,actualizado:now};
+    const dup=[...S.areas.entries()].find(([k,a])=>k!==id&&String(a.nombre||"").toLowerCase()===nombre.toLowerCase());
+    if(dup){
+      if(!id&&!preset.nombre){toast("Ya existe un área con ese nombre");return;}
+      const s2=areaStats(cur.nombre);
+      merge.replaceChildren(h("span",{},`Ya existe el área “${dup[1].nombre}”. ¿Unir las dos? Sus ${s2.total} tareas y ${s2.puestos} puestos pasan a “${dup[1].nombre}”`+(id?" y esta área se elimina.":".")),
+        h("div",{class:"actions"},h("button",{type:"button",class:"btn sm",onclick:()=>{merge.hidden=true;}},"No"),h("button",{type:"button",class:"btn primary sm",onclick:async()=>{
+          try{await moverArea(cur.nombre,dup[1].nombre);if(id)await db.doc("areas/"+id).delete();closeLayer();toast("Áreas unidas");}
+          catch(e){toast("No se pudo unir: "+(e?.message||e?.code||"error"));}}},"Unir áreas")));
+      merge.hidden=false;return;}
+    saveBtn.disabled=true;
+    try{if(id){if(nombre!==cur.nombre)await moverArea(cur.nombre,nombre);await db.doc("areas/"+id).update(data);}
+      else await db.doc("areas/"+nuevoId("ar")).set({...data,creado:now});
+      closeLayer();toast("Área guardada");}
+    catch(e){saveBtn.disabled=false;toast("No se pudo guardar: "+(e?.message||e?.code||"error"));}});
+  const scrim=h("div",{class:"scrim",onclick:e=>{if(e.target===scrim)closeLayer();}},sheet);
+  document.getElementById("layer").replaceChildren(scrim);setTimeout(()=>f.nombre.focus(),30);}
+
 /* ---------- Desempeño ---------- */
 function renderDesempeno(m){
   m.append(h("div",{class:"page-h"},h("h1",{},"Desempeño"),h("div",{class:"sub"},"Cumplimiento evaluado al cerrar cada hilo o subtarea: entrega y ejecución, por persona.")));
@@ -1040,7 +1121,7 @@ function renderPuestos(m){
     `Última lectura: ${S.ingesta.ultimaCorrida?fmtHora(S.ingesta.ultimaCorrida):"—"}. Solo entran conversaciones donde remitente y destinatarios son @hrsuplidora.com. `+
     (S.ingesta.nota||""))));}
 function openPuesto(id){const cur=id?{...S.puestos.get(id)}:{nombre:"",area:"Gerencia",correos:[],superior:"gg",reportaGG:false,ocupante:"",orden:50};
-  const f={nombre:h("input",{id:"p-nombre",type:"text",value:cur.nombre||""}),area:sel("p-area",AREAS.map(a=>[a,a]),cur.area),
+  const f={nombre:h("input",{id:"p-nombre",type:"text",value:cur.nombre||""}),area:areaSel("p-area",cur.area),
     correos:h("input",{id:"p-correos",type:"text",value:(cur.correos||[]).join(", ")}),
     superior:sel("p-sup",[["","Ninguno"],...puestoOpts().filter(([v])=>v!==id)],cur.superior||""),
     ocupante:h("input",{id:"p-ocup",type:"text",value:cur.ocupante||""}),rep:h("input",{id:"p-rep",type:"checkbox"}),
@@ -1065,7 +1146,8 @@ const AYUDA=[
  ["Editar desde la fila","En Publicación e Hilos cada fila se edita ahí mismo: tarea, área, responsable, fecha, proyecto, quién decide y estado (en el Borrador, igual antes de guardar). Los campos cambiados se marcan en azul y aparecen Guardar y Cancelar (Enter guarda, Esc cancela). Para el detalle, la evidencia, las subtareas, el resultado y la evaluación, pulse el #ID."],
  ["Ordenar","Pulse el título de una columna para ordenar por ella; otro clic invierte el orden. En el celular use “Ordenar por”. El orden se recuerda en este dispositivo y aplica a Publicación e Hilos."],
  ["Colores","Fecha: rojo si está vencida, ámbar si vence en 7 días o menos, verde si va a tiempo y gris si no tiene fecha; las tareas completadas o descartadas no llevan color. Estado (pastel): gris Sin iniciar, azul En proceso, lila En revisión, verde Completada, amarillo En pausa y rosa Descartado. Los proyectos usan el mismo código: Abierto azul, En pausa amarillo, Cerrado verde, Cancelado rosa."],
- ["Mis tareas asociadas","Al filtrar por un puesto que le reporta (Publicación o Hilos), siempre aparecen también sus propias tareas de esa área: las que tienen esa Área relacionada, o que son madre o subtarea de un hilo del área. El área se cambia en la columna Área."],
+ ["Áreas","En la pestaña Áreas se administra la lista: nombre, detalle, responsable (puesto), status (Activa o Inactiva) y orden. Solo las activas se ofrecen en tareas y puestos. Si cambia el nombre de un área, sus tareas y puestos se actualizan; si le pone el nombre de otra existente, se ofrece unirlas. Con un responsable, sus tareas de esa área aparecen también en el filtro de ese puesto."],
+ ["Mis tareas asociadas","Al filtrar por un puesto que le reporta (Publicación o Hilos), siempre aparecen también sus propias tareas de esa área: las que tienen esa Área relacionada (o un área cuyo responsable es ese puesto, según la pestaña Áreas), o que son madre o subtarea de un hilo del área. El área se cambia en la columna Área."],
  ["Proyectos","En la pestaña Proyectos se administra la lista: nombre, detalle, líder (puesto) y status (Abierto, En pausa, Cerrado, Cancelado). Al asignar un proyecto a una tarea solo se ofrecen los abiertos; la tarea conserva su proyecto aunque luego se cierre. Si cambia el nombre de un proyecto, sus tareas se actualizan; si le pone el nombre de otro existente, se ofrece unirlos."],
  ["Correo a un reporte","En Publicación, elija el puesto y pulse “Preparar correo”. Verá el listado de las tareas abiertas del puesto, con sus tareas asociadas; las confidenciales solo van si el destinatario es el responsable, marcadas como tales. Pulse “Copiar información”, cree un correo nuevo en Outlook y pegue; el destinatario y el asunto tienen su propio botón Copiar. Use el asunto tal cual, para que la lectura nocturna no vuelva a cargar el listado. HILOS no se conecta con Outlook ni envía correos."],
  ["Revisar el borrador","Abra la pestaña Borrador; el número indica cuántos temas esperan. Ajuste en la fila lo que haga falta y pulse Guardar para convertirlo en hilo, o Descartar si no requiere seguimiento."],
@@ -1093,6 +1175,7 @@ async function boot(){
   db.collection("borrador").where("estado","==","pendiente").onSnapshot(s=>{S.borrador=new Map(s.docs.map(d=>[d.id,d.data()]));S.loaded.b=true;render();},err);
   db.collection("publicaciones").orderBy("fecha","desc").limit(1).onSnapshot(s=>{S.pub=s.docs[0]?.data()||null;render();},err);
   db.doc("estado/ingesta").onSnapshot(s=>{S.ingesta=s.exists?s.data():null;renderSync();},err);
-  db.collection("proyectos").onSnapshot(s=>{S.proyectos=new Map(s.docs.map(d=>[d.id,d.data()]));render();},err);}
+  db.collection("proyectos").onSnapshot(s=>{S.proyectos=new Map(s.docs.map(d=>[d.id,d.data()]));render();},err);
+  db.collection("areas").onSnapshot(s=>{S.areas=new Map(s.docs.map(d=>[d.id,d.data()]));render();},err);}
 boot();
 </script>
