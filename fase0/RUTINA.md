@@ -74,7 +74,7 @@ Otros documentos:
 
 1. Cargar las herramientas con ToolSearch:
    - `select:ArtifactData`.
-   - El conector de Microsoft 365. Según la sesión, su nombre es `mcp__Microsoft_365__…` o `mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__…`. Probar `select:mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__outlook_email_search,mcp__027ff144-84d2-490b-951c-6e7060e2a2ed__read_resource`. Si no aparece, probar con el prefijo `mcp__Microsoft_365__`, o buscar las palabras "outlook email search".
+   - El conector de Microsoft 365. Su prefijo cambia según la cuenta y la sesión (por ejemplo `mcp__Microsoft_365__…` o `mcp__<identificador>__…`). Probar `select:mcp__Microsoft_365__outlook_email_search,mcp__Microsoft_365__read_resource`; si no aparecen, buscar con ToolSearch las palabras "outlook email search" y "read resource" y usar las herramientas que devuelva.
 2. Leer `estado/ingesta`, `config/general`, las colecciones `puestos`, `proyectos` y `areas`, los `hilos` abiertos (todo lo que no esté `descartado` ni `completada` con resultado), el `borrador` con `estado == "pendiente"` e `ingesta/{mes actual}` e `ingesta/{mes anterior}`.
 3. Ventana de búsqueda: desde `ultimaCorrida` menos 2 horas (o los últimos 3 días, si no existe) hasta ahora.
 4. Buscar con `outlook_email_search` y paginar hasta agotar cada búsqueda:

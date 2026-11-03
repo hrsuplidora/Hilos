@@ -454,6 +454,8 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 
 **[D]** La Fase 0 arrancó el 12 de octubre de 2026. El detalle operativo está en `fase0/RUTINA.md`.
 
+**En curso (3 de noviembre de 2026):** traslado de HILOS a la cuenta Claude Teams de HR Suplidora, según `docs/migracion-teams.md`. Las rutinas de la cuenta personal quedaron apagadas y la base se exportó con 364 documentos.
+
 **[D] 20 de octubre de 2026:**
 
 - **Correo a cada reporte (copiar y pegar).** En Publicación, "Preparar correo" arma el listado de tareas abiertas del puesto, con las de la Gerencia General asociadas al área; las confidenciales solo van si el destinatario es su responsable, marcadas como tales (29 de octubre de 2026). Las subtareas van debajo de su tarea madre aunque sean de otro puesto, y una subtarea suelta indica de qué tarea cuelga (sin revelar el título si la madre es confidencial de otro puesto); "Copiar información" lo copia con formato para pegarlo en un correo nuevo de Outlook. La primera idea era crear el borrador con el conector de Microsoft 365, pero exigía aprobar en Entra el permiso Mail.ReadWrite y la Gerencia General prefirió no ampliar el acceso: la página no se conecta con Outlook. El asunto empieza con "Seguimiento HILOS" y la lectura nocturna lo excluye. En la Fase 1 el envío puede salir del buzón `hilos@`.
