@@ -2,7 +2,7 @@
 
 Este archivo es la fuente del texto que ejecutan las rutinas programadas de Claude. Si se cambia aquí, hay que actualizar también la rutina correspondiente.
 
-- Página y base de datos: https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww
+- Página y base de datos: https://claude.ai/artifact/K4cYmF4AvWYcJeHApZtVcF
 - Buzón: jmunoz@hrsuplidora.com, por medio del conector Microsoft 365, en **solo lectura**.
 - Zona horaria: America/Costa_Rica (UTC−6).
 
@@ -10,9 +10,9 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 | Rutina | Id | Cuándo (hora de Costa Rica) | Dónde corre | Qué hace |
 |---|---|---|---|---|
-| HILOS – Procesamiento diario | `trig_01RqXcW371afMRdM8RcGWxe2` | Lunes a viernes, 6:50 p. m. | Sesión dedicada "HILOS – Operación (Fase 0)" (`session_01W7uMV8DTbN9eqy8NkojS2e`), que tiene el conector de Microsoft 365. Delega en un subagente. | Procedimiento A |
-| HILOS – Publicación del lunes | `trig_01NJ7NLn938BKdcXBicDRgmH` | Lunes, 5:50 a. m. | La misma sesión dedicada | Procedimiento A y luego B |
-| HILOS – Aviso 6:45 | `trig_01C4XL3AYm7rBKWN3JNKhWx7` | Lunes, 6:45 a. m. | Sesión nueva en cada corrida, sin conectores, con aviso al celular | Procedimiento C |
+| HILOS – Procesamiento diario | `trig_01Vs1STL5oTYoqY4iBJCsFLv` | Lunes a viernes, 6:50 p. m. | Sesión dedicada "HILOS – Operación" (`session_015mCaGVQsUGpU29TS1RVT1u`), que tiene el conector de Microsoft 365. Delega en un subagente. | Procedimiento A |
+| HILOS – Publicación del lunes | `trig_018ZedBVVfDwX4WEyFQfJ2eu` | Lunes, 5:50 a. m. | La misma sesión dedicada | Procedimiento A y luego B |
+| HILOS – Aviso 6:45 | `trig_01VFBAXAJ6ju6UicSRUReBUL` | Lunes, 6:45 a. m. | Sesión nueva en cada corrida, sin conectores, con aviso al celular | Procedimiento C |
 
 - **Fuente que leen las rutinas:** el documento `config/procedimiento` de la base de HILOS (campo `texto`). Es una copia de este archivo; si este archivo cambia, hay que actualizar también ese documento.
 - **Por qué una sesión dedicada:** las rutinas que abren una sesión nueva en cada corrida no heredan los conectores. Las sesiones creadas desde Claude Code sí los tienen.
@@ -114,6 +114,6 @@ Otros documentos:
 ## Procedimiento C · Aviso de las 6:45
 
 1. Leer `publicaciones` (la más reciente), `estado/ingesta`, `hilos` y `borrador` pendiente.
-2. Si existe la publicación de hoy, el mensaje final es una sola línea de menos de 200 caracteres, por ejemplo: "HILOS: publicación lista. 3 decisiones esperan por usted, 2 vencidos, 5 temas por confirmar. https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww". Las decisiones cuentan solo los hilos abiertos con decisión pendiente de la Gerencia General; los borradores pendientes se cuentan aparte, como temas por confirmar.
+2. Si existe la publicación de hoy, el mensaje final es una sola línea de menos de 200 caracteres, por ejemplo: "HILOS: publicación lista. 3 decisiones esperan por usted, 2 vencidos, 5 temas por confirmar. https://claude.ai/artifact/K4cYmF4AvWYcJeHApZtVcF". Las decisiones cuentan solo los hilos abiertos con decisión pendiente de la Gerencia General; los borradores pendientes se cuentan aparte, como temas por confirmar.
 3. Si no existe, o si `estado/ingesta.error` tiene contenido, el mensaje dice qué falló.
 4. No escribir nada en la base de datos.

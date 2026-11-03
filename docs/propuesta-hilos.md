@@ -391,7 +391,7 @@ Notas:
 
 Detalle de la Fase 0:
 
-- **Página:** https://claude.ai/artifact/WieamYskCoDZPrfRq2D3Ww. Es privada y solo la Gerencia General puede leer sus datos.
+- **Página:** https://claude.ai/artifact/K4cYmF4AvWYcJeHApZtVcF. Es privada y solo la Gerencia General puede leer sus datos.
 - **Lectura del correo:** de lunes a viernes a las 6:50 p. m., y el lunes a las 5:50 a. m. antes de la publicación.
 - **Publicación del lunes:** lista antes de las 6:45 a. m., con aviso al celular a las 6:45.
 - **Actas:** un correo interno con asunto que empiece con "Acta". Se cargan en la lectura de ese mismo día.
@@ -454,7 +454,7 @@ Cualquier desarrollador con acceso al repositorio puede continuar el trabajo.
 
 **[D]** La Fase 0 arrancó el 12 de octubre de 2026. El detalle operativo está en `fase0/RUTINA.md`.
 
-**En curso (3 de noviembre de 2026):** traslado de HILOS a la cuenta Claude Teams de HR Suplidora, según `docs/migracion-teams.md`. Las rutinas de la cuenta personal quedaron apagadas y la base se exportó con 364 documentos.
+**[D] 3 de noviembre de 2026:** HILOS se trasladó a la cuenta Claude Teams de HR Suplidora. Página: https://claude.ai/artifact/K4cYmF4AvWYcJeHApZtVcF. La página y las rutinas de la cuenta personal quedan apagadas como respaldo dos semanas y luego se borran.
 
 **[D] 20 de octubre de 2026:**
 
