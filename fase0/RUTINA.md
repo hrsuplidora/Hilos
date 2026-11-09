@@ -68,7 +68,7 @@ Otros documentos:
 - `proyectos/{pr-…}`: `{"nombre":"…","detalle":"…"|null,"lider":"<id de puesto>"|null,"estado":"abierto|en_pausa|cerrado|cancelado"}`. Solo lectura para las rutinas.
 - `estado/ingesta`: `{"ultimaCorrida":"ISO","ultimoResumen":"…","error":null|"…","nota":"…"}`
 - `ingesta/{AAAA-MM}`: `{"procesados":["<internetMessageId>", ...]}`, los ids ya leídos ese mes.
-- `publicaciones/{AAAA-MM-DD}`: `{"fecha":"AAAA-MM-DD","generada":"ISO","resumenGeneral":"…","preguntasGenerales":["…"],"porPuesto":{"<id>":{"resumen":"…","preguntas":["…"]}}}`
+- `publicaciones/{AAAA-MM-DD}`: `{"fecha":"AAAA-MM-DD","generada":"ISO"}`. Es solo la marca de que la corrida del lunes terminó; no lleva resúmenes ni preguntas.
 
 ## Procedimiento A · Procesar correo nuevo
 
@@ -104,12 +104,8 @@ Otros documentos:
 ## Procedimiento B · Publicación del lunes
 
 1. Ejecutar el procedimiento A.
-2. Con los hilos y el borrador actualizados, escribir `publicaciones/{fecha de hoy}`:
-   - `resumenGeneral`: 2 o 3 frases sobre la semana. Qué espera decisión de la Gerencia General, qué está vencido o detenido, y qué se cerró.
-   - `preguntasGenerales`: de 3 a 5 preguntas concretas para la semana.
-   - `porPuesto`: para cada puesto con `reportaGG: true`, un `resumen` (2 o 3 frases) y de 3 a 5 `preguntas` para el 1:1, basadas en hilos reales. Cada pregunta nombra el tema.
-   - `porPuesto.gg`: lo mismo para las tareas cuyo responsable es la propia Gerencia General: qué tiene pendiente de ejecutar, qué está vencido y qué puede delegar. Las preguntas van dirigidas a ella misma, por ejemplo "¿Este tema lo puede ejecutar otro puesto?".
-3. Español costarricense, directo, sin relleno ni adulación. Las cifras llevan su unidad. No se inventa nada que no esté en los hilos o en el borrador.
+2. Escribir `publicaciones/{fecha de hoy}` con `fecha` (la fecha de hoy en Costa Rica) y `generada` (la hora real en que se terminó, en ISO). Nada más: el documento es solo la marca de que la corrida del lunes terminó, y el aviso de las 6:45 la usa para confirmarlo.
+3. No se redactan resúmenes ni preguntas sugeridas. La página muestra las tareas y la Gerencia General las lee directo.
 
 ## Procedimiento C · Aviso de las 6:45
 

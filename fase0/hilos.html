@@ -76,8 +76,6 @@ a{color:var(--accent)}
 .sec h2{font-family:var(--f-display);font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);margin:0 0 10px;display:flex;gap:8px;align-items:baseline}
 .sec h2 .n{font-family:var(--f-mono);color:var(--ink-3);letter-spacing:0}
 .empty{color:var(--ink-3);font-size:14px;padding:4px 0}
-.lede{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;max-width:72ch}
-.lede p{margin:0}
 
 /* Filas de hilo */
 .list{display:grid;gap:6px}
@@ -235,7 +233,6 @@ td.wrap-td{min-width:220px;max-width:46ch;color:var(--ink-2)}
 .sum dt{color:var(--ink-3)}
 .sum dd{margin:0;text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
 .sum dd.hot{color:var(--bad);font-weight:600}
-.qs{margin:0;padding-left:20px;display:grid;gap:6px;max-width:75ch}
 
 /* Herramientas de lista */
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:6px 4px}
@@ -563,8 +560,6 @@ function renderLunes(m){
     m.append(h("div",{class:"toolbar"},h("button",{type:"button",class:"btn sm",style:"margin-left:auto",onclick:()=>openCorreo(S.rama)},"Preparar correo para "+(oc||puestoNombre(S.rama)))));}
   const set=rama(S.rama);const todos=hilosArr();
   const abiertos=visibles(S.rama).filter(x=>!cerrado(x));
-  const resumen=S.rama==="consolidado"?S.pub?.resumenGeneral:S.pub?.porPuesto?.[S.rama]?.resumen;
-  if(resumen)m.append(h("section",{class:"sec"},h("div",{class:"lede"},h("p",{},resumen))));
   if(S.rama==="consolidado"){
     const grid=h("div",{class:"grid-sum"});
     for(const[id,p]of[...reportesGG(),["gg",{nombre:"Gerencia General (mis tareas)"}]]){const r=rama(id);const ab=todos.filter(x=>inR(x,r)&&!cerrado(x));
@@ -595,11 +590,7 @@ function renderLunes(m){
   m.append(sec("Alertas",conHijos(resto,x=>({showParent:true,why:quieto(x)})),
     "No hay otras tareas abiertas.",null,"Todas las demás tareas abiertas, con sus subtareas debajo. El color de la fecha señala las vencidas y las que vencen pronto."));
   m.append(sec("Resultados por medir",conHijos(porMedir,()=>({showParent:true})),
-    "Nada pendiente de medir.",null,"Completadas sin resultado. Pulse el #ID para anotar el resultado y evaluar el cumplimiento."));
-  const qs=S.rama==="consolidado"?(S.pub?.preguntasGenerales||[]):(S.pub?.porPuesto?.[S.rama]?.preguntas||[]);
-  const qsec=h("section",{class:"sec"},h("h2",{},"Preguntas sugeridas",h("span",{class:"n"},String(qs.length))));
-  qsec.append(qs.length?h("ol",{class:"qs"},qs.map(q=>h("li",{},q))):h("p",{class:"empty"},"Se generan con cada publicación del lunes."));
-  m.append(qsec);}
+    "Nada pendiente de medir.",null,"Completadas sin resultado. Pulse el #ID para anotar el resultado y evaluar el cumplimiento."));}
 
 /* ---------- Correo al puesto ---------- */
 /* Arma el listado de tareas abiertas del puesto (sin confidenciales) para copiarlo y pegarlo en un correo nuevo de Outlook.
