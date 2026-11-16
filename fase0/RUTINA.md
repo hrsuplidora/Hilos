@@ -37,9 +37,10 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
    - crear el hilo con ese `num`.
 
    Los borradores no llevan número; lo reciben cuando se convierten en hilo.
-9. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (por ejemplo Comercial, Operaciones, RRHH, Contabilidad, Calidad o Salud Ocupacional). Se usa `Gerencia` solo si el tema es transversal. En cualquier hilo o borrador, `area` es el nombre exacto de un área con `estado: "activa"` de la colección `areas`; las rutinas nunca crean ni renombran áreas. Con ese dato la página muestra la tarea en el filtro de ese puesto, junto a las del puesto.
-10. **Proyecto.** `proyecto` lleva el nombre exacto de un proyecto de la colección `proyectos` con `estado: "abierto"`. Si el tema parece pertenecer a un proyecto que no está en la lista, `proyecto` queda en null y se anota en `notas`: "Posible proyecto: <nombre>". Las rutinas nunca crean, renombran ni cierran proyectos; eso lo hace la Gerencia General en la página.
-11. **Listados enviados desde HILOS.** Los correos cuyo asunto empieza con "Seguimiento HILOS" son el listado de tareas que la Gerencia General envía a un puesto desde la página; quedan excluidos por `config/general.excluirAsuntos`. En las respuestas a esos correos (RE:, RV:) solo cuenta el texto nuevo de quien responde, nunca la tabla citada.
+9. **La bitácora del 1:1 no se toca.** El campo `sesiones` de un hilo lo escribe solo la Gerencia General desde la página. Si un correo cuenta lo que se habló en una reunión, eso va a `evidencia` y al borrador como siempre, nunca a `sesiones`.
+10. **Área de las tareas de la Gerencia General.** Si el responsable (`puesto`) es `gg`, `area` es el área con la que se relaciona el tema: la del puesto que participa en el correo o la del asunto que trata (por ejemplo Comercial, Operaciones, RRHH, Contabilidad, Calidad o Salud Ocupacional). Se usa `Gerencia` solo si el tema es transversal. En cualquier hilo o borrador, `area` es el nombre exacto de un área con `estado: "activa"` de la colección `areas`; las rutinas nunca crean ni renombran áreas. Con ese dato la página muestra la tarea en el filtro de ese puesto, junto a las del puesto.
+11. **Proyecto.** `proyecto` lleva el nombre exacto de un proyecto de la colección `proyectos` con `estado: "abierto"`. Si el tema parece pertenecer a un proyecto que no está en la lista, `proyecto` queda en null y se anota en `notas`: "Posible proyecto: <nombre>". Las rutinas nunca crean, renombran ni cierran proyectos; eso lo hace la Gerencia General en la página.
+12. **Listados enviados desde HILOS.** Los correos cuyo asunto empieza con "Seguimiento HILOS" son el listado de tareas que la Gerencia General envía a un puesto desde la página; quedan excluidos por `config/general.excluirAsuntos`. En las respuestas a esos correos (RE:, RV:) solo cuenta el texto nuevo de quien responde, nunca la tabla citada.
 
 ## Esquemas en la base de datos
 
@@ -59,8 +60,11 @@ Este archivo es la fuente del texto que ejecutan las rutinas programadas de Clau
 
 ```json
 {"num":70,"padre":null,"resultadoNota":null,"fechaOriginal":null,"reprogramaciones":0,"creado":"ISO","actualizado":"ISO","origen":"correo|acta|manual",
- "evidencia":[...],"historial":[{"fecha":"ISO","texto":"…"}],"evaluacion":null,"fechaCierre":null}
+ "evidencia":[...],"historial":[{"fecha":"ISO","texto":"…"}],"evaluacion":null,"fechaCierre":null,
+ "sesiones":[{"id":"s-…","fecha":"AAAA-MM-DD","nota":"…","puesto":"<id>|null","creado":"ISO"}]}
 ```
+
+`sesiones` es la bitácora del 1:1: una nota por sesión, con la fecha de la conversación. **Las rutinas nunca la escriben, la editan ni la borran**; la llena la Gerencia General en la página al conversar con cada puesto. Como toda escritura va con `update` de los campos que cambian, el campo se conserva solo; basta con no incluirlo nunca en un `update` ni en un `set`.
 
 Otros documentos:
 
